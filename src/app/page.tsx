@@ -43,7 +43,7 @@ const FAQS = [
   },
   {
     q: "What happens to the photo I upload?",
-    a: "In this demo, nothing leaves your browser — the photo never touches a server. In production, photos are used once for generation and deleted right after.",
+    a: "Demo-only previews stay in your browser. Real renders resize the photo locally when needed, then upload it with the reference motion video to the selected generation provider for a one-time render; the app does not keep a separate photo library.",
   },
   {
     q: "Which AI actually makes the video?",

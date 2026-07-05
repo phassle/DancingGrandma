@@ -85,6 +85,77 @@ test("a successful run lands on the done step with the rendered video", async ()
   );
 });
 
+test("download fetches the rendered video and starts a file download", async () => {
+  const user = userEvent.setup();
+  const anchorClick = vi.fn();
+  const createdAnchors: HTMLAnchorElement[] = [];
+  track.mockResolvedValue("https://fal.media/out.mp4");
+  vi.mocked(fetch).mockImplementation(async (input) => {
+    const url = typeof input === "string" ? input : (input as Request).url;
+    if (url === "https://fal.media/out.mp4") {
+      return new Response("video-bytes", {
+        status: 200,
+        headers: { "Content-Type": "video/mp4" },
+      });
+    }
+    return new Response(null, { status: 404 });
+  });
+
+  await startRealRun(user);
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+
+  const originalCreateElement = document.createElement.bind(document);
+  const createElement = vi.spyOn(document, "createElement");
+  createElement.mockImplementation(((tagName: string, options?: ElementCreationOptions) => {
+    const element = originalCreateElement(tagName, options);
+    if (tagName.toLowerCase() === "a") {
+      const createdAnchor = element as HTMLAnchorElement;
+      createdAnchors.push(createdAnchor);
+      createdAnchor.click = anchorClick;
+    }
+    return element;
+  }) as typeof document.createElement);
+
+  await user.click(screen.getByRole("button", { name: "Download" }));
+
+  expect(fetch).toHaveBeenCalledWith("https://fal.media/out.mp4");
+  expect(createdAnchors[0].download).toBe("dancing-grandma.mp4");
+  expect(createdAnchors[0].href).toBe("blob:grandma");
+  expect(anchorClick).toHaveBeenCalled();
+  expect(await screen.findByText(/download started/i)).toBeDefined();
+});
+
+test("share uses native file sharing when the browser supports video files", async () => {
+  const user = userEvent.setup();
+  const share = vi.fn().mockResolvedValue(undefined);
+  const canShare = vi.fn().mockReturnValue(true);
+  track.mockResolvedValue("https://fal.media/out.mp4");
+  vi.mocked(fetch).mockImplementation(async (input) => {
+    const url = typeof input === "string" ? input : (input as Request).url;
+    if (url === "https://fal.media/out.mp4") {
+      return new Response("video-bytes", {
+        status: 200,
+        headers: { "Content-Type": "video/mp4" },
+      });
+    }
+    return new Response(null, { status: 404 });
+  });
+  Object.defineProperty(navigator, "share", { configurable: true, value: share });
+  Object.defineProperty(navigator, "canShare", { configurable: true, value: canShare });
+
+  await startRealRun(user);
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+
+  await user.click(screen.getByRole("button", { name: "Share the chaos" }));
+
+  await waitFor(() => expect(share).toHaveBeenCalled());
+  const payload = share.mock.calls[0][0] as ShareData;
+  expect(payload.title).toBe("DancingGrandma");
+  expect(payload.files?.[0]).toBeInstanceOf(File);
+  expect(payload.files?.[0].name).toBe("dancing-grandma.mp4");
+  expect(payload.files?.[0].type).toBe("video/mp4");
+});
+
 test("Kling is the preselected recommended engine", async () => {
   const user = userEvent.setup();
 

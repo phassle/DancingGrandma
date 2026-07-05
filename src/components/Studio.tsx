@@ -55,6 +55,7 @@ const GENERATION_STAGES = [
 const MAX_PHOTO_MB = 10;
 const PENDING_RUN_KEY = "dg:pending-run";
 const PENDING_RUN_TTL_MS = 24 * 60 * 60 * 1000;
+const RESULT_FILE_NAME = "dancing-grandma.mp4";
 
 type PendingRun = {
   requestId: string;
@@ -200,6 +201,30 @@ function logStudioError(phase: string, err: unknown, context: Record<string, unk
   }).catch(() => {});
 }
 
+async function fetchResultBlob(url: string): Promise<Blob> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Video download failed: ${res.status}`);
+  const blob = await res.blob();
+  if (blob.size === 0) throw new Error("Video download was empty");
+  return blob;
+}
+
+function resultFile(blob: Blob): File {
+  return new File([blob], RESULT_FILE_NAME, { type: blob.type || "video/mp4" });
+}
+
+function triggerDownload(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = RESULT_FILE_NAME;
+  link.rel = "noopener";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
 function generationFailureMessage(err: unknown, engine: Engine): string {
   if (err instanceof GenerationError && err.kind === "timeout") {
     return "That render took too long — the floor was packed. Your photo and clip are still loaded, so just try again.";
@@ -259,6 +284,8 @@ export default function Studio() {
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [resultDanceName, setResultDanceName] = useState<string | null>(null);
   const [resultIsGoldenClip, setResultIsGoldenClip] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   // Curated dances whose reference clip actually exists under public/dances/.
   const [liveClipIds, setLiveClipIds] = useState<Set<string>>(new Set());
@@ -648,22 +675,64 @@ export default function Studio() {
     setQueuePosition(null);
     setResultDanceName(null);
     setResultIsGoldenClip(false);
+    setIsDownloading(false);
+    setIsSharing(false);
     localStorage.removeItem(PENDING_RUN_KEY);
     setStep("photo");
   };
 
-  const share = async () => {
+  const downloadResult = async () => {
+    if (!resultUrl) {
+      setToast("Render a video before downloading.");
+      return;
+    }
+    setIsDownloading(true);
     try {
-      await navigator.clipboard.writeText(
-        resultUrl ?? "https://dancinggrandma.example/v/grandma-goes-viral",
+      triggerDownload(await fetchResultBlob(resultUrl));
+      setToast("Download started.");
+    } catch (err) {
+      logStudioError("download-result", err, { resultUrl });
+      const opened = window.open(resultUrl, "_blank", "noopener,noreferrer");
+      setToast(
+        opened
+          ? "Couldn't start a direct download, so the video opened in a new tab."
+          : "Couldn't start the download. Use the video controls to save it.",
       );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const share = async () => {
+    const shareUrl = resultUrl ?? "https://dancinggrandma.example/v/grandma-goes-viral";
+    setIsSharing(true);
+    try {
+      if (resultUrl && typeof navigator.share === "function") {
+        const file = resultFile(await fetchResultBlob(resultUrl));
+        const fileShare = { files: [file] };
+        if (typeof navigator.canShare !== "function" || navigator.canShare(fileShare)) {
+          await navigator.share({
+            title: "DancingGrandma",
+            text: "Generated Dance Video",
+            files: [file],
+          });
+          setToast("Share sheet opened.");
+          return;
+        }
+      }
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable");
+      await navigator.clipboard.writeText(shareUrl);
       setToast(
         resultUrl
-          ? "Video link copied. The group chat is not ready. 💃"
+          ? "Video link copied. Download first if the link only works in this browser."
           : "Demo link copied — real links arrive with real renders. 💃",
       );
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      logStudioError("share-result", err, { resultUrl });
       setToast("Couldn't reach the clipboard — copy the URL from the address bar instead.");
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -1198,18 +1267,20 @@ export default function Studio() {
                     <button
                       type="button"
                       onClick={share}
+                      disabled={isSharing}
                       className="rounded-full bg-go px-7 py-3 text-center font-display text-lg text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover"
                     >
-                      Share the chaos
+                      {isSharing ? "Sharing..." : "Share the chaos"}
                     </button>
                     {resultUrl && (
-                      <a
-                        href={resultUrl}
-                        download="dancing-grandma.mp4"
-                        className="rounded-full bg-butter px-7 py-3 text-center font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5"
+                      <button
+                        type="button"
+                        onClick={downloadResult}
+                        disabled={isDownloading}
+                        className="rounded-full bg-butter px-7 py-3 text-center font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-70"
                       >
-                        Download
-                      </a>
+                        {isDownloading ? "Downloading..." : "Download"}
+                      </button>
                     )}
                     <button
                       type="button"
