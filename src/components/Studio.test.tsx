@@ -134,8 +134,21 @@ test("a pasted video link runs the real path on Wan with the URL handed through"
   expect(generate.mock.calls[0][1]).toBe("https://example.com/griddy.mp4");
 });
 
-test("a TikTok or YouTube page link gets save-it-yourself guidance, not a doomed run", async () => {
+test("a YouTube page link is imported into a clip the generator can use", async () => {
   const user = userEvent.setup();
+  vi.mocked(fetch).mockImplementation(async (input, init) => {
+    const url = (typeof input === "string" ? input : (input as Request).url).toString();
+    if (url.endsWith("/api/import")) {
+      expect(JSON.parse(String(init?.body))).toEqual({
+        url: "https://www.youtube.com/shorts/SJKl6PEXklU",
+      });
+      return new Response("transcoded-bytes", {
+        status: 200,
+        headers: { "Content-Type": "video/mp4", "X-Clip-Name": "griddy-tutorial.mp4" },
+      });
+    }
+    return new Response(null, { status: 404 });
+  });
 
   render(<Studio />);
   await user.upload(
@@ -145,13 +158,43 @@ test("a TikTok or YouTube page link gets save-it-yourself guidance, not a doomed
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.type(
     screen.getByLabelText(/paste a video link/i),
-    "https://www.tiktok.com/@someone/video/123",
+    "https://www.youtube.com/shorts/SJKl6PEXklU",
+  );
+  await user.click(screen.getByRole("button", { name: /use this link/i }));
+
+  // The imported file is loaded under the name the route reported.
+  expect(await screen.findByText(/“griddy-tutorial.mp4” loaded/)).toBeDefined();
+  expect(
+    (screen.getByRole("button", { name: "Make her dance 💃" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+});
+
+test("a failed import shows a helpful message, not a doomed run", async () => {
+  const user = userEvent.setup();
+  vi.mocked(fetch).mockImplementation(async (input) => {
+    const url = (typeof input === "string" ? input : (input as Request).url).toString();
+    if (url.endsWith("/api/import")) {
+      return Response.json({ error: "Video unavailable" }, { status: 502 });
+    }
+    return new Response(null, { status: 404 });
+  });
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+  await user.type(
+    screen.getByLabelText(/paste a video link/i),
+    "https://www.youtube.com/watch?v=nope",
   );
   await user.click(screen.getByRole("button", { name: /use this link/i }));
 
   const alert = await screen.findByRole("alert");
-  expect(alert.textContent).toMatch(/save the video/i);
-  // No clip was accepted, so the big CTA stays off.
+  expect(alert.textContent).toMatch(/couldn't import/i);
+  expect(alert.textContent).toMatch(/video unavailable/i);
   expect(
     (screen.getByRole("button", { name: "Make her dance 💃" }) as HTMLButtonElement)
       .disabled,
