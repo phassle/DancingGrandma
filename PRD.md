@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v1 |
 | **Date** | 2026-07-05 |
-| **Owner** | Per Hässle (Monterro InfuseAI) |
+| **Owner** | Per Hassle (Monterro InfuseAI) |
 | **Repo** | `InfuseAI-Demos/DancingGrandma` |
 
 ## 1. Summary
