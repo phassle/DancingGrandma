@@ -23,6 +23,7 @@ orchestrated by [Aspire](https://aspire.dev) (`apphost.cs`):
 
 ```bash
 npm install
+cp .env.example .env.local                                  # fill in provider keys for local Next.js runs
 cp appsettings.Development.json.example appsettings.Development.json  # fill in Azure provider values if testing that path
 aspire run
 ```
@@ -32,6 +33,7 @@ resource. Docker must be running. To run just the Next.js app without the
 platform pieces:
 
 ```bash
+cp .env.example .env.local  # fill in FAL_KEY or REPLICATE_API_TOKEN for real renders
 npm run dev
 ```
 
