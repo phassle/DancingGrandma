@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import Studio from "./Studio";
 import { GenerationError, generateDanceVideo } from "@/lib/generate";
@@ -105,6 +105,94 @@ test("dance cards mark only the dances whose reference clip exists as real rende
   // The Griddy's drop-in clip is missing, so it must not promise a real render.
   expect(screen.getByRole("radio", { name: /the griddy/i })).toBeDefined();
   expect(screen.queryByRole("radio", { name: /griddy.*real render/i })).toBeNull();
+});
+
+test("a pasted video link runs the real path on Wan with the URL handed through", async () => {
+  const user = userEvent.setup();
+  generate.mockResolvedValue("https://fal.media/link-out.mp4");
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+  await user.type(
+    screen.getByLabelText(/paste a video link/i),
+    "https://example.com/griddy.mp4",
+  );
+  await user.click(screen.getByRole("button", { name: /use this link/i }));
+
+  // Link clips are only wired for Wan — other engines sit this one out.
+  expect(
+    (screen.getByRole("radio", { name: /kling/i }) as HTMLInputElement).disabled,
+  ).toBe(true);
+
+  await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
+
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+  expect(generate.mock.calls[0][1]).toBe("https://example.com/griddy.mp4");
+});
+
+test("a TikTok or YouTube page link gets save-it-yourself guidance, not a doomed run", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+  await user.type(
+    screen.getByLabelText(/paste a video link/i),
+    "https://www.tiktok.com/@someone/video/123",
+  );
+  await user.click(screen.getByRole("button", { name: /use this link/i }));
+
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toMatch(/save the video/i);
+  // No clip was accepted, so the big CTA stays off.
+  expect(
+    (screen.getByRole("button", { name: "Make her dance 💃" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+});
+
+test("pasting a video from the clipboard loads it as the reference clip", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+
+  fireEvent.paste(window, {
+    clipboardData: {
+      files: [new File(["v"], "pasted.mov", { type: "video/quicktime" })],
+      getData: () => "",
+    },
+  });
+
+  expect(await screen.findByText(/“pasted.mov” loaded/)).toBeDefined();
+});
+
+test("dropping a video file on the tile loads it as the reference clip", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+
+  fireEvent.drop(screen.getByText(/got your own dance video/i), {
+    dataTransfer: { files: [new File(["v"], "dropped.webm", { type: "video/webm" })] },
+  });
+
+  expect(await screen.findByText(/“dropped.webm” loaded/)).toBeDefined();
 });
 
 test("a provider error shows a friendly message and retry re-runs with the same files", async () => {

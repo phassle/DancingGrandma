@@ -34,6 +34,7 @@ const photo = () => new File(["p"], "grandma.png", { type: "image/png" });
 const clip = () => new File(["v"], "dance.mp4", { type: "video/mp4" });
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.mocked(fal.storage.upload).mockResolvedValue("https://fal.media/files/x");
 });
 
@@ -64,6 +65,23 @@ test("a render-stage provider failure rejects with kind 'provider'", async () =>
   await expect(
     generateDanceVideo(photo(), clip(), wan, () => {}),
   ).rejects.toMatchObject({ kind: "provider", message: "Internal server error" });
+});
+
+test("a URL reference is handed straight to Wan without uploading it", async () => {
+  vi.mocked(fal.subscribe).mockResolvedValue({
+    data: { video: { url: "https://fal.media/out.mp4" } },
+    requestId: "r2",
+  });
+
+  await expect(
+    generateDanceVideo(photo(), "https://example.com/griddy.mp4", wan, () => {}),
+  ).resolves.toBe("https://fal.media/out.mp4");
+
+  // Only the photo is uploaded; the clip URL goes into the input as-is.
+  expect(fal.storage.upload).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(fal.subscribe).mock.calls[0][1]).toMatchObject({
+    input: { video_url: "https://example.com/griddy.mp4" },
+  });
 });
 
 test("retrying after a render failure reuses the uploads instead of re-uploading", async () => {

@@ -1,0 +1,8 @@
+# Copy this to `.claude/az-rg-allow.local` (gitignored) and set the regex that
+# matches the resource group(s) this project is allowed to touch.
+# Case-insensitive. First non-empty, non-comment line wins.
+#
+# Examples:
+#   ^rg-myproject-.+$      # a whole rg-myproject-* family
+#   ^rg-myproject-poc$     # a single exact resource group
+^rg-REPLACE-ME-.+$

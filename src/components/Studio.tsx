@@ -73,6 +73,8 @@ export default function Studio() {
   const [dragging, setDragging] = useState(false);
   const [dance, setDance] = useState<Dance | null>(null);
   const [customVideo, setCustomVideo] = useState<File | null>(null);
+  const [customUrl, setCustomUrl] = useState<string | null>(null);
+  const [urlDraft, setUrlDraft] = useState("");
   const [danceError, setDanceError] = useState<string | null>(null);
   const [engine, setEngine] = useState<Engine>(DEFAULT_ENGINE);
   const [genStatus, setGenStatus] = useState<string | null>(null);
@@ -102,10 +104,13 @@ export default function Studio() {
   }, []);
 
   // Real generation runs when there's a reference clip to hand the engine —
-  // the user's own upload, or a curated dance whose bundled clip exists —
-  // and the chosen engine has a wired adapter. Everything else simulates.
+  // the user's own upload or link, or a curated dance whose bundled clip
+  // exists — and the chosen engine has a wired adapter. Everything else
+  // simulates. Link clips are only wired for Wan.
   const danceHasLiveClip = dance !== null && liveClipIds.has(dance.id);
-  const isRealRun = (customVideo !== null || danceHasLiveClip) && Boolean(engine.endpoint);
+  const isRealRun =
+    (customVideo !== null || customUrl !== null || danceHasLiveClip) &&
+    Boolean(engine.endpoint);
   const [stageIndex, setStageIndex] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -146,7 +151,8 @@ export default function Studio() {
     let cancelled = false;
     (async () => {
       try {
-        const referenceVideo = customVideo ?? (await referenceClipFile(dance!.referenceClip!));
+        const referenceVideo =
+          customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
         const url = await generateDanceVideo(photoFile!, referenceVideo, engine, (msg) => {
           if (!cancelled) setGenStatus(msg);
         });
@@ -205,8 +211,8 @@ export default function Studio() {
 
   const acceptDanceVideo = (file: File | undefined) => {
     if (!file) return;
-    if (!file.type.startsWith("video/")) {
-      setDanceError("That's not a video. MP4 or MOV of the dance, please.");
+    if (!file.type.startsWith("video/") && file.type !== "image/gif") {
+      setDanceError("That's not a video. MP4, MOV, WebM, M4V or GIF of the dance, please.");
       return;
     }
     if (file.size > 100 * 1024 * 1024) {
@@ -214,10 +220,61 @@ export default function Studio() {
       return;
     }
     setCustomVideo(file);
+    setCustomUrl(null);
     setDance(null);
     setDanceError(null);
     setGenError(null);
   };
+
+  const acceptDanceUrl = (raw: string) => {
+    const trimmed = raw.trim();
+    let url: URL;
+    try {
+      url = new URL(trimmed);
+    } catch {
+      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      return;
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      return;
+    }
+    // Social pages aren't video files, and their clips belong to their
+    // creators — the app doesn't rip them.
+    const host = url.hostname.replace(/^www\./, "");
+    if (["tiktok.com", "youtube.com", "youtu.be", "instagram.com"].some((h) => host === h || host.endsWith(`.${h}`))) {
+      setDanceError(
+        "That's a page on a social app, not a video file — and those clips belong to their creators. Save the video to your device with the app's own save button, then drop the file here instead.",
+      );
+      return;
+    }
+    setCustomUrl(trimmed);
+    setCustomVideo(null);
+    setDance(null);
+    setDanceError(null);
+    setGenError(null);
+    // Link clips are only wired for Wan — snap back if another engine was picked.
+    setEngine(DEFAULT_ENGINE);
+  };
+
+  // On the dance step, ⌘V works too: a copied video file loads directly,
+  // copied text goes through the link path.
+  useEffect(() => {
+    if (step !== "dance") return;
+    const onPaste = (e: Event) => {
+      const clipboard = (e as ClipboardEvent).clipboardData;
+      const file = clipboard?.files?.[0];
+      if (file) {
+        acceptDanceVideo(file);
+        return;
+      }
+      const text = clipboard?.getData("text");
+      if (text?.trim()) acceptDanceUrl(text);
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+     
+  }, [step]);
 
   const reset = () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -228,6 +285,8 @@ export default function Studio() {
     setPhotoError(null);
     setDance(null);
     setCustomVideo(null);
+    setCustomUrl(null);
+    setUrlDraft("");
     setDanceError(null);
     setGenStatus(null);
     setGenError(null);
@@ -405,6 +464,7 @@ export default function Studio() {
                           onChange={() => {
                             setDance(d);
                             setCustomVideo(null);
+                            setCustomUrl(null);
                           }}
                           className="sr-only"
                         />
@@ -428,28 +488,58 @@ export default function Studio() {
                       </label>
                     );
                   })}
-                  <label
-                    className={`flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed p-4 transition-colors ${
-                      customVideo ? "border-butter bg-butter/10 text-ink" : "border-line text-muted hover:border-muted"
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      acceptDanceVideo(e.dataTransfer.files[0]);
+                    }}
+                    className={`rounded-2xl border border-dashed p-4 transition-colors sm:col-span-2 ${
+                      customVideo || customUrl
+                        ? "border-butter bg-butter/10 text-ink"
+                        : "border-line text-muted hover:border-muted"
                     }`}
                   >
-                    <span aria-hidden="true" className="text-3xl">🎬</span>
-                    <span className="text-sm">
-                      <span className="font-medium text-ink">
-                        {customVideo ? `“${customVideo.name}” loaded` : "Got your own dance video?"}
-                      </span>{" "}
-                      {customVideo
-                        ? "— this clip's moves (and music) go to the real generator."
-                        : "Upload a reference clip (MP4/MOV, 10–30 s) and the real AI engine renders it."}
-                    </span>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="sr-only"
-                      aria-label="Upload your own reference dance video"
-                      onChange={(e) => acceptDanceVideo(e.target.files?.[0])}
-                    />
-                  </label>
+                    <label className="flex cursor-pointer items-center gap-4">
+                      <span aria-hidden="true" className="text-3xl">🎬</span>
+                      <span className="text-sm">
+                        <span className="font-medium text-ink">
+                          {customVideo
+                            ? `“${customVideo.name}” loaded`
+                            : customUrl
+                              ? "Link loaded"
+                              : "Got your own dance video?"}
+                        </span>{" "}
+                        {customVideo || customUrl
+                          ? "— this clip's moves (and music) go to the real generator."
+                          : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below (MP4, MOV, WebM, M4V or GIF, 10–30 s) — the real AI engine renders it."}
+                      </span>
+                      <input
+                        type="file"
+                        accept="video/*,image/gif"
+                        className="sr-only"
+                        aria-label="Upload your own reference dance video"
+                        onChange={(e) => acceptDanceVideo(e.target.files?.[0])}
+                      />
+                    </label>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <input
+                        type="url"
+                        value={urlDraft}
+                        onChange={(e) => setUrlDraft(e.target.value)}
+                        aria-label="Paste a video link"
+                        placeholder="https:// — direct link to a video file"
+                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => acceptDanceUrl(urlDraft)}
+                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform hover:-translate-y-0.5"
+                      >
+                        Use this link
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </fieldset>
 
@@ -462,7 +552,10 @@ export default function Studio() {
                 <div className="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Video generation engine">
                   {ENGINES.map((e) => {
                     const selected = engine.id === e.id;
-                    const soon = e.status === "coming-soon";
+                    // Link clips are only wired for Wan; a pasted link pins the engine.
+                    const soon =
+                      e.status === "coming-soon" ||
+                      (customUrl !== null && e.id !== DEFAULT_ENGINE.id);
                     return (
                       <label
                         key={e.id}
@@ -518,7 +611,7 @@ export default function Studio() {
                 </button>
                 <button
                   type="button"
-                  disabled={!dance && !customVideo}
+                  disabled={!dance && !customVideo && !customUrl}
                   onClick={() => {
                     setStageIndex(0);
                     setGenError(null);
