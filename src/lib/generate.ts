@@ -62,10 +62,12 @@ async function uploadOnce(file: File): Promise<string> {
 /**
  * The single generation seam: photo + reference dance video + engine → video URL.
  * Everything above (the wizard) and below (engine adapters) varies independently.
+ * The reference can be a File (uploaded to fal storage) or an already-public
+ * URL (handed to the engine as-is — fal fetches it server-side).
  */
 export async function generateDanceVideo(
   photo: File,
-  referenceVideo: File,
+  referenceVideo: File | string,
   engine: Engine,
   onUpdate: GenerationUpdate,
 ): Promise<string> {
@@ -78,8 +80,12 @@ export async function generateDanceVideo(
   try {
     onUpdate("Uploading the star…");
     imageUrl = await uploadOnce(photo);
-    onUpdate("Uploading the choreography…");
-    videoUrl = await uploadOnce(referenceVideo);
+    if (typeof referenceVideo === "string") {
+      videoUrl = referenceVideo;
+    } else {
+      onUpdate("Uploading the choreography…");
+      videoUrl = await uploadOnce(referenceVideo);
+    }
   } catch (err) {
     throw classifyFalError(err);
   }
