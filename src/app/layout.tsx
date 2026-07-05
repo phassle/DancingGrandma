@@ -17,6 +17,7 @@ const schibsted = Schibsted_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: "DancingGrandma — put your grandma in the dance",
   description:
     "Upload a photo of grandma, pick a TikTok dance, and get a video of her nailing every move. Music included. Group chat not ready.",

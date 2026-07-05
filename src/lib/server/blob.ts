@@ -45,9 +45,17 @@ export async function saveVideoFromUrl(generationId: string, url: string): Promi
   const res = await fetch(url);
   if (!res.ok) throw new Error(`fetching video failed: ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());
+  return saveVideoBytes(generationId, bytes);
+}
+
+export async function saveVideoBytes(generationId: string, bytes: Buffer): Promise<string> {
   const blobPath = `${generationId}.mp4`;
   await getVideosContainer()
     .getBlockBlobClient(blobPath)
     .uploadData(bytes, { blobHTTPHeaders: { blobContentType: "video/mp4" } });
   return blobPath;
+}
+
+export async function readVideoBytes(blobPath: string): Promise<Buffer> {
+  return getVideosContainer().getBlockBlobClient(blobPath).downloadToBuffer();
 }

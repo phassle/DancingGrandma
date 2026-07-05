@@ -209,10 +209,6 @@ async function fetchResultBlob(url: string): Promise<Blob> {
   return blob;
 }
 
-function resultFile(blob: Blob): File {
-  return new File([blob], RESULT_FILE_NAME, { type: blob.type || "video/mp4" });
-}
-
 function triggerDownload(blob: Blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -223,6 +219,14 @@ function triggerDownload(blob: Blob) {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+function persistentShareUrl(resultUrl: string): string | null {
+  if (typeof window === "undefined") return null;
+  const parsed = new URL(resultUrl, window.location.origin);
+  const match = parsed.pathname.match(/^\/api\/video\/([0-9a-f-]{36})$/i);
+  if (!match) return null;
+  return new URL(`/v/${match[1]}`, window.location.origin).toString();
 }
 
 function generationFailureMessage(err: unknown, engine: Engine): string {
@@ -704,27 +708,16 @@ export default function Studio() {
   };
 
   const share = async () => {
-    const shareUrl = resultUrl ?? "https://dancinggrandma.example/v/grandma-goes-viral";
+    const shareUrl =
+      (resultUrl ? persistentShareUrl(resultUrl) : null) ??
+      "https://dancinggrandma.example/v/grandma-goes-viral";
     setIsSharing(true);
     try {
-      if (resultUrl && typeof navigator.share === "function") {
-        const file = resultFile(await fetchResultBlob(resultUrl));
-        const fileShare = { files: [file] };
-        if (typeof navigator.canShare !== "function" || navigator.canShare(fileShare)) {
-          await navigator.share({
-            title: "DancingGrandma",
-            text: "Generated Dance Video",
-            files: [file],
-          });
-          setToast("Share sheet opened.");
-          return;
-        }
-      }
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable");
       await navigator.clipboard.writeText(shareUrl);
       setToast(
-        resultUrl
-          ? "Video link copied. Download first if the link only works in this browser."
+        resultUrl && shareUrl.includes("/v/")
+          ? "Share link copied."
           : "Demo link copied — real links arrive with real renders. 💃",
       );
     } catch (err) {
