@@ -86,7 +86,12 @@ function falInputFor(engine: Engine, imageUrl: string, videoUrl: string) {
   // Per-engine input mapping. Both current adapters take image+video URLs;
   // Kling additionally carries the reference audio through on its own.
   return engine.id === "kling-motion-control"
-    ? { image_url: imageUrl, video_url: videoUrl, keep_original_sound: true }
+    ? {
+        image_url: imageUrl,
+        video_url: videoUrl,
+        keep_original_sound: true,
+        character_orientation: "video",
+      }
     : { image_url: imageUrl, video_url: videoUrl, resolution: "580p" };
 }
 

@@ -40,6 +40,7 @@ function falApiError(
 }
 
 const wan = ENGINES.find((e) => e.id === "wan-animate-fal")!;
+const kling = ENGINES.find((e) => e.id === "kling-motion-control")!;
 const replicateWan = ENGINES.find((e) => e.id === "wan-animate-replicate")!;
 const azureSora = ENGINES.find((e) => e.id === "sora-2-azure")!;
 const photo = () => new File(["p"], "grandma.png", { type: "image/png" });
@@ -136,6 +137,21 @@ test("submitDanceVideo returns the queue request id as soon as the run is accept
   });
   expect(fal.queue.status).not.toHaveBeenCalled();
   expect(fal.queue.result).not.toHaveBeenCalled();
+});
+
+test("Kling Motion Control submits fal's required video-orientation input", async () => {
+  await expect(submitDanceVideo(photo(), "https://example.com/griddy.mp4", kling)).resolves.toBe(
+    "req-1",
+  );
+
+  expect(fal.queue.submit).toHaveBeenCalledWith(kling.endpoint, {
+    input: {
+      image_url: "https://fal.media/files/x",
+      video_url: "https://example.com/griddy.mp4",
+      keep_original_sound: true,
+      character_orientation: "video",
+    },
+  });
 });
 
 test("trackDanceVideo polls queue status and resolves the result video URL", async () => {

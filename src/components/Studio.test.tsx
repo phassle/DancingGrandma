@@ -129,7 +129,7 @@ test("dance cards mark only the dances whose reference clip exists as real rende
   expect(screen.queryByRole("radio", { name: /renegade.*real render/i })).toBeNull();
 });
 
-test("a pasted video link runs the real path on Wan with the URL handed through", async () => {
+test("a pasted video link can run through Kling with the URL handed through", async () => {
   const user = userEvent.setup();
   track.mockResolvedValue("https://fal.media/link-out.mp4");
 
@@ -145,21 +145,22 @@ test("a pasted video link runs the real path on Wan with the URL handed through"
   );
   await user.click(screen.getByRole("button", { name: /use this link/i }));
 
-  // Link clips are only wired for Wan — other engines sit this one out.
+  // Direct video URLs can now use any wired fal engine.
   expect(screen.getByRole("link", { name: "Open source clip" }).getAttribute("href")).toBe(
     "https://example.com/griddy.mp4",
   );
-  expect(
-    (screen.getByRole("radio", { name: /kling/i }) as HTMLInputElement).disabled,
-  ).toBe(true);
+  const kling = screen.getByRole("radio", { name: /kling/i }) as HTMLInputElement;
+  expect(kling.disabled).toBe(false);
+  await user.click(kling);
 
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
   expect(submit.mock.calls[0][1]).toBe("https://example.com/griddy.mp4");
+  expect(submit.mock.calls[0][2]).toMatchObject({ id: "kling-motion-control" });
 });
 
-test("a YouTube page link is shown before import and becomes a previewable clip", async () => {
+test("a YouTube page link imports a clip that can run through Kling", async () => {
   const user = userEvent.setup();
   vi.mocked(fetch).mockImplementation(async (input, init) => {
     const url = (typeof input === "string" ? input : (input as Request).url).toString();
@@ -208,6 +209,16 @@ test("a YouTube page link is shown before import and becomes a previewable clip"
     (screen.getByRole("button", { name: "Make her dance 💃" }) as HTMLButtonElement)
       .disabled,
   ).toBe(false);
+
+  const kling = screen.getByRole("radio", { name: /kling/i }) as HTMLInputElement;
+  expect(kling.disabled).toBe(false);
+  await user.click(kling);
+  await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
+
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+  expect(submit.mock.calls[0][1]).toBeInstanceOf(File);
+  expect((submit.mock.calls[0][1] as File).name).toBe("griddy-tutorial.mp4");
+  expect(submit.mock.calls[0][2]).toMatchObject({ id: "kling-motion-control" });
 });
 
 test("a failed import shows a helpful message, not a doomed run", async () => {

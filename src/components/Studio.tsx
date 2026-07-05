@@ -495,8 +495,6 @@ export default function Studio() {
       setDanceError(null);
       setGenError(null);
       setUrlDraft(trimmed);
-      // Link clips are only wired for Wan — snap back if another engine was picked.
-      setEngine(DEFAULT_ENGINE);
       return;
     }
 
@@ -908,10 +906,7 @@ export default function Studio() {
                 <div className="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Video generation engine">
                   {ENGINES.map((e) => {
                     const selected = engine.id === e.id;
-                    // Link clips are only wired for Wan; a pasted link pins the engine.
-                    const soon =
-                      e.status === "coming-soon" ||
-                      (customUrl !== null && e.id !== DEFAULT_ENGINE.id);
+                    const soon = e.status === "coming-soon";
                     return (
                       <label
                         key={e.id}
