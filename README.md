@@ -13,12 +13,40 @@ Control as a selectable alternative.
 
 ## Run it
 
+The whole stack — Next.js app, Postgres, blob storage (Azurite), Keycloak — is
+orchestrated by [Aspire](https://aspire.dev) (`apphost.cs`):
+
 ```bash
 npm install
+cp appsettings.Development.json.example appsettings.Development.json  # fill in Sora values
+aspire run
+```
+
+The Aspire dashboard opens with links to the app, logs, and telemetry for every
+resource. Docker must be running. To run just the Next.js app without the
+platform pieces:
+
+```bash
 npm run dev
 ```
 
 Open http://localhost:3000.
+
+### What the apphost wires up
+
+| Resource   | Local                        | Azure (`aspire publish`)          |
+| ---------- | ---------------------------- | --------------------------------- |
+| `web`      | `next dev`                   | Container App (standalone build)  |
+| `postgres` | container + `db/init` schema | PostgreSQL Flexible Server        |
+| `videos`   | Azurite blob container       | Storage account blob container    |
+| `keycloak` | container + realm import     | Container App                     |
+| Sora       | `SORA_*` env from parameters | same, from deploy-time parameters |
+| Front Door | —                            | `infra/frontdoor.bicep` → web     |
+
+The database schema (`db/init/001-schema.sql`) holds **users**, their
+**video generations**, and a **credits ledger** (balance = sum of transactions,
+so it can't drift). Server-side access lives in `src/lib/server/`
+(`db.ts`, `blob.ts`, `sora.ts`).
 
 ## Docs
 

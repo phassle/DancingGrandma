@@ -1,0 +1,10 @@
+{
+  "//": "Copy to appsettings.Development.json (gitignored) and fill in. Resolve the values from your POC resource group the same way scripts/generate-grandma.sh does:",
+  "//1": "  OAI: az cognitiveservices account show -g <rg> -n <account> --query 'properties.endpoints.\"OpenAI Sora API\"' -o tsv",
+  "//2": "  KEY: az cognitiveservices account keys list -g <rg> -n <account> --query key1 -o tsv",
+  "Parameters": {
+    "sora-endpoint": "https://<your-foundry-account>.openai.azure.com/",
+    "sora-api-key": "<key1>",
+    "sora-deployment": "sora-2"
+  }
+}

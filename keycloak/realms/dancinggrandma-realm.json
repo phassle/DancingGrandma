@@ -1,0 +1,46 @@
+{
+  "realm": "dancinggrandma",
+  "enabled": true,
+  "displayName": "DancingGrandma",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "sslRequired": "external",
+  "clients": [
+    {
+      "clientId": "web",
+      "name": "DancingGrandma web app",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "dev-only-secret-change-in-cloud",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:*/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:*/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "grandma@example.com",
+      "email": "grandma@example.com",
+      "firstName": "Dancing",
+      "lastName": "Grandma",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "grandma",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

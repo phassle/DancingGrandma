@@ -47,6 +47,17 @@ next-env.d.ts
 .claude/az-rg-allow.local
 infra/main.bicepparam
 infra/*.local.bicepparam
+appsettings.Development.json
+
+# aspire apphost build artifacts
+/artifacts/
+/.aspire/
+
+# graphify machine-local state (the graph outputs themselves are committed)
+graphify-out/cache/
+graphify-out/cost.json
+graphify-out/.graphify_python
+graphify-out/.graphify_root
 
 # Trending-dance reference clips ship with the repo so every card renders for
 # real on a fresh clone. See public/dances/README.md for the roster and the
