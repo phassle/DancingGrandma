@@ -1,0 +1,12 @@
+using './main.bicep'
+
+// Copy this to `infra/main.bicepparam` (gitignored) and fill in your values,
+// or pass them on the command line with --parameters key=value.
+// The resource group and subscription are supplied by you at deploy time and
+// are never committed to this public repo.
+param resourceGroupName = '<your-resource-group>'
+param location = 'swedencentral'
+param namePrefix = 'dancinggrandma'
+param soraVersion = '2025-12-08'
+param soraCapacity = 1
+param soraDeploymentName = 'sora-2'
