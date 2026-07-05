@@ -1,26 +1,223 @@
 @import "tailwindcss";
 
+/*
+  DancingGrandma design tokens — "kitchen disco at grandma's 80th".
+  Drenched strategy: the deep dance-floor green IS the surface.
+  Pink is the go-color (CTAs only), butter yellow is the sparkle.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: oklch(0.24 0.052 152);
+  --bg-deep: oklch(0.19 0.045 152);
+  --surface: oklch(0.29 0.058 152);
+  --surface-raised: oklch(0.33 0.06 152);
+  --ink: oklch(0.975 0.008 120);
+  --muted: oklch(0.8 0.035 150);
+  --brand: oklch(0.6 0.158 150);
+  --brand-bright: oklch(0.72 0.17 148);
+  --go: oklch(0.6 0.21 5);
+  --go-hover: oklch(0.55 0.21 5);
+  --butter: oklch(0.87 0.15 95);
+  --butter-ink: oklch(0.3 0.06 152);
+  --line: oklch(0.4 0.055 152);
+
+  --shadow-pop: 0 4px 0 var(--bg-deep);
+  --shadow-float: 0 12px 32px oklch(0.12 0.03 152 / 0.45);
+
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-bright: var(--brand-bright);
+  --color-go: var(--go);
+  --color-go-hover: var(--go-hover);
+  --color-butter: var(--butter);
+  --color-butter-ink: var(--butter-ink);
+  --color-line: var(--line);
+  --font-display: var(--font-lilita);
+  --font-sans: var(--font-schibsted);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-schibsted), system-ui, sans-serif;
+  /* Light-on-dark: slightly open leading + tracking for perceived weight */
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  font-kerning: normal;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--butter);
+  color: var(--butter-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--butter);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* --- Motion ------------------------------------------------------------ */
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(2deg);
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes arm-left {
+  0%,
+  100% {
+    transform: rotate(16deg);
+  }
+  50% {
+    transform: rotate(-26deg);
+  }
+}
+
+@keyframes arm-right {
+  0%,
+  100% {
+    transform: rotate(26deg);
+  }
+  50% {
+    transform: rotate(-16deg);
+  }
+}
+
+@keyframes hip {
+  0%,
+  100% {
+    transform: translateX(-4px) rotate(-3deg);
+  }
+  50% {
+    transform: translateX(4px) rotate(3deg);
+  }
+}
+
+@keyframes note-rise {
+  0% {
+    transform: translateY(0) rotate(-8deg) scale(0.9);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120px) rotate(10deg) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-drift {
+  0% {
+    transform: translateY(-8%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(14%) rotate(160deg);
+  }
+}
+
+@keyframes disco-spin {
+  0% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+  100% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes floor-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.86);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-bob {
+  animation: bob 0.9s var(--ease-snap) infinite;
+}
+.animate-sway {
+  animation: sway 1.8s ease-in-out infinite;
+}
+.animate-disco {
+  animation: disco-spin 3.4s ease-in-out infinite;
+  transform-origin: top center;
+}
+.animate-pop-in {
+  animation: pop-in 0.45s var(--ease-snap) both;
+}
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
