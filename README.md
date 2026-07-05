@@ -3,6 +3,8 @@
 Upload one photo of grandma, pick a trending TikTok dance, and get an AI-generated
 video of her nailing every move — music included.
 
+![DancingGrandma landing page](docs/hero-screenshot.png)
+
 A Monterro InfuseAI demo. The full flow (photo → dance → engine → result) is live with
 **simulated generation**; the production pipeline is designed around
 [Wan 2.2 Animate 14B](https://github.com/Wan-Video/Wan2.2) (Apache 2.0) served via
