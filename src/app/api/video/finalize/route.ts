@@ -20,6 +20,16 @@ function errorResponse(error: string, status = 502): Response {
   return Response.json({ kind: "provider", error }, { status });
 }
 
+function logFinalizeError(body: FinalizeRequest | null, err: unknown) {
+  console.error("[dg:finalize-error]", {
+    videoUrl: body?.videoUrl,
+    referenceVideoUrl: body?.referenceVideoUrl,
+    carriesAudio: body?.carriesAudio,
+    message: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
+}
+
 const CRC_TABLE = new Uint32Array(256).map((_, index) => {
   let crc = index;
   for (let bit = 0; bit < 8; bit += 1) {
@@ -189,6 +199,7 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   } catch (err) {
+    logFinalizeError(body, err);
     return errorResponse(err instanceof Error ? err.message : String(err));
   } finally {
     await rm(dir, { force: true, recursive: true });

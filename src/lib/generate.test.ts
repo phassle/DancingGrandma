@@ -33,10 +33,11 @@ const LOCKED_DETAIL =
 
 function falApiError(
   status: number,
-  detail: string,
+  detail: unknown,
   extras: Record<string, unknown> = {},
 ): Error {
-  return Object.assign(new Error(detail), { status, body: { detail }, ...extras });
+  const message = typeof detail === "string" ? detail : JSON.stringify(detail);
+  return Object.assign(new Error(message), { status, body: { detail }, ...extras });
 }
 
 const wan = ENGINES.find((e) => e.id === "wan-animate-fal")!;
@@ -49,6 +50,15 @@ const clip = () => new File(["v"], "dance.mp4", { type: "video/mp4" });
 beforeEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn(async () => ({
+      width: 100,
+      height: 100,
+      close: vi.fn(),
+    })),
+  );
   vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:finalized-video");
   vi.stubGlobal(
     "fetch",
@@ -125,6 +135,40 @@ test("a render-stage provider failure rejects with kind 'provider'", async () =>
   ).rejects.toMatchObject({ kind: "provider", message: "Internal server error" });
 });
 
+test("fal validation details keep request metadata and are logged for Aspire", async () => {
+  vi.mocked(fal.queue.result).mockRejectedValue(
+    falApiError(
+      422,
+      [
+        {
+          loc: ["body", "image_url"],
+          msg: "Image dimensions are too large. Maximum dimensions are 3850x3850 pixels.",
+          type: "image_too_large",
+        },
+      ],
+      { requestId: "fal-req-422" },
+    ),
+  );
+
+  await expect(trackDanceVideo("req-1", kling, () => {})).rejects.toMatchObject({
+    kind: "provider",
+    status: 422,
+    requestId: "fal-req-422",
+    code: "image_too_large",
+    message: "body.image_url: Image dimensions are too large. Maximum dimensions are 3850x3850 pixels.",
+  });
+  expect(console.error).toHaveBeenCalledWith(
+    "[dg:generation-error]",
+    expect.objectContaining({
+      phase: "fal-result",
+      engineId: "kling-motion-control",
+      status: 422,
+      requestId: "fal-req-422",
+      code: "image_too_large",
+    }),
+  );
+});
+
 test("submitDanceVideo returns the queue request id as soon as the run is accepted", async () => {
   await expect(
     submitDanceVideo(photo(), "https://example.com/griddy.mp4", wan),
@@ -152,6 +196,54 @@ test("Kling Motion Control submits fal's required video-orientation input", asyn
       character_orientation: "video",
     },
   });
+});
+
+test("oversized source photos are downscaled before provider upload", async () => {
+  const close = vi.fn();
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn(async () => ({
+      width: 4284,
+      height: 5712,
+      close,
+    })),
+  );
+  const drawImage = vi.fn();
+  const toBlob = vi.fn(
+    (callback: BlobCallback, type?: string, quality?: unknown) => {
+      callback(new Blob(["resized"], { type }));
+      expect(quality).toBe(0.92);
+    },
+  );
+  const canvas = {
+    width: 0,
+    height: 0,
+    getContext: vi.fn(() => ({ drawImage })),
+    toBlob,
+  } as unknown as HTMLCanvasElement;
+  const originalCreateElement = document.createElement.bind(document);
+  const createElement = vi.spyOn(document, "createElement");
+  createElement.mockImplementation(((tagName: string) => {
+    if (tagName === "canvas") return canvas;
+    return originalCreateElement(tagName);
+  }) as typeof document.createElement);
+  const oversized = new File(["p"], "IMG_0557.jpg", {
+    type: "image/jpeg",
+    lastModified: 123,
+  });
+
+  await expect(
+    submitDanceVideo(oversized, "https://example.com/griddy.mp4", kling),
+  ).resolves.toBe("req-1");
+
+  const uploaded = vi.mocked(fal.storage.upload).mock.calls[0][0] as File;
+  expect(uploaded).not.toBe(oversized);
+  expect(uploaded.name).toBe("IMG_0557-provider.jpg");
+  expect(uploaded.type).toBe("image/jpeg");
+  expect(canvas.width).toBe(2880);
+  expect(canvas.height).toBe(3840);
+  expect(toBlob).toHaveBeenCalledWith(expect.any(Function), "image/jpeg", 0.92);
+  expect(close).toHaveBeenCalled();
 });
 
 test("trackDanceVideo polls queue status and resolves the result video URL", async () => {

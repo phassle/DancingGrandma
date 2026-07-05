@@ -7,6 +7,14 @@ import { importClip } from "@/lib/import-clip";
  */
 export const runtime = "nodejs";
 
+function logImportError(url: string, err: unknown) {
+  console.error("[dg:import-error]", {
+    url,
+    message: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
+}
+
 export async function POST(request: Request): Promise<Response> {
   const { url } = await request.json().catch(() => ({}) as { url?: unknown });
   if (typeof url !== "string" || !url.trim()) {
@@ -24,6 +32,7 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   } catch (err) {
+    logImportError(url.trim(), err);
     return Response.json(
       { error: err instanceof Error ? err.message : "Import failed" },
       { status: 502 },

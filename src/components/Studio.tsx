@@ -162,6 +162,66 @@ function renderExpectation(elapsedSeconds: number, phase: RenderPhase): string {
   return "Long render; still polling";
 }
 
+function errorForLog(err: unknown) {
+  if (err instanceof GenerationError) {
+    return {
+      name: err.name,
+      kind: err.kind,
+      message: err.message,
+      status: err.status,
+      requestId: err.requestId,
+      code: err.code,
+      providerDetail: err.providerDetail,
+    };
+  }
+  if (err instanceof Error) {
+    return {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+    };
+  }
+  return { message: String(err) };
+}
+
+function logStudioError(phase: string, err: unknown, context: Record<string, unknown> = {}) {
+  const payload = {
+    phase,
+    ...context,
+    error: errorForLog(err),
+  };
+  console.error("[dg:ui-error]", payload);
+  if (typeof window === "undefined") return;
+  void fetch("/api/log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+function generationFailureMessage(err: unknown, engine: Engine): string {
+  if (err instanceof GenerationError && err.kind === "timeout") {
+    return "That render took too long — the floor was packed. Your photo and clip are still loaded, so just try again.";
+  }
+
+  if (err instanceof GenerationError && err.code === "image_too_large") {
+    const request = err.requestId ? ` Provider request: ${err.requestId}.` : "";
+    return `That photo was too large for ${engine.name}. The app now resizes large photos before upload; pick the photo again and try again.${request}`;
+  }
+
+  if (err instanceof GenerationError) {
+    const request = err.requestId ? ` Provider request: ${err.requestId}.` : "";
+    return `The engine tripped over its own feet: ${err.message}.${request} Your photo and clip are still loaded — try again.`;
+  }
+
+  if (err instanceof Error) {
+    return `The engine tripped over its own feet: ${err.message}. Your photo and clip are still loaded — try again.`;
+  }
+
+  return "Something went wrong on the dance floor. Try again.";
+}
+
 function SpiceMeter({ level }: { level: 1 | 2 | 3 }) {
   return (
     <span aria-label={`Spice level ${level} of 3`} role="img" className="text-sm">
@@ -371,6 +431,15 @@ export default function Studio() {
         }
       } catch (err) {
         if (!cancelled) {
+          logStudioError("generation", err, {
+            engineId: activeEngineForRun.id,
+            engineName: activeEngineForRun.name,
+            provider: activeEngineForRun.provider,
+            endpoint: activeEngineForRun.endpoint,
+            requestId: pendingRun?.requestId,
+            renderPhase,
+            elapsedSeconds,
+          });
           localStorage.removeItem(PENDING_RUN_KEY);
           setPendingRun(null);
           setGenerationStartedAt(null);
@@ -384,13 +453,7 @@ export default function Studio() {
               setStep("closed");
             }
           } else {
-            setGenError(
-              err instanceof GenerationError && err.kind === "timeout"
-                ? "That render took too long — the floor was packed. Your photo and clip are still loaded, so just try again."
-                : err instanceof Error
-                  ? `The engine tripped over its own feet: ${err.message}. Your photo and clip are still loaded — try again.`
-                  : "Something went wrong on the dance floor. Try again.",
-            );
+            setGenError(generationFailureMessage(err, activeEngineForRun));
             setStep("dance");
           }
         }
@@ -529,6 +592,7 @@ export default function Studio() {
       }
       acceptDanceVideo(new File([blob], name, { type: contentType }), "imported");
     } catch (err) {
+      logStudioError("import", err, { url: trimmed });
       setDanceError(
         `Couldn't import that link: ${err instanceof Error ? err.message : "unknown error"}. Try another link, or save the video and drop the file here instead.`,
       );

@@ -29,6 +29,7 @@ beforeEach(() => {
   generate.mockReset();
   submit.mockReset();
   track.mockReset();
+  vi.spyOn(console, "error").mockImplementation(() => {});
   submit.mockResolvedValue("req-1");
   track.mockResolvedValue("https://fal.media/out.mp4");
   localStorage.clear();
@@ -333,6 +334,15 @@ test("a provider error shows a friendly message and retry re-runs with the same 
   const alert = await screen.findByRole("alert");
   expect(alert.textContent).toContain("Internal server error");
   expect(alert.textContent).toMatch(/try again/i);
+  await waitFor(() => {
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/log",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Internal server error"),
+      }),
+    );
+  });
   // Back on the dance step with the clip still loaded — nothing to re-upload.
   expect(screen.getByText(/“dance.mp4” loaded/)).toBeDefined();
 
@@ -356,6 +366,28 @@ test("a timeout says the render took too long and keeps the retry path open", as
   expect(
     screen.getByRole("button", { name: "Make her dance 💃" }),
   ).toBeDefined();
+});
+
+test("an oversized provider image error tells the user to pick the photo again", async () => {
+  const user = userEvent.setup();
+  track.mockRejectedValue(
+    new GenerationError(
+      "provider",
+      "body.image_url: Image dimensions are too large. Maximum dimensions are 3850x3850 pixels.",
+      {
+        status: 422,
+        requestId: "fal-req-422",
+        code: "image_too_large",
+      },
+    ),
+  );
+
+  await startRealRun(user);
+
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toMatch(/photo was too large/i);
+  expect(alert.textContent).toMatch(/resizes large photos/i);
+  expect(alert.textContent).toContain("fal-req-422");
 });
 
 test("an unavailable provider shows a clearly labeled golden clip fallback", async () => {

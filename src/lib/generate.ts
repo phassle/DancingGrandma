@@ -26,13 +26,28 @@ export type TrackOptions = {
  */
 export type GenerationFailureKind = "unavailable" | "timeout" | "provider";
 
+export type GenerationErrorMeta = {
+  status?: number;
+  requestId?: string;
+  code?: string;
+  providerDetail?: unknown;
+};
+
 export class GenerationError extends Error {
   readonly kind: GenerationFailureKind;
+  readonly status?: number;
+  readonly requestId?: string;
+  readonly code?: string;
+  readonly providerDetail?: unknown;
 
-  constructor(kind: GenerationFailureKind, message: string) {
+  constructor(kind: GenerationFailureKind, message: string, meta: GenerationErrorMeta = {}) {
     super(message);
     this.name = "GenerationError";
     this.kind = kind;
+    this.status = meta.status;
+    this.requestId = meta.requestId;
+    this.code = meta.code;
+    this.providerDetail = meta.providerDetail;
   }
 }
 
@@ -41,20 +56,77 @@ export class GenerationError extends Error {
 type FalApiErrorLike = {
   status?: unknown;
   body?: { detail?: unknown };
+  requestId?: unknown;
   timeoutType?: unknown;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function stringifyDetail(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((item) => stringifyDetail(item)).filter(Boolean).join("; ");
+  }
+  if (isRecord(detail)) {
+    const message = detail.msg ?? detail.message ?? detail.error;
+    const loc = Array.isArray(detail.loc) ? detail.loc.join(".") : undefined;
+    const text = typeof message === "string" ? message : "";
+    return loc && text ? `${loc}: ${text}` : text || JSON.stringify(detail);
+  }
+  return "";
+}
+
+function detailCode(detail: unknown): string | undefined {
+  if (Array.isArray(detail)) {
+    return detail.map(detailCode).find((code) => code !== undefined);
+  }
+  if (isRecord(detail) && typeof detail.type === "string") return detail.type;
+  return undefined;
+}
+
+function falErrorMeta(err: FalApiErrorLike): GenerationErrorMeta {
+  return {
+    status: typeof err.status === "number" ? err.status : undefined,
+    requestId: typeof err.requestId === "string" ? err.requestId : undefined,
+    code: detailCode(err.body?.detail),
+    providerDetail: err.body?.detail,
+  };
+}
 
 function classifyFalError(err: unknown): GenerationError {
   const message = err instanceof Error ? err.message : String(err);
   const { status, body, timeoutType } = (err ?? {}) as FalApiErrorLike;
-  const detail = typeof body?.detail === "string" ? body.detail : "";
+  const detail = stringifyDetail(body?.detail);
+  const meta = falErrorMeta((err ?? {}) as FalApiErrorLike);
   if (status === 403 && detail.includes("User is locked")) {
-    return new GenerationError("unavailable", detail);
+    return new GenerationError("unavailable", detail, meta);
   }
   if (timeoutType != null || status === 408 || status === 504) {
-    return new GenerationError("timeout", detail || message);
+    return new GenerationError("timeout", detail || message, meta);
   }
-  return new GenerationError("provider", detail || message);
+  return new GenerationError("provider", detail || message, meta);
+}
+
+function toGenerationError(err: unknown): GenerationError {
+  return err instanceof GenerationError ? err : classifyFalError(err);
+}
+
+function logGenerationError(phase: string, engine: Engine, error: GenerationError) {
+  console.error("[dg:generation-error]", {
+    phase,
+    engineId: engine.id,
+    engineName: engine.name,
+    provider: engine.provider,
+    endpoint: engine.endpoint,
+    kind: error.kind,
+    message: error.message,
+    status: error.status,
+    requestId: error.requestId,
+    code: error.code,
+    providerDetail: error.providerDetail,
+  });
 }
 
 // Uploaded-file URLs, keyed by File identity, so a retry after a failed
@@ -63,11 +135,100 @@ const uploadedUrls = new WeakMap<File, string>();
 const acceptedRuns = new Map<string, { engineId: string; provider: EngineProvider; startedAt: number }>();
 const immediateResults = new Map<string, string>();
 const submittedReferenceUrls = new Map<string, string>();
+const MAX_PROVIDER_IMAGE_DIMENSION = 3840;
+
+type DrawableImage = {
+  width: number;
+  height: number;
+  draw(ctx: CanvasRenderingContext2D, width: number, height: number): void;
+  close?(): void;
+};
+
+async function decodeDrawableImage(file: File): Promise<DrawableImage> {
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    return {
+      width: bitmap.width,
+      height: bitmap.height,
+      draw: (ctx, width, height) => ctx.drawImage(bitmap, 0, 0, width, height),
+      close: () => bitmap.close(),
+    };
+  }
+
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Could not read the selected photo"));
+      img.src = url;
+    });
+    return {
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+      draw: (ctx, width, height) => ctx.drawImage(img, 0, 0, width, height),
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Could not resize the selected photo"));
+    }, type, quality);
+  });
+}
+
+function resizedPhotoName(name: string): string {
+  return name.replace(/\.[^.]+$/, "") + "-provider.jpg";
+}
+
+async function resizePhotoForProvider(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  if (typeof document === "undefined") return file;
+
+  const image = await decodeDrawableImage(file);
+  try {
+    const largest = Math.max(image.width, image.height);
+    if (largest <= MAX_PROVIDER_IMAGE_DIMENSION) return file;
+
+    const scale = MAX_PROVIDER_IMAGE_DIMENSION / largest;
+    const width = Math.round(image.width * scale);
+    const height = Math.round(image.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not prepare the selected photo");
+    image.draw(ctx, width, height);
+
+    const blob = await canvasToBlob(canvas, "image/jpeg", 0.92);
+    return new File([blob], resizedPhotoName(file.name), {
+      type: "image/jpeg",
+      lastModified: file.lastModified,
+    });
+  } finally {
+    image.close?.();
+  }
+}
 
 async function uploadOnce(file: File): Promise<string> {
   const cached = uploadedUrls.get(file);
   if (cached) return cached;
   const url = await fal.storage.upload(file);
+  uploadedUrls.set(file, url);
+  return url;
+}
+
+async function uploadPhotoOnce(file: File): Promise<string> {
+  const cached = uploadedUrls.get(file);
+  if (cached) return cached;
+  const uploadable = await resizePhotoForProvider(file);
+  const url = await fal.storage.upload(uploadable);
   uploadedUrls.set(file, url);
   return url;
 }
@@ -136,15 +297,15 @@ async function classifyProviderResponse(res: Response): Promise<GenerationError>
     .then((value) => value as { error?: string; kind?: GenerationFailureKind })
     .catch(() => ({ error: `${res.status} ${res.statusText}` }));
   if (body.kind) {
-    return new GenerationError(body.kind, body.error || res.statusText);
+    return new GenerationError(body.kind, body.error || res.statusText, { status: res.status });
   }
   if ([401, 402, 403, 429, 503].includes(res.status)) {
-    return new GenerationError("unavailable", body.error || res.statusText);
+    return new GenerationError("unavailable", body.error || res.statusText, { status: res.status });
   }
   if ([408, 504].includes(res.status)) {
-    return new GenerationError("timeout", body.error || res.statusText);
+    return new GenerationError("timeout", body.error || res.statusText, { status: res.status });
   }
-  return new GenerationError("provider", body.error || res.statusText);
+  return new GenerationError("provider", body.error || res.statusText, { status: res.status });
 }
 
 async function finalizeDeliveredVideo(
@@ -169,40 +330,54 @@ async function finalizeDeliveredVideo(
 function providerRouteAdapter(provider: Extract<EngineProvider, "replicate">): GenerationAdapter {
   return {
     async submit(photo, referenceVideo, engine) {
-      const form = new FormData();
-      form.set("photo", photo);
-      form.set("engineId", engine.id);
-      if (engine.endpoint) form.set("endpoint", engine.endpoint);
-      if (typeof referenceVideo === "string") {
-        form.set("referenceUrl", referenceVideo);
-        form.set("referenceName", referenceVideo);
-      } else {
-        form.set("referenceVideo", referenceVideo);
-        form.set("referenceName", referenceVideo.name);
-      }
+      try {
+        const form = new FormData();
+        form.set("photo", photo);
+        form.set("engineId", engine.id);
+        if (engine.endpoint) form.set("endpoint", engine.endpoint);
+        if (typeof referenceVideo === "string") {
+          form.set("referenceUrl", referenceVideo);
+          form.set("referenceName", referenceVideo);
+        } else {
+          form.set("referenceVideo", referenceVideo);
+          form.set("referenceName", referenceVideo.name);
+        }
 
-      const res = await fetch(`/api/providers/${provider}`, {
-        method: "POST",
-        body: form,
-      });
-      if (!res.ok) throw await classifyProviderResponse(res);
+        const res = await fetch(`/api/providers/${provider}`, {
+          method: "POST",
+          body: form,
+        });
+        if (!res.ok) throw await classifyProviderResponse(res);
 
-      const body = (await res.json()) as { requestId?: string; videoUrl?: string };
-      if (!body.requestId) {
-        throw new GenerationError("provider", `${engine.name} returned no request id`);
+        const body = (await res.json()) as { requestId?: string; videoUrl?: string };
+        if (!body.requestId) {
+          throw new GenerationError("provider", `${engine.name} returned no request id`);
+        }
+        if (body.videoUrl) immediateResults.set(body.requestId, body.videoUrl);
+        return body.requestId;
+      } catch (err) {
+        const error = toGenerationError(err);
+        logGenerationError("provider-submit", engine, error);
+        throw error;
       }
-      if (body.videoUrl) immediateResults.set(body.requestId, body.videoUrl);
-      return body.requestId;
     },
     async track(requestId, engine, onUpdate) {
-      onUpdate("Rendering, frame by frame…");
-      const videoUrl = immediateResults.get(requestId);
-      if (!videoUrl) {
-        throw new GenerationError("provider", `${engine.name} returned no playable video`);
+      try {
+        onUpdate("Rendering, frame by frame…");
+        const videoUrl = immediateResults.get(requestId);
+        if (!videoUrl) {
+          throw new GenerationError("provider", `${engine.name} returned no playable video`, {
+            requestId,
+          });
+        }
+        immediateResults.delete(requestId);
+        onUpdate("Finalizing audio and watermark…");
+        return finalizeDeliveredVideo(videoUrl, engine);
+      } catch (err) {
+        const error = toGenerationError(err);
+        logGenerationError("provider-track", engine, error);
+        throw error;
       }
-      immediateResults.delete(requestId);
-      onUpdate("Finalizing audio and watermark…");
-      return finalizeDeliveredVideo(videoUrl, engine);
     },
   };
 }
@@ -220,14 +395,16 @@ const falAdapter: GenerationAdapter = {
     let imageUrl: string;
     let videoUrl: string;
     try {
-      imageUrl = await uploadOnce(photo);
+      imageUrl = await uploadPhotoOnce(photo);
       if (typeof referenceVideo === "string") {
         videoUrl = referenceVideo;
       } else {
         videoUrl = await uploadOnce(referenceVideo);
       }
     } catch (err) {
-      throw classifyFalError(err);
+      const error = classifyFalError(err);
+      logGenerationError("fal-upload", engine, error);
+      throw error;
     }
 
     try {
@@ -237,7 +414,9 @@ const falAdapter: GenerationAdapter = {
       submittedReferenceUrls.set(submitted.request_id, videoUrl);
       return submitted.request_id;
     } catch (err) {
-      throw classifyFalError(err);
+      const error = classifyFalError(err);
+      logGenerationError("fal-submit", engine, error);
+      throw error;
     }
   },
   async track(
@@ -250,8 +429,10 @@ const falAdapter: GenerationAdapter = {
       throw new Error(`${engine.name} has no wired adapter yet`);
     }
 
+    let phase = "fal-status";
     try {
       for (;;) {
+        phase = "fal-status";
         const status = await fal.queue.status(engine.endpoint, {
           requestId,
           logs: false,
@@ -269,17 +450,23 @@ const falAdapter: GenerationAdapter = {
         await sleep(pollMs);
       }
 
+      phase = "fal-result";
       const result = await fal.queue.result(engine.endpoint, { requestId });
       const url = (result.data as { video?: { url?: string } })?.video?.url;
       if (!url) {
-        throw new Error("The engine finished but returned no video");
+        throw new GenerationError("provider", "The engine finished but returned no video", {
+          requestId,
+        });
       }
       const referenceVideoUrl = submittedReferenceUrls.get(requestId);
       submittedReferenceUrls.delete(requestId);
       onUpdate("Finalizing audio and watermark…");
+      phase = "finalize";
       return finalizeDeliveredVideo(url, engine, referenceVideoUrl);
     } catch (err) {
-      throw classifyFalError(err);
+      const error = toGenerationError(err);
+      logGenerationError(phase, engine, error);
+      throw error;
     }
   },
 };
