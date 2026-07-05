@@ -1,9 +1,15 @@
 import { readVideoBytes } from "@/lib/server/blob";
+import { isShareId } from "@/lib/share-id";
 
 export const runtime = "nodejs";
 
-function isValidShareId(id: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+function isMissingBlob(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const known = err as { statusCode?: unknown; code?: unknown };
+  return (
+    (typeof known.statusCode === "number" && known.statusCode === 404) ||
+    (typeof known.code === "string" && known.code === "BlobNotFound")
+  );
 }
 
 export async function GET(
@@ -11,7 +17,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const { id } = await context.params;
-  if (!isValidShareId(id)) {
+  if (!isShareId(id)) {
     return new Response("Not Found", { status: 404 });
   }
 
@@ -25,8 +31,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    const statusCode = typeof err === "object" && err !== null && "statusCode" in err ? (err as { statusCode?: unknown }).statusCode : undefined;
-    if (statusCode === 404) {
+    if (isMissingBlob(err)) {
       return new Response("Not Found", { status: 404 });
     }
     throw err;

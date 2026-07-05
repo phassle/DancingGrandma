@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
 import { GenerationError, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
+import { isShareId } from "@/lib/share-id";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
@@ -222,11 +223,15 @@ function triggerDownload(blob: Blob) {
 }
 
 function persistentShareUrl(resultUrl: string): string | null {
-  if (typeof window === "undefined") return null;
-  const parsed = new URL(resultUrl, window.location.origin);
-  const match = parsed.pathname.match(/^\/api\/video\/([0-9a-f-]{36})$/i);
-  if (!match) return null;
-  return new URL(`/v/${match[1]}`, window.location.origin).toString();
+  try {
+    const parsed = new URL(resultUrl, window.location.origin);
+    const match = parsed.pathname.match(/^\/api\/video\/([^/]+)$/);
+    if (!match) return null;
+    if (!isShareId(match[1])) return null;
+    return new URL(`/v/${match[1]}`, window.location.origin).toString();
+  } catch {
+    return null;
+  }
 }
 
 function generationFailureMessage(err: unknown, engine: Engine): string {

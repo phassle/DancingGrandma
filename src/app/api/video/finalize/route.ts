@@ -194,7 +194,16 @@ export async function POST(request: Request): Promise<Response> {
     await execFileAsync("ffmpeg", args);
     const output = await readFile(outputPath);
     const shareId = randomUUID();
-    await saveVideoBytes(shareId, output);
+    try {
+      await saveVideoBytes(shareId, output);
+    } catch (err) {
+      console.error("[dg:finalize-storage-error]", {
+        shareId,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      throw err;
+    }
     return Response.json({
       videoUrl: `/api/video/${shareId}`,
       shareUrl: `/v/${shareId}`,
