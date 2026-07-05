@@ -10,7 +10,15 @@ Everyday consumers (18–45) who saw a viral ad or a friend's clip and want to m
 
 ## Product Purpose
 
-DancingGrandma turns a single photo of a person plus a reference dance video (a TikTok dance) into a new AI-generated video where that person performs the dance, music included. Success = the user laughs out loud at the preview and hits share. The web app is the product: upload photo, pick or upload a dance, generate, share. (MVP: generation is mocked while the video-model research lands; the flow is real end-to-end.)
+DancingGrandma is a reference-video motion-transfer product: one person photo plus one reference dance video becomes a character-animation video where that person performs the reference motion, music included. Success = the user laughs out loud at the preview and hits share. The web app is the product: upload photo, pick or upload a reference motion video, generate, share.
+
+## Product Vocabulary
+
+- **Character animation / human image animation**: the product's core task. A person image follows the motion from a reference video.
+- **Motion transfer**: the reference dance video's timing, pose, movement, and expression cues are transferred to the person image.
+- **Character replacement**: the supplied person replaces the performer in a reference video while preserving motion and scene context.
+- **Reference motion video**: the uploaded, imported, or curated dance clip that supplies movement.
+- **Generic image-to-video**: not the core product contract unless the provider also accepts a reference motion video and performs character animation or replacement.
 
 ## Brand Personality
 
@@ -25,7 +33,7 @@ Playful, warm, a little absurd. Three words: **cheeky · festive · family-warm*
 
 ## Design Principles
 
-1. **The demo IS the pitch** — show a before/after (photo → dancing video) above the fold; don't explain what a paragraph can't sell but a clip can.
+1. **The demo IS the pitch** — show a before/after (photo + reference motion video → character-animation clip) above the fold; don't explain what a paragraph can't sell but a clip can.
 2. **Three taps to joy** — photo, dance, go. Every screen has exactly one obvious next action.
 3. **Affectionate absurdity** — copy and motion are allowed to be silly; grandma is always the hero, never the punchline.
 4. **Party, committed** — color and typography go big (committed/full-palette strategy); timid is off-brand.

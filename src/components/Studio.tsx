@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
-import { GenerationError, generateDanceVideo } from "@/lib/generate";
+import { GenerationError, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
@@ -53,6 +53,43 @@ const GENERATION_STAGES = [
 ];
 
 const MAX_PHOTO_MB = 10;
+const PENDING_RUN_KEY = "dg:pending-run";
+const PENDING_RUN_TTL_MS = 24 * 60 * 60 * 1000;
+
+type PendingRun = {
+  requestId: string;
+  engineId: string;
+  danceName: string;
+  startedAt: number;
+};
+
+function parsePendingRun(raw: string | null): PendingRun | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<PendingRun>;
+    if (
+      typeof parsed.requestId !== "string" ||
+      typeof parsed.engineId !== "string" ||
+      typeof parsed.startedAt !== "number"
+    ) {
+      return null;
+    }
+    return {
+      requestId: parsed.requestId,
+      engineId: parsed.engineId,
+      danceName: typeof parsed.danceName === "string" ? parsed.danceName : "Custom dance",
+      startedAt: parsed.startedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formatElapsed(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes}:${rest.toString().padStart(2, "0")}`;
+}
 
 function SpiceMeter({ level }: { level: 1 | 2 | 3 }) {
   return (
@@ -80,6 +117,11 @@ export default function Studio() {
   const [genStatus, setGenStatus] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [pendingRun, setPendingRun] = useState<PendingRun | null>(null);
+  const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [resultDanceName, setResultDanceName] = useState<string | null>(null);
+  const [resultIsGoldenClip, setResultIsGoldenClip] = useState(false);
 
   // Curated dances whose reference clip actually exists under public/dances/.
   const [liveClipIds, setLiveClipIds] = useState<Set<string>>(new Set());
@@ -109,8 +151,9 @@ export default function Studio() {
   // simulates. Link clips are only wired for Wan.
   const danceHasLiveClip = dance !== null && liveClipIds.has(dance.id);
   const isRealRun =
-    (customVideo !== null || customUrl !== null || danceHasLiveClip) &&
-    Boolean(engine.endpoint);
+    pendingRun !== null ||
+    ((customVideo !== null || customUrl !== null || danceHasLiveClip) &&
+      Boolean(engine.endpoint));
   const [stageIndex, setStageIndex] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,10 +172,52 @@ export default function Studio() {
   }, [step]);
 
   useEffect(() => {
+    const stored = parsePendingRun(localStorage.getItem(PENDING_RUN_KEY));
+    if (!stored || Date.now() - stored.startedAt > PENDING_RUN_TTL_MS) {
+      localStorage.removeItem(PENDING_RUN_KEY);
+      return;
+    }
+    const storedEngine = ENGINES.find((e) => e.id === stored.engineId);
+    if (!storedEngine?.endpoint) {
+      localStorage.removeItem(PENDING_RUN_KEY);
+      return;
+    }
+    const resumeTimer = window.setTimeout(() => {
+      setPendingRun(stored);
+      setGenerationStartedAt(stored.startedAt);
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - stored.startedAt) / 1000)));
+      setResultDanceName(stored.danceName);
+      setEngine(storedEngine);
+      setStep("generating");
+    }, 0);
+    return () => window.clearTimeout(resumeTimer);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (step !== "generating" || !isRealRun || !generationStartedAt) return;
+    const updateElapsed = () => {
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - generationStartedAt) / 1000)));
+    };
+    updateElapsed();
+    const timer = setInterval(updateElapsed, 1000);
+    return () => clearInterval(timer);
+  }, [generationStartedAt, isRealRun, step]);
+
+  useEffect(() => {
+    if (step !== "generating" || !isRealRun) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isRealRun, step]);
 
   useEffect(() => {
     if (step !== "generating") return;
@@ -149,21 +234,57 @@ export default function Studio() {
     }
 
     let cancelled = false;
+    let activeEngineForRun = engine;
     (async () => {
       try {
-        const referenceVideo =
-          customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
-        const url = await generateDanceVideo(photoFile!, referenceVideo, engine, (msg) => {
+        const activeEngine =
+          pendingRun !== null
+            ? (ENGINES.find((e) => e.id === pendingRun.engineId) ?? engine)
+            : engine;
+        activeEngineForRun = activeEngine;
+        const requestId =
+          pendingRun?.requestId ??
+          (await (async () => {
+            const referenceVideo =
+              customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
+            const id = await submitDanceVideo(photoFile!, referenceVideo, activeEngine);
+            const run = {
+              requestId: id,
+              engineId: activeEngine.id,
+              danceName: dance?.name ?? customVideo?.name ?? "Custom dance",
+              startedAt: generationStartedAt ?? Date.now(),
+            };
+            localStorage.setItem(PENDING_RUN_KEY, JSON.stringify(run));
+            if (!cancelled) {
+              setPendingRun(run);
+              setResultDanceName(run.danceName);
+            }
+            return id;
+          })());
+        const url = await trackDanceVideo(requestId, activeEngine, (msg) => {
           if (!cancelled) setGenStatus(msg);
         });
         if (!cancelled) {
+          localStorage.removeItem(PENDING_RUN_KEY);
+          setPendingRun(null);
           setResultUrl(url);
+          setResultIsGoldenClip(false);
           setStep("done");
+          setGenerationStartedAt(null);
         }
       } catch (err) {
         if (!cancelled) {
+          localStorage.removeItem(PENDING_RUN_KEY);
+          setPendingRun(null);
+          setGenerationStartedAt(null);
           if (err instanceof GenerationError && err.kind === "unavailable") {
-            setStep("closed");
+            if (activeEngineForRun.goldenClip) {
+              setResultUrl(activeEngineForRun.goldenClip);
+              setResultIsGoldenClip(true);
+              setStep("done");
+            } else {
+              setStep("closed");
+            }
           } else {
             setGenError(
               err instanceof GenerationError && err.kind === "timeout"
@@ -316,6 +437,12 @@ export default function Studio() {
     setGenStatus(null);
     setGenError(null);
     setResultUrl(null);
+    setPendingRun(null);
+    setGenerationStartedAt(null);
+    setElapsedSeconds(0);
+    setResultDanceName(null);
+    setResultIsGoldenClip(false);
+    localStorage.removeItem(PENDING_RUN_KEY);
     setStep("photo");
   };
 
@@ -619,7 +746,12 @@ export default function Studio() {
                 </div>
                 <p className="mt-3 text-sm text-muted" aria-live="polite">
                   <span className="font-bold text-ink">{engine.name}</span> ({engine.vendor}) ·{" "}
-                  {engine.pricing} · {engine.audio} · max length: {engine.maxDuration}
+                  {engine.pricing} ·{" "}
+                  {engine.carriesAudio
+                    ? "carries reference audio"
+                    : "reference audio added after generation"}{" "}
+                  · max length: {engine.maxDuration}
+                  <span className="mt-1 block text-xs text-muted">{engine.howWired}</span>
                 </p>
               </fieldset>
 
@@ -644,6 +776,11 @@ export default function Studio() {
                     setStageIndex(0);
                     setGenError(null);
                     setGenStatus(null);
+                    setElapsedSeconds(0);
+                    setResultUrl(null);
+                    setResultIsGoldenClip(false);
+                    setGenerationStartedAt(Date.now());
+                    setResultDanceName(dance?.name ?? customVideo?.name ?? "Custom dance");
                     setStep("generating");
                   }}
                   className="rounded-full bg-go px-9 py-3.5 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
@@ -670,6 +807,11 @@ export default function Studio() {
                 Rendering on {engine.name}
                 {isRealRun ? " — a real run can take a few minutes" : ""}
               </p>
+              {isRealRun && (
+                <p className="mt-1 text-sm font-medium text-ink">
+                  Elapsed: {formatElapsed(elapsedSeconds)}
+                </p>
+              )}
               <div
                 role="progressbar"
                 aria-label="Generating the video"
@@ -722,7 +864,9 @@ export default function Studio() {
                 She ate. 🔥
               </h3>
               <p className="mt-2 max-w-[55ch] text-muted">
-                {dance ? `“${dance.name}” — performed flawlessly on the first take.` : "Performed flawlessly on the first take."}
+                {resultDanceName || dance
+                  ? `“${resultDanceName ?? dance!.name}” — performed flawlessly on the first take.`
+                  : "Performed flawlessly on the first take."}
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-8 sm:flex-row sm:items-start sm:justify-center">
@@ -742,7 +886,7 @@ export default function Studio() {
                       <GrandmaDancer className="absolute inset-x-0 bottom-0 mx-auto h-[88%]" title="Your generated video: grandma performing the dance" />
                     )}
                     <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-go px-2.5 py-1 text-xs font-bold uppercase tracking-[0.08em] text-ink">
-                      {resultUrl ? "● Rendered" : "● Preview"}
+                      {resultIsGoldenClip ? "● Sample" : resultUrl ? "● Rendered" : "● Preview"}
                     </span>
                   </div>
                   {photoUrl && (
@@ -789,6 +933,13 @@ export default function Studio() {
                       <span className="text-ink">{engine.name}</span> ({engine.vendor}),{" "}
                       {engine.pricing.toLowerCase()}, and turns the real photo + dance video into
                       the real thing, music included.
+                    </p>
+                  )}
+                  {resultIsGoldenClip && (
+                    <p className="mt-6 rounded-2xl bg-bg-deep/50 p-4 text-sm text-muted">
+                      <span className="font-bold text-butter">Pre-rendered sample.</span> The
+                      selected provider is unavailable, so this keeps the demo moving without
+                      pretending it is a fresh render.
                     </p>
                   )}
                 </div>
