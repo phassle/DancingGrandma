@@ -14,15 +14,35 @@ type Dance = {
   bpm: number;
   spice: 1 | 2 | 3;
   blurb: string;
+  /** Local reference video under public/ — when the file exists, this dance
+   * renders for real instead of simulating. See public/dances/README.md. */
+  referenceClip?: string;
 };
 
 const DANCES: Dance[] = [
-  { id: "griddy", name: "The Griddy", emoji: "🏈", bpm: 140, spice: 2, blurb: "Arms pumping, knees flying. Touchdown energy." },
-  { id: "renegade", name: "Renegade", emoji: "🔥", bpm: 128, spice: 3, blurb: "The classic. Eight counts of pure chaos." },
+  { id: "freestyle", name: "Street Freestyle", emoji: "📻", bpm: 100, spice: 2, blurb: "Boombox out, limbs loose. Full send.", referenceClip: "/dances/freestyle.mp4" },
+  { id: "griddy", name: "The Griddy", emoji: "🏈", bpm: 140, spice: 2, blurb: "Arms pumping, knees flying. Touchdown energy.", referenceClip: "/dances/griddy.mp4" },
+  { id: "renegade", name: "Renegade", emoji: "🔥", bpm: 128, spice: 3, blurb: "The classic. Eight counts of pure chaos.", referenceClip: "/dances/renegade.mp4" },
   { id: "macarena", name: "Macarena Redux", emoji: "🙌", bpm: 103, spice: 1, blurb: "She already knows this one. Trust." },
   { id: "disco", name: "Disco Inferno", emoji: "🪩", bpm: 118, spice: 2, blurb: "Point up, point down, own the room." },
   { id: "woah", name: "The Woah", emoji: "🎯", bpm: 145, spice: 2, blurb: "One move. Perfectly timed. Devastating." },
 ];
+
+// Fetched reference clips, cached per path so a retry reuses the same File
+// (and the seam's upload memoization keeps holding).
+const clipFiles = new Map<string, Promise<File>>();
+
+function referenceClipFile(path: string): Promise<File> {
+  let file = clipFiles.get(path);
+  if (!file) {
+    file = fetch(path)
+      .then((res) => res.arrayBuffer())
+      .then((buf) => new File([buf], path.split("/").pop()!, { type: "video/mp4" }));
+    clipFiles.set(path, file);
+    file.catch(() => clipFiles.delete(path));
+  }
+  return file;
+}
 
 const GENERATION_STAGES = [
   "Studying the choreography…",
@@ -59,9 +79,33 @@ export default function Studio() {
   const [genError, setGenError] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
 
-  // Real generation runs when the user brought their own reference clip and
-  // the chosen engine has a wired adapter; curated dances stay simulated.
-  const isRealRun = customVideo !== null && Boolean(engine.endpoint);
+  // Curated dances whose reference clip actually exists under public/dances/.
+  const [liveClipIds, setLiveClipIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const checks = await Promise.all(
+        DANCES.filter((d) => d.referenceClip).map(async (d) => {
+          try {
+            const res = await fetch(d.referenceClip!, { method: "HEAD" });
+            return res.ok ? d.id : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      if (!cancelled) setLiveClipIds(new Set(checks.filter((id) => id !== null)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Real generation runs when there's a reference clip to hand the engine —
+  // the user's own upload, or a curated dance whose bundled clip exists —
+  // and the chosen engine has a wired adapter. Everything else simulates.
+  const danceHasLiveClip = dance !== null && liveClipIds.has(dance.id);
+  const isRealRun = (customVideo !== null || danceHasLiveClip) && Boolean(engine.endpoint);
   const [stageIndex, setStageIndex] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,7 +146,8 @@ export default function Studio() {
     let cancelled = false;
     (async () => {
       try {
-        const url = await generateDanceVideo(photoFile!, customVideo!, engine, (msg) => {
+        const referenceVideo = customVideo ?? (await referenceClipFile(dance!.referenceClip!));
+        const url = await generateDanceVideo(photoFile!, referenceVideo, engine, (msg) => {
           if (!cancelled) setGenStatus(msg);
         });
         if (!cancelled) {
@@ -366,7 +411,14 @@ export default function Studio() {
                         <span aria-hidden="true" className="text-3xl">{d.emoji}</span>
                         <span className="flex-1">
                           <span className="flex items-baseline justify-between gap-2">
-                            <span className="font-display text-xl">{d.name}</span>
+                            <span className="font-display text-xl">
+                              {d.name}
+                              {liveClipIds.has(d.id) && (
+                                <span className={`ml-2 rounded-full px-2 py-0.5 align-middle font-sans text-xs font-bold ${selected ? "bg-butter-ink/15" : "bg-brand/40 text-brand-bright"}`}>
+                                  real render
+                                </span>
+                              )}
+                            </span>
                             <SpiceMeter level={d.spice} />
                           </span>
                           <span className={`mt-1 block text-sm ${selected ? "text-butter-ink/80" : "text-muted"}`}>
@@ -609,13 +661,15 @@ export default function Studio() {
                       Make another
                     </button>
                   </div>
-                  <p className="mt-6 rounded-2xl bg-bg-deep/50 p-4 text-sm text-muted">
-                    <span className="font-bold text-butter">Demo mode.</span> This preview is
-                    simulated — in production this run goes to{" "}
-                    <span className="text-ink">{engine.name}</span> ({engine.vendor}),{" "}
-                    {engine.pricing.toLowerCase()}, and turns the real photo + dance video into
-                    the real thing, music included.
-                  </p>
+                  {!resultUrl && (
+                    <p className="mt-6 rounded-2xl bg-bg-deep/50 p-4 text-sm text-muted">
+                      <span className="font-bold text-butter">Demo mode.</span> This preview is
+                      simulated — in production this run goes to{" "}
+                      <span className="text-ink">{engine.name}</span> ({engine.vendor}),{" "}
+                      {engine.pricing.toLowerCase()}, and turns the real photo + dance video into
+                      the real thing, music included.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
