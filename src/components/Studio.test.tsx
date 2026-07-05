@@ -18,7 +18,22 @@ beforeEach(() => {
   // jsdom has no object URLs; the wizard only needs a stable string.
   URL.createObjectURL = vi.fn(() => "blob:grandma");
   URL.revokeObjectURL = vi.fn();
+  // No bundled reference clips unless a test serves them explicitly.
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(null, { status: 404 })),
+  );
 });
+
+/** Serve a reference clip at the given path; every other path stays 404. */
+function serveClip(path: string) {
+  vi.mocked(fetch).mockImplementation(async (input, init) => {
+    const url = typeof input === "string" ? input : (input as Request).url;
+    if (!url.toString().endsWith(path)) return new Response(null, { status: 404 });
+    if (init?.method === "HEAD") return new Response(null, { status: 200 });
+    return new Response("clip", { status: 200 });
+  });
+}
 
 /** Upload a photo + a custom reference clip and hit "Make her dance". */
 async function startRealRun(user: UserEvent) {
@@ -45,6 +60,51 @@ test("a successful run lands on the done step with the rendered video", async ()
   expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
     "https://fal.media/out.mp4",
   );
+});
+
+test("a curated dance with a bundled clip renders for real", async () => {
+  const user = userEvent.setup();
+  serveClip("/dances/freestyle.mp4");
+  generate.mockResolvedValue("https://fal.media/freestyle-out.mp4");
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+  await user.click(await screen.findByRole("radio", { name: /street freestyle/i }));
+  await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
+
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+  expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
+    "https://fal.media/freestyle-out.mp4",
+  );
+  // A real render is the real thing — no demo-mode disclaimer.
+  expect(screen.queryByText(/demo mode/i)).toBeNull();
+
+  const clip = generate.mock.calls[0][1];
+  expect(clip).toBeInstanceOf(File);
+  expect((clip as File).name).toBe("freestyle.mp4");
+});
+
+test("dance cards mark only the dances whose reference clip exists as real renders", async () => {
+  const user = userEvent.setup();
+  serveClip("/dances/freestyle.mp4");
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+
+  expect(
+    await screen.findByRole("radio", { name: /street freestyle.*real render/i }),
+  ).toBeDefined();
+  // The Griddy's drop-in clip is missing, so it must not promise a real render.
+  expect(screen.getByRole("radio", { name: /the griddy/i })).toBeDefined();
+  expect(screen.queryByRole("radio", { name: /griddy.*real render/i })).toBeNull();
 });
 
 test("a provider error shows a friendly message and retry re-runs with the same files", async () => {
