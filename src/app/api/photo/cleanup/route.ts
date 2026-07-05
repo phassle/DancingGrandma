@@ -36,7 +36,9 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     // fal CDN v3 files can be deleted via the REST API.
-    // The file path is the everything after "fal.media/".
+    // The file path is everything after "fal.media/" in the URL, e.g.
+    // "https://fal.media/files/abc123/photo.jpg" → filePath = "files/abc123/photo.jpg".
+    // The path is percent-encoded because it may contain slashes and special chars.
     const parsedUrl = new URL(url);
     const filePath = parsedUrl.pathname.replace(/^\//, "");
     const deleteUrl = `https://rest.alpha.fal.ai/storage/objects/${encodeURIComponent(filePath)}`;
