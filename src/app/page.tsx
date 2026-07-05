@@ -47,7 +47,7 @@ const FAQS = [
   },
   {
     q: "Which AI actually makes the video?",
-    a: "The default pipeline uses Kling 2.6 Motion Control via fal.ai because it accepts one photo plus one reference motion video and carries the original music through. Wan 2.2 Animate stays available as the open-source alternative.",
+    a: "The default uses Kling 2.6 Motion Control on a cloud render server. Think of it like sending the photo and dance clip to a very fast machine in the cloud; it teaches the photo the dance, keeps the music, and sends the finished video back. Wan 2.2 Animate stays available as the open-source alternative.",
   },
   {
     q: "Can I use someone who isn't a grandma?",
@@ -177,12 +177,12 @@ export default function Home() {
           <p className="max-w-[52ch]">
             A Monterro InfuseAI demo. Video generation defaults to{" "}
             <a
-              href="https://fal.ai/models/fal-ai/kling-video/v2.6/standard/motion-control"
+              href="#studio"
               className="text-brand-bright underline underline-offset-4 hover:text-ink"
             >
               Kling 2.6 Motion Control
             </a>{" "}
-            via fal.ai, with Wan 2.2 Animate still available as an alternative.
+            on a cloud render server, with Wan 2.2 Animate still available as an alternative.
           </p>
           <p>Be kind to your grandma. 💚</p>
         </div>
