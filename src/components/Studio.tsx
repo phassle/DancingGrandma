@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
-import { GenerationError, generateDanceVideo } from "@/lib/generate";
+import { GenerationError, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
@@ -20,12 +20,11 @@ type Dance = {
 };
 
 const DANCES: Dance[] = [
-  { id: "freestyle", name: "Street Freestyle", emoji: "📻", bpm: 100, spice: 2, blurb: "Boombox out, limbs loose. Full send.", referenceClip: "/dances/freestyle.mp4" },
   { id: "griddy", name: "The Griddy", emoji: "🏈", bpm: 140, spice: 2, blurb: "Arms pumping, knees flying. Touchdown energy.", referenceClip: "/dances/griddy.mp4" },
   { id: "renegade", name: "Renegade", emoji: "🔥", bpm: 128, spice: 3, blurb: "The classic. Eight counts of pure chaos.", referenceClip: "/dances/renegade.mp4" },
-  { id: "macarena", name: "Macarena Redux", emoji: "🙌", bpm: 103, spice: 1, blurb: "She already knows this one. Trust." },
-  { id: "disco", name: "Disco Inferno", emoji: "🪩", bpm: 118, spice: 2, blurb: "Point up, point down, own the room." },
-  { id: "woah", name: "The Woah", emoji: "🎯", bpm: 145, spice: 2, blurb: "One move. Perfectly timed. Devastating." },
+  { id: "macarena", name: "Macarena Redux", emoji: "🙌", bpm: 103, spice: 1, blurb: "She already knows this one. Trust.", referenceClip: "/dances/macarena.mp4" },
+  { id: "disco", name: "Disco Inferno", emoji: "🪩", bpm: 118, spice: 2, blurb: "Point up, point down, own the room.", referenceClip: "/dances/disco.mp4" },
+  { id: "woah", name: "The Woah", emoji: "🎯", bpm: 145, spice: 2, blurb: "One move. Perfectly timed. Devastating.", referenceClip: "/dances/woah.mp4" },
 ];
 
 // Fetched reference clips, cached per path so a retry reuses the same File
@@ -54,6 +53,114 @@ const GENERATION_STAGES = [
 ];
 
 const MAX_PHOTO_MB = 10;
+const PENDING_RUN_KEY = "dg:pending-run";
+const PENDING_RUN_TTL_MS = 24 * 60 * 60 * 1000;
+
+type PendingRun = {
+  requestId: string;
+  engineId: string;
+  danceName: string;
+  startedAt: number;
+};
+
+type RenderPhase = "preparing" | "queued" | "rendering" | "finalizing";
+type CustomClipSource = "uploaded" | "imported" | "direct-url";
+
+function parsePendingRun(raw: string | null): PendingRun | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<PendingRun>;
+    if (
+      typeof parsed.requestId !== "string" ||
+      typeof parsed.engineId !== "string" ||
+      typeof parsed.startedAt !== "number"
+    ) {
+      return null;
+    }
+    return {
+      requestId: parsed.requestId,
+      engineId: parsed.engineId,
+      danceName: typeof parsed.danceName === "string" ? parsed.danceName : "Custom dance",
+      startedAt: parsed.startedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formatElapsed(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes}:${rest.toString().padStart(2, "0")}`;
+}
+
+function formatUpdateAge(seconds: number | null): string {
+  if (seconds === null) return "waiting";
+  if (seconds < 2) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  return `${formatElapsed(seconds)} ago`;
+}
+
+function queuePositionFromMessage(message: string): number | null {
+  const match = message.match(/^#(\d+)\s+in line/i);
+  return match ? Number(match[1]) : null;
+}
+
+function phaseFromMessage(message: string): RenderPhase {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("finalizing") || normalized.includes("watermark")) {
+    return "finalizing";
+  }
+  if (normalized.includes("rendering")) return "rendering";
+  if (
+    normalized.includes("queue") ||
+    normalized.includes("line") ||
+    normalized.includes("waiting")
+  ) {
+    return "queued";
+  }
+  return "preparing";
+}
+
+function renderPhaseLabel(phase: RenderPhase): string {
+  switch (phase) {
+    case "preparing":
+      return "Preparing";
+    case "queued":
+      return "Queued";
+    case "rendering":
+      return "Rendering";
+    case "finalizing":
+      return "Finalizing";
+  }
+}
+
+function realRenderProgressPercent(
+  phase: RenderPhase,
+  elapsedSeconds: number,
+  queuePosition: number | null,
+): number {
+  switch (phase) {
+    case "preparing":
+      return Math.min(12, 6 + Math.floor(elapsedSeconds / 6));
+    case "queued": {
+      const queueSignal =
+        queuePosition === null ? 16 : Math.max(12, 26 - Math.min(queuePosition, 14));
+      return Math.min(34, queueSignal + Math.floor(elapsedSeconds / 20));
+    }
+    case "rendering":
+      return Math.min(86, 38 + Math.floor(elapsedSeconds / 4));
+    case "finalizing":
+      return Math.min(96, 88 + Math.floor(elapsedSeconds / 30));
+  }
+}
+
+function renderExpectation(elapsedSeconds: number, phase: RenderPhase): string {
+  if (phase === "finalizing") return "Almost done";
+  if (elapsedSeconds < 30) return "Typical wait: 2-4 min";
+  if (elapsedSeconds < 180) return "Inside normal render time";
+  return "Long render; still polling";
+}
 
 function SpiceMeter({ level }: { level: 1 | 2 | 3 }) {
   return (
@@ -74,12 +181,24 @@ export default function Studio() {
   const [dance, setDance] = useState<Dance | null>(null);
   const [customVideo, setCustomVideo] = useState<File | null>(null);
   const [customUrl, setCustomUrl] = useState<string | null>(null);
+  const [customVideoPreviewUrl, setCustomVideoPreviewUrl] = useState<string | null>(null);
+  const [customClipSource, setCustomClipSource] = useState<CustomClipSource | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importingUrl, setImportingUrl] = useState<string | null>(null);
   const [danceError, setDanceError] = useState<string | null>(null);
   const [engine, setEngine] = useState<Engine>(DEFAULT_ENGINE);
   const [genStatus, setGenStatus] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [pendingRun, setPendingRun] = useState<PendingRun | null>(null);
+  const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [renderPhase, setRenderPhase] = useState<RenderPhase>("preparing");
+  const [lastRunUpdateAt, setLastRunUpdateAt] = useState<number | null>(null);
+  const [queuePosition, setQueuePosition] = useState<number | null>(null);
+  const [resultDanceName, setResultDanceName] = useState<string | null>(null);
+  const [resultIsGoldenClip, setResultIsGoldenClip] = useState(false);
 
   // Curated dances whose reference clip actually exists under public/dances/.
   const [liveClipIds, setLiveClipIds] = useState<Set<string>>(new Set());
@@ -109,13 +228,21 @@ export default function Studio() {
   // simulates. Link clips are only wired for Wan.
   const danceHasLiveClip = dance !== null && liveClipIds.has(dance.id);
   const isRealRun =
-    (customVideo !== null || customUrl !== null || danceHasLiveClip) &&
-    Boolean(engine.endpoint);
+    pendingRun !== null ||
+    ((customVideo !== null || customUrl !== null || danceHasLiveClip) &&
+      Boolean(engine.endpoint));
   const [stageIndex, setStageIndex] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const clipObjectUrlRef = useRef<string | null>(null);
+
+  const clearClipPreview = useCallback(() => {
+    if (clipObjectUrlRef.current) URL.revokeObjectURL(clipObjectUrlRef.current);
+    clipObjectUrlRef.current = null;
+    setCustomVideoPreviewUrl(null);
+  }, []);
 
   // Move focus to the step heading on step changes (not on initial page load)
   // so keyboard/screen-reader users follow along
@@ -129,10 +256,56 @@ export default function Studio() {
   }, [step]);
 
   useEffect(() => {
+    const stored = parsePendingRun(localStorage.getItem(PENDING_RUN_KEY));
+    if (!stored || Date.now() - stored.startedAt > PENDING_RUN_TTL_MS) {
+      localStorage.removeItem(PENDING_RUN_KEY);
+      return;
+    }
+    const storedEngine = ENGINES.find((e) => e.id === stored.engineId);
+    if (!storedEngine?.endpoint) {
+      localStorage.removeItem(PENDING_RUN_KEY);
+      return;
+    }
+    const resumeTimer = window.setTimeout(() => {
+      setPendingRun(stored);
+      setGenerationStartedAt(stored.startedAt);
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - stored.startedAt) / 1000)));
+      setResultDanceName(stored.danceName);
+      setRenderPhase("queued");
+      setLastRunUpdateAt(Date.now());
+      setGenStatus("Checking the saved render…");
+      setEngine(storedEngine);
+      setStep("generating");
+    }, 0);
+    return () => window.clearTimeout(resumeTimer);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      if (clipObjectUrlRef.current) URL.revokeObjectURL(clipObjectUrlRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (step !== "generating" || !isRealRun || !generationStartedAt) return;
+    const updateElapsed = () => {
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - generationStartedAt) / 1000)));
+    };
+    updateElapsed();
+    const timer = setInterval(updateElapsed, 1000);
+    return () => clearInterval(timer);
+  }, [generationStartedAt, isRealRun, step]);
+
+  useEffect(() => {
+    if (step !== "generating" || !isRealRun) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isRealRun, step]);
 
   useEffect(() => {
     if (step !== "generating") return;
@@ -149,21 +322,67 @@ export default function Studio() {
     }
 
     let cancelled = false;
+    let activeEngineForRun = engine;
     (async () => {
       try {
-        const referenceVideo =
-          customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
-        const url = await generateDanceVideo(photoFile!, referenceVideo, engine, (msg) => {
-          if (!cancelled) setGenStatus(msg);
+        const activeEngine =
+          pendingRun !== null
+            ? (ENGINES.find((e) => e.id === pendingRun.engineId) ?? engine)
+            : engine;
+        activeEngineForRun = activeEngine;
+        const requestId =
+          pendingRun?.requestId ??
+          (await (async () => {
+            const referenceVideo =
+              customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
+            const id = await submitDanceVideo(photoFile!, referenceVideo, activeEngine);
+            const run = {
+              requestId: id,
+              engineId: activeEngine.id,
+              danceName: dance?.name ?? customVideo?.name ?? "Custom dance",
+              startedAt: generationStartedAt ?? Date.now(),
+            };
+            localStorage.setItem(PENDING_RUN_KEY, JSON.stringify(run));
+            if (!cancelled) {
+              setPendingRun(run);
+              setResultDanceName(run.danceName);
+              setRenderPhase("queued");
+              setGenStatus("Render accepted. Waiting for provider queue…");
+              setLastRunUpdateAt(Date.now());
+            }
+            return id;
+          })());
+        const url = await trackDanceVideo(requestId, activeEngine, (msg) => {
+          if (!cancelled) {
+            setGenStatus(msg);
+            setRenderPhase(phaseFromMessage(msg));
+            setQueuePosition(queuePositionFromMessage(msg));
+            setLastRunUpdateAt(Date.now());
+          }
         });
         if (!cancelled) {
+          localStorage.removeItem(PENDING_RUN_KEY);
+          setPendingRun(null);
           setResultUrl(url);
+          setResultIsGoldenClip(false);
           setStep("done");
+          setGenerationStartedAt(null);
+          setLastRunUpdateAt(null);
         }
       } catch (err) {
         if (!cancelled) {
+          localStorage.removeItem(PENDING_RUN_KEY);
+          setPendingRun(null);
+          setGenerationStartedAt(null);
+          setLastRunUpdateAt(null);
           if (err instanceof GenerationError && err.kind === "unavailable") {
-            setStep("closed");
+            if (activeEngineForRun.goldenClip) {
+              setResultUrl(activeEngineForRun.goldenClip);
+              setResultIsGoldenClip(true);
+              setStep("done");
+            } else {
+              setStep("closed");
+            }
           } else {
             setGenError(
               err instanceof GenerationError && err.kind === "timeout"
@@ -209,52 +428,116 @@ export default function Studio() {
     setPhotoError(null);
   }, []);
 
-  const acceptDanceVideo = (file: File | undefined) => {
+  const acceptDanceVideo = (file: File | undefined, source: CustomClipSource = "uploaded") => {
     if (!file) return;
     if (!file.type.startsWith("video/") && file.type !== "image/gif") {
       setDanceError("That's not a video. MP4, MOV, WebM, M4V or GIF of the dance, please.");
+      return;
+    }
+    if (file.size === 0) {
+      setDanceError("That video is empty. Pick a clip that actually plays.");
       return;
     }
     if (file.size > 100 * 1024 * 1024) {
       setDanceError("That clip is over 100 MB. Trim it down — 10–30 seconds is the sweet spot.");
       return;
     }
+    clearClipPreview();
+    const previewUrl = URL.createObjectURL(file);
+    clipObjectUrlRef.current = previewUrl;
+    setCustomVideoPreviewUrl(previewUrl);
+    setCustomClipSource(source);
     setCustomVideo(file);
     setCustomUrl(null);
     setDance(null);
     setDanceError(null);
     setGenError(null);
+    if (source === "uploaded") setUrlDraft("");
   };
 
-  const acceptDanceUrl = (raw: string) => {
+  const updateUrlDraft = (value: string) => {
+    setUrlDraft(value);
+    setDanceError(null);
+    if (!value.trim()) return;
+    setDance(null);
+    if (customVideo !== null || customUrl !== null || customClipSource !== null) {
+      setCustomVideo(null);
+      setCustomUrl(null);
+      setCustomClipSource(null);
+      clearClipPreview();
+    }
+  };
+
+  const acceptDanceUrl = async (raw: string) => {
     const trimmed = raw.trim();
     let url: URL;
     try {
       url = new URL(trimmed);
     } catch {
-      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      setDanceError("That link doesn't look like a URL. Paste a video link or a direct file link.");
       return;
     }
     if (url.protocol !== "https:" && url.protocol !== "http:") {
-      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      setDanceError("That link doesn't look like a URL. Paste a video link or a direct file link.");
       return;
     }
-    // Social pages aren't video files, and their clips belong to their
-    // creators — the app doesn't rip them.
-    const host = url.hostname.replace(/^www\./, "");
-    if (["tiktok.com", "youtube.com", "youtu.be", "instagram.com"].some((h) => host === h || host.endsWith(`.${h}`))) {
-      setDanceError(
-        "That's a page on a social app, not a video file — and those clips belong to their creators. Save the video to your device with the app's own save button, then drop the file here instead.",
-      );
+
+    // A direct video file goes straight to the engine (fal fetches it
+    // server-side). Anything else is a page — hand it to the importer, which
+    // downloads and transcodes it into a clip we can upload.
+    if (/\.(mp4|mov|webm|m4v|gif)($|\?)/i.test(url.pathname)) {
+      clearClipPreview();
+      setCustomUrl(trimmed);
+      setCustomVideoPreviewUrl(trimmed);
+      setCustomClipSource("direct-url");
+      setCustomVideo(null);
+      setDance(null);
+      setDanceError(null);
+      setGenError(null);
+      setUrlDraft(trimmed);
+      // Link clips are only wired for Wan — snap back if another engine was picked.
+      setEngine(DEFAULT_ENGINE);
       return;
     }
-    setCustomUrl(trimmed);
+
+    setImporting(true);
+    setImportingUrl(trimmed);
+    clearClipPreview();
     setCustomVideo(null);
+    setCustomUrl(null);
+    setCustomClipSource(null);
     setDance(null);
     setDanceError(null);
     setGenError(null);
-    // Link clips are only wired for Wan — snap back if another engine was picked.
-    setEngine(DEFAULT_ENGINE);
+    try {
+      const res = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      if (!res.ok) {
+        const detail = await res
+          .json()
+          .then((b) => (b as { error?: string }).error)
+          .catch(() => null);
+        throw new Error(detail || `import failed (${res.status})`);
+      }
+      const name = decodeURIComponent(res.headers.get("X-Clip-Name") || "imported-clip.mp4");
+      const blob = await res.blob();
+      const contentType = blob.type || res.headers.get("Content-Type") || "video/mp4";
+      if (blob.size === 0) throw new Error("Downloaded clip is empty");
+      if (!contentType.startsWith("video/")) {
+        throw new Error("Downloaded clip was not a playable video");
+      }
+      acceptDanceVideo(new File([blob], name, { type: contentType }), "imported");
+    } catch (err) {
+      setDanceError(
+        `Couldn't import that link: ${err instanceof Error ? err.message : "unknown error"}. Try another link, or save the video and drop the file here instead.`,
+      );
+    } finally {
+      setImporting(false);
+      setImportingUrl(null);
+    }
   };
 
   // On the dance step, ⌘V works too: a copied video file loads directly,
@@ -269,16 +552,19 @@ export default function Studio() {
         return;
       }
       const text = clipboard?.getData("text");
-      if (text?.trim()) acceptDanceUrl(text);
+      if (text?.trim()) {
+        updateUrlDraft(text.trim());
+      }
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- accept* handlers only touch stable setters
   }, [step]);
 
   const reset = () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     objectUrlRef.current = null;
+    clearClipPreview();
     setPhotoUrl(null);
     setPhotoFile(null);
     setPhotoName(null);
@@ -286,11 +572,22 @@ export default function Studio() {
     setDance(null);
     setCustomVideo(null);
     setCustomUrl(null);
+    setCustomClipSource(null);
     setUrlDraft("");
     setDanceError(null);
+    setImportingUrl(null);
     setGenStatus(null);
     setGenError(null);
     setResultUrl(null);
+    setPendingRun(null);
+    setGenerationStartedAt(null);
+    setElapsedSeconds(0);
+    setRenderPhase("preparing");
+    setLastRunUpdateAt(null);
+    setQueuePosition(null);
+    setResultDanceName(null);
+    setResultIsGoldenClip(false);
+    localStorage.removeItem(PENDING_RUN_KEY);
     setStep("photo");
   };
 
@@ -310,6 +607,33 @@ export default function Studio() {
   };
 
   const stepNumber = step === "photo" ? 1 : step === "dance" ? 2 : 3;
+  const lastUpdateOffsetSeconds =
+    generationStartedAt !== null && lastRunUpdateAt !== null
+      ? Math.max(0, Math.floor((lastRunUpdateAt - generationStartedAt) / 1000))
+      : null;
+  const secondsSinceLastUpdate =
+    isRealRun && lastUpdateOffsetSeconds !== null
+      ? Math.max(0, elapsedSeconds - lastUpdateOffsetSeconds)
+      : null;
+  const progressValue = isRealRun
+    ? realRenderProgressPercent(renderPhase, elapsedSeconds, queuePosition)
+    : Math.round(((stageIndex + 1) / GENERATION_STAGES.length) * 100);
+  const providerUpdateIsStale =
+    isRealRun && secondsSinceLastUpdate !== null && secondsSinceLastUpdate >= 30;
+  const pendingUrl = urlDraft.trim();
+  const showPendingUrl = pendingUrl !== "" && customVideo === null && customUrl === null;
+  const previewLinkLabel =
+    customClipSource === "imported"
+      ? "Preview downloaded clip"
+      : customClipSource === "direct-url"
+        ? "Open source clip"
+        : "Preview selected clip";
+  const clipReadyMessage =
+    customClipSource === "imported"
+      ? "Validated MP4 ready — open the preview before generating."
+      : customClipSource === "direct-url"
+        ? "Direct video link ready — the engine will fetch this source."
+        : "Video file ready — open the preview before generating.";
 
   return (
     <section id="studio" aria-labelledby="studio-title" className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-28">
@@ -465,6 +789,9 @@ export default function Studio() {
                             setDance(d);
                             setCustomVideo(null);
                             setCustomUrl(null);
+                            setCustomClipSource(null);
+                            setUrlDraft("");
+                            clearClipPreview();
                           }}
                           className="sr-only"
                         />
@@ -507,12 +834,12 @@ export default function Studio() {
                           {customVideo
                             ? `“${customVideo.name}” loaded`
                             : customUrl
-                              ? "Link loaded"
+                              ? "Direct link loaded"
                               : "Got your own dance video?"}
                         </span>{" "}
                         {customVideo || customUrl
-                          ? "— this clip's moves (and music) go to the real generator."
-                          : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below (MP4, MOV, WebM, M4V or GIF, 10–30 s) — the real AI engine renders it."}
+                          ? `— ${clipReadyMessage}`
+                          : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below — a file link, or a YouTube/TikTok page we'll download for you (MP4, MOV, WebM, M4V or GIF, 10–30 s)."}
                       </span>
                       <input
                         type="file"
@@ -526,18 +853,47 @@ export default function Studio() {
                       <input
                         type="url"
                         value={urlDraft}
-                        onChange={(e) => setUrlDraft(e.target.value)}
+                        onChange={(e) => updateUrlDraft(e.target.value)}
+                        disabled={importing}
                         aria-label="Paste a video link"
-                        placeholder="https:// — direct link to a video file"
-                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter"
+                        placeholder="https:// — video file, or a YouTube / TikTok link"
+                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter disabled:opacity-50"
                       />
                       <button
                         type="button"
                         onClick={() => acceptDanceUrl(urlDraft)}
-                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform hover:-translate-y-0.5"
+                        disabled={importing || !urlDraft.trim()}
+                        aria-live="polite"
+                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-50"
                       >
-                        Use this link
+                        {importing ? "Importing…" : "Use this link"}
                       </button>
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm" aria-live="polite">
+                      {showPendingUrl && !importing && (
+                        <p className="text-muted">
+                          Ready to import:{" "}
+                          <span className="break-all font-medium text-ink">{pendingUrl}</span>
+                        </p>
+                      )}
+                      {importing && importingUrl && (
+                        <p className="text-muted">
+                          Downloading and validating:{" "}
+                          <span className="break-all font-medium text-ink">{importingUrl}</span>
+                        </p>
+                      )}
+                      {customVideoPreviewUrl && (
+                        <p>
+                          <a
+                            href={customVideoPreviewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-brand-bright underline underline-offset-4 hover:text-ink"
+                          >
+                            {previewLinkLabel}
+                          </a>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -591,7 +947,12 @@ export default function Studio() {
                 </div>
                 <p className="mt-3 text-sm text-muted" aria-live="polite">
                   <span className="font-bold text-ink">{engine.name}</span> ({engine.vendor}) ·{" "}
-                  {engine.pricing} · {engine.audio} · max length: {engine.maxDuration}
+                  {engine.pricing} ·{" "}
+                  {engine.carriesAudio
+                    ? "carries reference audio"
+                    : "reference audio added after generation"}{" "}
+                  · max length: {engine.maxDuration}
+                  <span className="mt-1 block text-xs text-muted">{engine.howWired}</span>
                 </p>
               </fieldset>
 
@@ -615,7 +976,15 @@ export default function Studio() {
                   onClick={() => {
                     setStageIndex(0);
                     setGenError(null);
-                    setGenStatus(null);
+                    setGenStatus("Submitting photo and reference video…");
+                    setElapsedSeconds(0);
+                    setRenderPhase("preparing");
+                    setLastRunUpdateAt(Date.now());
+                    setQueuePosition(null);
+                    setResultUrl(null);
+                    setResultIsGoldenClip(false);
+                    setGenerationStartedAt(Date.now());
+                    setResultDanceName(dance?.name ?? customVideo?.name ?? "Custom dance");
                     setStep("generating");
                   }}
                   className="rounded-full bg-go px-9 py-3.5 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
@@ -642,22 +1011,58 @@ export default function Studio() {
                 Rendering on {engine.name}
                 {isRealRun ? " — a real run can take a few minutes" : ""}
               </p>
+              {isRealRun && (
+                <div className="mt-5 grid w-full max-w-2xl grid-cols-2 gap-2 text-left sm:grid-cols-4">
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Phase</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {renderPhaseLabel(renderPhase)}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Elapsed</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {formatElapsed(elapsedSeconds)}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Queue</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {queuePosition === null ? "waiting" : `#${queuePosition}`}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Last update</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {formatUpdateAge(secondsSinceLastUpdate)}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {isRealRun && (
+                <p className="mt-3 text-sm font-medium text-ink">
+                  Last update: {formatUpdateAge(secondsSinceLastUpdate)} ·{" "}
+                  {renderExpectation(elapsedSeconds, renderPhase)}
+                </p>
+              )}
+              {providerUpdateIsStale && (
+                <p role="status" className="mt-3 max-w-xl rounded-lg bg-butter/15 px-4 py-3 text-sm text-ink">
+                  No provider update for {formatElapsed(secondsSinceLastUpdate ?? 0)}.
+                  The render is still open, and the app is still polling.
+                </p>
+              )}
               <div
                 role="progressbar"
                 aria-label="Generating the video"
                 aria-valuemin={0}
-                aria-valuemax={GENERATION_STAGES.length}
-                aria-valuenow={isRealRun ? undefined : stageIndex + 1}
+                aria-valuemax={100}
+                aria-valuenow={progressValue}
                 className="mt-4 h-3 w-full max-w-sm overflow-hidden rounded-full bg-bg-deep"
               >
                 <div
-                  className={`h-full rounded-full bg-butter transition-[width] duration-700 ease-out ${
-                    isRealRun ? "animate-pulse" : ""
-                  }`}
+                  className="h-full rounded-full bg-butter transition-[width] duration-700 ease-out"
                   style={{
-                    width: isRealRun
-                      ? "100%"
-                      : `${((stageIndex + 1) / GENERATION_STAGES.length) * 100}%`,
+                    width: `${progressValue}%`,
                   }}
                 />
               </div>
@@ -694,7 +1099,9 @@ export default function Studio() {
                 She ate. 🔥
               </h3>
               <p className="mt-2 max-w-[55ch] text-muted">
-                {dance ? `“${dance.name}” — performed flawlessly on the first take.` : "Performed flawlessly on the first take."}
+                {resultDanceName || dance
+                  ? `“${resultDanceName ?? dance!.name}” — performed flawlessly on the first take.`
+                  : "Performed flawlessly on the first take."}
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-8 sm:flex-row sm:items-start sm:justify-center">
@@ -714,7 +1121,7 @@ export default function Studio() {
                       <GrandmaDancer className="absolute inset-x-0 bottom-0 mx-auto h-[88%]" title="Your generated video: grandma performing the dance" />
                     )}
                     <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-go px-2.5 py-1 text-xs font-bold uppercase tracking-[0.08em] text-ink">
-                      {resultUrl ? "● Rendered" : "● Preview"}
+                      {resultIsGoldenClip ? "● Sample" : resultUrl ? "● Rendered" : "● Preview"}
                     </span>
                   </div>
                   {photoUrl && (
@@ -761,6 +1168,13 @@ export default function Studio() {
                       <span className="text-ink">{engine.name}</span> ({engine.vendor}),{" "}
                       {engine.pricing.toLowerCase()}, and turns the real photo + dance video into
                       the real thing, music included.
+                    </p>
+                  )}
+                  {resultIsGoldenClip && (
+                    <p className="mt-6 rounded-2xl bg-bg-deep/50 p-4 text-sm text-muted">
+                      <span className="font-bold text-butter">Pre-rendered sample.</span> The
+                      selected provider is unavailable, so this keeps the demo moving without
+                      pretending it is a fresh render.
                     </p>
                   )}
                 </div>

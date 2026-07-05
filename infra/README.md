@@ -75,39 +75,43 @@ the only things you change to relocate everything.
 
 ## Generate a video after deploy
 
-Grab the endpoint and key (set `RG` to your resource group):
+Verified end-to-end with `sora-2` (version `2025-12-08`). Sora uses the
+**`*.openai.azure.com`** endpoint (not the default `cognitiveservices` one) and
+the OpenAI-style `/openai/v1/videos` API with `api-version=preview`.
+
+Grab the Sora endpoint and key (set `RG` to your resource group):
 
 ```bash
 RG=<your-resource-group>
 ACC=$(az cognitiveservices account list -g $RG --query "[0].name" -o tsv)
-ENDPOINT=$(az cognitiveservices account show -g $RG -n $ACC --query properties.endpoint -o tsv)
+# NOTE: the "OpenAI Sora API" endpoint, not properties.endpoint
+OAI=$(az cognitiveservices account show -g $RG -n $ACC --query 'properties.endpoints."OpenAI Sora API"' -o tsv)
 KEY=$(az cognitiveservices account keys list -g $RG -n $ACC --query key1 -o tsv)
 ```
 
-Create a generation job (Sora video jobs API):
+Create a generation job (fields are strings: `size` like `1280x720`, `seconds` like `4`/`8`/`12`):
 
 ```bash
-JOB=$(curl -s "$ENDPOINT/openai/v1/video/generations/jobs?api-version=preview" \
+VID=$(curl -s "${OAI}openai/v1/videos?api-version=preview" \
   -H "api-key: $KEY" -H "Content-Type: application/json" \
   -d '{
         "model": "sora-2",
         "prompt": "A cheerful grandma dancing joyfully in a cozy living room, warm light, smooth camera",
-        "height": 720, "width": 1280, "n_seconds": 8
+        "size": "1280x720", "seconds": "8"
       }' | jq -r .id)
-echo "job: $JOB"
+echo "video: $VID"
 ```
 
-Poll until it succeeds, then download:
+Poll until `status == completed`, then download the MP4:
 
 ```bash
-curl -s "$ENDPOINT/openai/v1/video/generations/jobs/$JOB?api-version=preview" \
-  -H "api-key: $KEY" | jq '{status, generations}'
+curl -s "${OAI}openai/v1/videos/${VID}?api-version=preview" \
+  -H "api-key: $KEY" | jq '{status, progress, error}'
 
-# once status == succeeded, GEN is the generation id from the response above:
-curl -s "$ENDPOINT/openai/v1/video/generations/$GEN/content/video?api-version=preview" \
+# once completed:
+curl -s "${OAI}openai/v1/videos/${VID}/content?api-version=preview" \
   -H "api-key: $KEY" --output grandma-dancing.mp4
 ```
 
-> The exact API version / request fields for Sora on Azure evolve — check the
-> current Azure AI Foundry docs if a field is rejected. The infra above is what
-> Sora needs regardless of those details.
+> API surface (preview) can change — if a field is rejected, check the current
+> Azure AI Foundry Sora docs. The infra above is what Sora needs regardless.
