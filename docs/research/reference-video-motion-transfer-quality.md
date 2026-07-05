@@ -31,9 +31,15 @@ This follows the same research direction as earlier systems:
 
 ## Model/API options
 
-### Best fit for the current app: Wan-Animate via fal.ai
+### Current default: Kling Motion Control
 
-The existing app already defaults to `fal-ai/wan/v2.2-14b/animate/move`. fal's docs describe this endpoint as generating high-fidelity character videos by replicating expressions and movements from reference videos, and the schema requires both `video_url` and `image_url`: [fal Wan Animate Move API](https://fal.ai/models/fal-ai/wan/v2.2-14b/animate/move/api).
+The app now defaults to Kling v2.6 Motion Control because it completed a real end-to-end test with a YouTube-imported reference clip, a downscaled phone photo, `character_orientation: "video"`, and original audio preserved. fal describes Kling v2.6 Motion Control as transferring movement from a reference video to a character image. Its docs say the reference video should show a realistic-style character with full body or upper body visible, including the head, without obstruction; `character_orientation: "video"` is better for complex motions and allows up to 30 seconds, while `"image"` is better for camera-following portrait cases and allows up to 10 seconds: [fal Kling v2.6 Motion Control](https://fal.ai/models/fal-ai/kling-video/v2.6/standard/motion-control/api).
+
+Kling v3 adds optional element binding for facial consistency when `character_orientation` is `"video"`: [fal Kling v3 Motion Control](https://fal.ai/models/fal-ai/kling-video/v3/standard/motion-control/api). That is worth evaluating if identity drift is a top complaint.
+
+### Strong open-source alternative: Wan-Animate via fal.ai
+
+Wan remains a good fit for the workflow. fal's docs describe this endpoint as generating high-fidelity character videos by replicating expressions and movements from reference videos, and the schema requires both `video_url` and `image_url`: [fal Wan Animate Move API](https://fal.ai/models/fal-ai/wan/v2.2-14b/animate/move/api).
 
 Quality-relevant knobs in that API:
 
@@ -44,12 +50,6 @@ Quality-relevant knobs in that API:
 - `use_turbo`: fal says this applies quality enhancement for faster generation with optimized parameters
 
 Current app note: `src/lib/generate.ts` sends Wan requests at `resolution: "580p"` and does not set `num_inference_steps` or `video_quality`. A quality pass should benchmark 720p plus explicit quality parameters before changing providers.
-
-### Strong fallback: Kling Motion Control
-
-Kling Motion Control is also the right class of model. fal describes Kling v2.6 Motion Control as transferring movement from a reference video to a character image. Its docs say the reference video should show a realistic-style character with full body or upper body visible, including the head, without obstruction; `character_orientation: "video"` is better for complex motions and allows up to 30 seconds, while `"image"` is better for camera-following portrait cases and allows up to 10 seconds: [fal Kling v2.6 Motion Control](https://fal.ai/models/fal-ai/kling-video/v2.6/standard/motion-control/api).
-
-Kling v3 adds optional element binding for facial consistency when `character_orientation` is `"video"`: [fal Kling v3 Motion Control](https://fal.ai/models/fal-ai/kling-video/v3/standard/motion-control/api). That is worth evaluating if identity drift is a top complaint.
 
 ### Runway Act-Two
 
@@ -132,9 +132,9 @@ Automated signals can help but should not replace human review:
 ## Recommended next steps for DancingGrandma
 
 1. Treat this as **motion transfer**, not generic image-to-video.
-2. Keep Wan Animate via fal as the first quality target, but benchmark `720p`, explicit `video_quality`, and higher `num_inference_steps` against the current `580p` default.
+2. Keep Wan Animate via fal as the first open-source quality target, but benchmark `720p`, explicit `video_quality`, and higher `num_inference_steps` against the current `580p` setting.
 3. Evaluate Kling v3 Motion Control with element binding for identity consistency.
 4. Reclassify or replace the HF route, because the current implementation does not consume the reference video as a motion driver.
 5. Stop treating Sora/Azure Sora as a real fallback for this workflow; it is approximate, currently not wired to the uploaded image, has human-likeness constraints, and is scheduled for API removal.
 6. Add input validation before spending generation credits.
-7. Build a golden-set benchmark and compare output quality before making any provider the default.
+7. Build a golden-set benchmark and compare output quality before making another provider the default.

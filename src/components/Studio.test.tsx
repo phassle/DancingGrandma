@@ -79,9 +79,27 @@ test("a successful run lands on the done step with the rendered video", async ()
   await startRealRun(user);
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+  expect(submit.mock.calls[0][2]).toMatchObject({ id: "kling-motion-control" });
   expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
     "https://fal.media/out.mp4",
   );
+});
+
+test("Kling is the preselected recommended engine", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+
+  expect(screen.getByRole("radio", { name: /kling 2.6 motion control/i })).toHaveProperty(
+    "checked",
+    true,
+  );
+  expect(screen.getByText("our pick")).toBeDefined();
 });
 
 test("a curated dance with a bundled clip renders for real", async () => {
@@ -404,7 +422,7 @@ test("an unavailable provider shows a clearly labeled golden clip fallback", asy
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
   expect(screen.getByText(/pre-rendered sample/i)).toBeDefined();
   expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
-    "/dances/griddy.mp4",
+    "/dances/renegade.mp4",
   );
   expect(screen.queryByRole("alert")).toBeNull();
 });
@@ -423,7 +441,7 @@ test("a real run stores the pending request id until the run reaches a terminal 
   await waitFor(() => {
     expect(JSON.parse(localStorage.getItem("dg:pending-run") ?? "null")).toMatchObject({
       requestId: "req-1",
-      engineId: "wan-animate-fal",
+      engineId: "kling-motion-control",
       startedAt: expect.any(Number),
     });
   });

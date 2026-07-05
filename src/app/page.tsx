@@ -47,7 +47,7 @@ const FAQS = [
   },
   {
     q: "Which AI actually makes the video?",
-    a: "The pipeline is built for Wan 2.2 Animate (Alibaba's open-source motion-transfer model, Apache 2.0) served via fal.ai, with Kling 2.6 Motion Control as the fallback. Both take exactly one photo + one reference video and return her doing the dance.",
+    a: "The default pipeline uses Kling 2.6 Motion Control via fal.ai because it accepts one photo plus one reference motion video and carries the original music through. Wan 2.2 Animate stays available as the open-source alternative.",
   },
   {
     q: "Can I use someone who isn't a grandma?",
@@ -59,24 +59,24 @@ export default function Home() {
   return (
     <main className="flex-1">
       {/* Header */}
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <p className="font-display text-2xl">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6">
+        <p className="font-display text-xl sm:text-2xl">
           Dancing<span className="text-butter">Grandma</span>
         </p>
         <a
           href="#studio"
-          className="rounded-full bg-go px-6 py-2.5 font-display text-lg text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover"
+          className="rounded-full bg-go px-5 py-2.5 font-display text-base text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover sm:px-6 sm:text-lg"
         >
           Make one
         </a>
       </header>
 
       {/* Hero */}
-      <section aria-labelledby="hero-title" className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-20 pt-10 sm:pt-16 lg:grid-cols-[1.15fr_1fr] lg:gap-6">
+      <section aria-labelledby="hero-title" className="mx-auto grid w-full max-w-6xl items-center gap-5 px-4 pb-8 pt-6 sm:gap-8 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.15fr_1fr] lg:gap-6">
         <div>
           <h1
             id="hero-title"
-            className="font-display text-[clamp(2.75rem,7vw,5.5rem)] uppercase leading-[0.95]"
+            className="font-display text-[clamp(2.35rem,11vw,5.5rem)] uppercase leading-[0.95]"
           >
             Your grandma.
             <br />
@@ -84,14 +84,14 @@ export default function Home() {
             <br />
             <span className="text-go">One video.</span>
           </h1>
-          <p className="mt-6 max-w-[48ch] text-lg text-muted">
+          <p className="mt-5 max-w-[48ch] text-base text-muted sm:mt-6 sm:text-lg">
             Upload one photo, pick a trending TikTok dance, and the AI puts her in it —
             every move, every beat, music included. Sixty seconds from cardigan to icon.
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-5">
+          <div className="mt-7 flex flex-col items-stretch gap-4 sm:mt-9 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
             <a
               href="#studio"
-              className="rounded-full bg-go px-9 py-4 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover"
+              className="rounded-full bg-go px-7 py-3.5 text-center font-display text-lg text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover sm:px-9 sm:py-4 sm:text-xl"
             >
               Make grandma dance
             </a>
@@ -105,16 +105,16 @@ export default function Home() {
         </div>
 
         {/* Phone preview — the demo is the pitch */}
-        <div className="relative mx-auto w-64 sm:w-72">
+        <div className="relative mx-auto w-40 sm:w-72">
           <div className="rounded-[2.5rem] bg-bg-deep p-3 shadow-[var(--shadow-float)] ring-1 ring-line">
             <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,oklch(0.31_0.07_152),oklch(0.2_0.05_152))]">
               <GrandmaDancer className="absolute inset-x-0 bottom-0 mx-auto h-[92%]" />
             </div>
           </div>
-          <p className="absolute -left-10 top-10 -rotate-6 rounded-xl bg-butter px-3.5 py-2 font-display text-sm text-butter-ink shadow-[var(--shadow-pop)] max-lg:-left-2">
+          <p className="absolute -left-10 top-8 -rotate-6 rounded-xl bg-butter px-3 py-1.5 font-display text-xs text-butter-ink shadow-[var(--shadow-pop)] max-lg:-left-2 sm:top-10 sm:px-3.5 sm:py-2 sm:text-sm">
             📸 one photo in
           </p>
-          <p className="absolute -right-8 bottom-14 rotate-3 rounded-xl bg-surface-raised px-3.5 py-2 font-display text-sm text-ink shadow-[var(--shadow-pop)] ring-1 ring-line max-lg:-right-2">
+          <p className="absolute -right-8 bottom-9 rotate-3 rounded-xl bg-surface-raised px-3 py-1.5 font-display text-xs text-ink shadow-[var(--shadow-pop)] ring-1 ring-line max-lg:-right-2 sm:bottom-14 sm:px-3.5 sm:py-2 sm:text-sm">
             💃 one legend out
           </p>
         </div>
@@ -122,12 +122,14 @@ export default function Home() {
 
       <Marquee />
 
+      <Studio />
+
       {/* How it works — a real 3-step sequence */}
-      <section id="how" aria-labelledby="how-title" className="mx-auto w-full max-w-6xl px-6 py-20 sm:py-28">
+      <section id="how" aria-labelledby="how-title" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-28">
         <h2 id="how-title" className="font-display text-4xl sm:text-5xl">
           From fridge magnet to <span className="text-go">for-you page</span>
         </h2>
-        <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-8">
+        <ol className="mt-8 grid gap-8 sm:mt-12 sm:grid-cols-3 sm:gap-8">
           {STEPS.map((s) => (
             <li key={s.n} className="relative">
               <span aria-hidden="true" className="font-display text-6xl text-butter/90">
@@ -140,10 +142,8 @@ export default function Home() {
         </ol>
       </section>
 
-      <Studio />
-
       {/* FAQ */}
-      <section aria-labelledby="faq-title" className="mx-auto w-full max-w-3xl px-6 py-20 sm:py-24">
+      <section aria-labelledby="faq-title" className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 sm:py-24">
         <h2 id="faq-title" className="font-display text-4xl sm:text-5xl">
           The sensible questions
         </h2>
@@ -170,19 +170,19 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-line/60 bg-bg-deep/50">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-6 px-6 py-10 text-sm text-muted">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-6 px-4 py-8 text-sm text-muted sm:px-6 sm:py-10">
           <p className="font-display text-lg text-ink">
             Dancing<span className="text-butter">Grandma</span>
           </p>
           <p className="max-w-[52ch]">
-            A Monterro InfuseAI demo. Video generation designed around{" "}
+            A Monterro InfuseAI demo. Video generation defaults to{" "}
             <a
-              href="https://github.com/Wan-Video/Wan2.2"
+              href="https://fal.ai/models/fal-ai/kling-video/v2.6/standard/motion-control"
               className="text-brand-bright underline underline-offset-4 hover:text-ink"
             >
-              Wan 2.2 Animate
+              Kling 2.6 Motion Control
             </a>{" "}
-            (Apache 2.0) served via fal.ai — integration coming next.
+            via fal.ai, with Wan 2.2 Animate still available as an alternative.
           </p>
           <p>Be kind to your grandma. 💚</p>
         </div>

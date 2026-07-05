@@ -6,7 +6,7 @@ import {
   submitDanceVideo,
   trackDanceVideo,
 } from "./generate";
-import { ENGINES } from "./engines";
+import { DEFAULT_ENGINE, ENGINES } from "./engines";
 
 // The fal client is the system boundary — everything below it is mocked.
 vi.mock("@fal-ai/client", () => ({
@@ -104,6 +104,13 @@ test("available engines declare providers and resolve to wired adapters", () => 
       expect(hasWiredGenerationAdapter(engine)).toBe(true);
     }
   }
+});
+
+test("Kling is the default recommended engine", () => {
+  expect(DEFAULT_ENGINE.id).toBe("kling-motion-control");
+  expect(ENGINES[0].id).toBe("kling-motion-control");
+  expect(ENGINES[0].status).toBe("recommended");
+  expect(wan.status).toBe("available");
 });
 
 test("balance-exhausted 403 rejects with kind 'unavailable'", async () => {

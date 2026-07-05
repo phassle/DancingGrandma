@@ -282,10 +282,9 @@ export default function Studio() {
     };
   }, []);
 
-  // Real generation runs when there's a reference clip to hand the engine —
+  // Real generation runs when there's a reference clip to hand the engine:
   // the user's own upload or link, or a curated dance whose bundled clip
-  // exists — and the chosen engine has a wired adapter. Everything else
-  // simulates. Link clips are only wired for Wan.
+  // exists, and the chosen engine has a wired adapter.
   const danceHasLiveClip = dance !== null && liveClipIds.has(dance.id);
   const isRealRun =
     pendingRun !== null ||
@@ -698,14 +697,14 @@ export default function Studio() {
         : "Video file ready — open the preview before generating.";
 
   return (
-    <section id="studio" aria-labelledby="studio-title" className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-28">
-      <div className="rounded-[2rem] bg-surface shadow-[var(--shadow-float)] ring-1 ring-line/60 overflow-hidden">
+    <section id="studio" aria-labelledby="studio-title" className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-6 sm:py-28">
+      <div className="overflow-hidden rounded-[1.35rem] bg-surface shadow-[var(--shadow-float)] ring-1 ring-line/60 sm:rounded-[2rem]">
         {/* Studio header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line/60 bg-bg-deep/40 px-6 py-5 sm:px-10">
+        <div className="flex flex-col items-start justify-between gap-3 border-b border-line/60 bg-bg-deep/40 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-10 sm:py-5">
           <h2 id="studio-title" className="font-display text-2xl sm:text-3xl">
             The Dance Studio
           </h2>
-          <ol className="flex items-center gap-2 text-sm font-medium" aria-label="Progress">
+          <ol className="-mx-1 flex w-full items-center gap-1 overflow-x-auto px-1 text-sm font-medium sm:mx-0 sm:w-auto sm:gap-2 sm:overflow-visible sm:px-0" aria-label="Progress">
             {(["Photo", "Dance", "Showtime"] as const).map((label, i) => {
               const active = stepNumber === i + 1;
               const complete = stepNumber > i + 1;
@@ -713,7 +712,7 @@ export default function Studio() {
                 <li
                   key={label}
                   aria-current={active ? "step" : undefined}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition-colors ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 transition-colors sm:px-3 ${
                     active
                       ? "bg-butter text-butter-ink"
                       : complete
@@ -729,11 +728,11 @@ export default function Studio() {
           </ol>
         </div>
 
-        <div className="px-6 py-10 sm:px-10 sm:py-12">
+        <div className="px-4 py-6 sm:px-10 sm:py-12">
           {/* STEP 1 — PHOTO */}
           {step === "photo" && (
             <div className="animate-pop-in">
-              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl outline-none sm:text-4xl">
                 Who&apos;s the star?
               </h3>
               <p className="mt-2 max-w-[55ch] text-muted">
@@ -752,7 +751,7 @@ export default function Studio() {
                   setDragging(false);
                   acceptPhoto(e.dataTransfer.files[0]);
                 }}
-                className={`mt-8 rounded-3xl border-2 border-dashed p-8 sm:p-12 text-center transition-colors ${
+                className={`mt-6 rounded-2xl border-2 border-dashed p-6 text-center transition-colors sm:mt-8 sm:rounded-3xl sm:p-12 ${
                   dragging ? "border-butter bg-butter/10" : "border-line bg-bg-deep/30"
                 }`}
               >
@@ -805,12 +804,12 @@ export default function Studio() {
                 </p>
               )}
 
-              <div className="mt-8 flex justify-end">
+              <div className="mt-6 flex justify-end sm:mt-8">
                 <button
                   type="button"
                   disabled={!photoUrl}
                   onClick={() => setStep("dance")}
-                  className="rounded-full bg-butter px-8 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="w-full rounded-full bg-butter px-8 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                 >
                   Pick her dance →
                 </button>
@@ -821,14 +820,14 @@ export default function Studio() {
           {/* STEP 2 — DANCE */}
           {step === "dance" && (
             <div className="animate-pop-in">
-              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl outline-none sm:text-4xl">
                 Pick the choreography
               </h3>
               <p className="mt-2 max-w-[55ch] text-muted">
                 This week&apos;s most-requested dances. The music comes along for free.
               </p>
 
-              <fieldset className="mt-8">
+              <fieldset className="mt-6 sm:mt-8">
                 <legend className="sr-only">Choose a dance</legend>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {DANCES.map((d) => {
@@ -911,7 +910,7 @@ export default function Studio() {
                         onChange={(e) => acceptDanceVideo(e.target.files?.[0])}
                       />
                     </label>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <input
                         type="url"
                         value={urlDraft}
@@ -919,14 +918,14 @@ export default function Studio() {
                         disabled={importing}
                         aria-label="Paste a video link"
                         placeholder="https:// — video file, or a YouTube / TikTok link"
-                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter disabled:opacity-50"
+                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-3 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter disabled:opacity-50 sm:py-2"
                       />
                       <button
                         type="button"
                         onClick={() => acceptDanceUrl(urlDraft)}
                         disabled={importing || !urlDraft.trim()}
                         aria-live="polite"
-                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-50"
+                        className="rounded-full bg-surface-raised px-5 py-3 text-sm font-medium text-ink ring-1 ring-line transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-50 sm:py-2"
                       >
                         {importing ? "Importing…" : "Use this link"}
                       </button>
@@ -961,20 +960,20 @@ export default function Studio() {
                 </div>
               </fieldset>
 
-              {/* Engine picker — Wan is the default; more engines join over time */}
-              <fieldset className="mt-10">
+              {/* Engine picker — Kling is the default; more engines join over time */}
+              <fieldset className="mt-8 sm:mt-10">
                 <legend className="font-display text-xl">Pick the engine</legend>
                 <p className="mt-1 text-sm text-muted">
                   Same grandma, different AI under the hood. We default to the best one.
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Video generation engine">
+                <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap" role="radiogroup" aria-label="Video generation engine">
                   {ENGINES.map((e) => {
                     const selected = engine.id === e.id;
                     const soon = e.status === "coming-soon";
                     return (
                       <label
                         key={e.id}
-                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ring-2 transition-all ${
+                        className={`inline-flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium ring-2 transition-all sm:justify-start sm:rounded-full sm:py-2 ${
                           soon
                             ? "cursor-not-allowed text-muted/60 ring-line/40"
                             : selected
@@ -1021,11 +1020,11 @@ export default function Studio() {
                 </p>
               )}
 
-              <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+              <div className="mt-8 flex flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-center">
                 <button
                   type="button"
                   onClick={() => setStep("photo")}
-                  className="font-medium text-muted underline underline-offset-4 hover:text-ink"
+                  className="text-center font-medium text-muted underline underline-offset-4 hover:text-ink sm:text-left"
                 >
                   ← Back to the photo
                 </button>
@@ -1046,7 +1045,7 @@ export default function Studio() {
                     setResultDanceName(dance?.name ?? customVideo?.name ?? "Custom dance");
                     setStep("generating");
                   }}
-                  className="rounded-full bg-go px-9 py-3.5 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="w-full rounded-full bg-go px-9 py-3.5 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                 >
                   Make her dance 💃
                 </button>
@@ -1056,11 +1055,11 @@ export default function Studio() {
 
           {/* STEP 3 — GENERATING */}
           {step === "generating" && (
-            <div className="animate-pop-in flex flex-col items-center py-6 text-center">
-              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+            <div className="animate-pop-in flex flex-col items-center py-4 text-center sm:py-6">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl outline-none sm:text-4xl">
                 Hold my knitting.
               </h3>
-              <div className="mt-8 w-44">
+              <div className="mt-6 w-36 sm:mt-8 sm:w-44">
                 <GrandmaDancer className="w-full" title="Grandma rehearsing her dance" />
               </div>
               <p aria-live="polite" className="mt-6 min-h-[1.75rem] font-medium text-brand-bright">
@@ -1130,8 +1129,8 @@ export default function Studio() {
 
           {/* PROVIDER UNAVAILABLE — the dance floor is closed */}
           {step === "closed" && (
-            <div className="animate-pop-in flex flex-col items-center py-6 text-center">
-              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+            <div className="animate-pop-in flex flex-col items-center py-4 text-center sm:py-6">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl outline-none sm:text-4xl">
                 The dance floor is closed 🪩
               </h3>
               <p className="mt-3 max-w-[45ch] text-muted">
@@ -1154,7 +1153,7 @@ export default function Studio() {
           {/* STEP 4 — DONE */}
           {step === "done" && (
             <div className="animate-pop-in">
-              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl outline-none sm:text-4xl">
                 She ate. 🔥
               </h3>
               <p className="mt-2 max-w-[55ch] text-muted">
@@ -1195,11 +1194,11 @@ export default function Studio() {
                 </div>
 
                 <div className="max-w-sm">
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <button
                       type="button"
                       onClick={share}
-                      className="rounded-full bg-go px-7 py-3 font-display text-lg text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover"
+                      className="rounded-full bg-go px-7 py-3 text-center font-display text-lg text-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5 hover:bg-go-hover"
                     >
                       Share the chaos
                     </button>
@@ -1207,7 +1206,7 @@ export default function Studio() {
                       <a
                         href={resultUrl}
                         download="dancing-grandma.mp4"
-                        className="rounded-full bg-butter px-7 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5"
+                        className="rounded-full bg-butter px-7 py-3 text-center font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5"
                       >
                         Download
                       </a>
@@ -1215,7 +1214,7 @@ export default function Studio() {
                     <button
                       type="button"
                       onClick={reset}
-                      className="rounded-full bg-surface-raised px-7 py-3 font-display text-lg text-ink ring-1 ring-line transition-transform hover:-translate-y-0.5"
+                      className="rounded-full bg-surface-raised px-7 py-3 text-center font-display text-lg text-ink ring-1 ring-line transition-transform hover:-translate-y-0.5"
                     >
                       Make another
                     </button>

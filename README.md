@@ -9,12 +9,12 @@ music included.
 A Monterro InfuseAI demo. The full flow (photo → reference motion video → engine
 → result) is live; real renders run for uploaded, imported, and curated
 reference clips when provider credentials are configured. The production
-pipeline is a reference-video motion-transfer path designed around
-[Wan 2.2 Animate 14B](https://github.com/Wan-Video/Wan2.2) (Apache 2.0) served via
-[fal.ai](https://fal.ai/models/fal-ai/wan/v2.2-14b/animate/move), with Kling 2.6 Motion
-Control as a selectable alternative. Generic image-to-video is not treated as a
-wired engine unless it accepts the reference motion video and performs character
-animation or replacement.
+pipeline is a reference-video motion-transfer path that defaults to
+[Kling 2.6 Motion Control](https://fal.ai/models/fal-ai/kling-video/v2.6/standard/motion-control)
+served via fal.ai, with [Wan 2.2 Animate 14B](https://github.com/Wan-Video/Wan2.2)
+(Apache 2.0) still available as a selectable alternative. Generic image-to-video
+is not treated as a wired engine unless it accepts the reference motion video and
+performs character animation or replacement.
 
 ## Run it
 
