@@ -42,3 +42,14 @@ next-env.d.ts
 
 # machine-local Claude Code permissions
 .claude/settings.local.json
+
+# machine-local secrets / identifiers — never commit (public repo)
+.claude/az-rg-allow.local
+infra/main.bicepparam
+infra/*.local.bicepparam
+
+# Curated dance reference clips are local drop-ins (copyright) — only the
+# Pexels-licensed freestyle clip ships with the repo. See public/dances/README.md.
+public/dances/*
+!public/dances/README.md
+!public/dances/freestyle.mp4

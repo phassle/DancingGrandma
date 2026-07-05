@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
-import { generateDanceVideo } from "@/lib/generate";
+import { GenerationError, generateDanceVideo } from "@/lib/generate";
 
-type Step = "photo" | "dance" | "generating" | "done";
+type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
 type Dance = {
   id: string;
@@ -14,15 +14,35 @@ type Dance = {
   bpm: number;
   spice: 1 | 2 | 3;
   blurb: string;
+  /** Local reference video under public/ — when the file exists, this dance
+   * renders for real instead of simulating. See public/dances/README.md. */
+  referenceClip?: string;
 };
 
 const DANCES: Dance[] = [
-  { id: "griddy", name: "The Griddy", emoji: "🏈", bpm: 140, spice: 2, blurb: "Arms pumping, knees flying. Touchdown energy." },
-  { id: "renegade", name: "Renegade", emoji: "🔥", bpm: 128, spice: 3, blurb: "The classic. Eight counts of pure chaos." },
+  { id: "freestyle", name: "Street Freestyle", emoji: "📻", bpm: 100, spice: 2, blurb: "Boombox out, limbs loose. Full send.", referenceClip: "/dances/freestyle.mp4" },
+  { id: "griddy", name: "The Griddy", emoji: "🏈", bpm: 140, spice: 2, blurb: "Arms pumping, knees flying. Touchdown energy.", referenceClip: "/dances/griddy.mp4" },
+  { id: "renegade", name: "Renegade", emoji: "🔥", bpm: 128, spice: 3, blurb: "The classic. Eight counts of pure chaos.", referenceClip: "/dances/renegade.mp4" },
   { id: "macarena", name: "Macarena Redux", emoji: "🙌", bpm: 103, spice: 1, blurb: "She already knows this one. Trust." },
   { id: "disco", name: "Disco Inferno", emoji: "🪩", bpm: 118, spice: 2, blurb: "Point up, point down, own the room." },
   { id: "woah", name: "The Woah", emoji: "🎯", bpm: 145, spice: 2, blurb: "One move. Perfectly timed. Devastating." },
 ];
+
+// Fetched reference clips, cached per path so a retry reuses the same File
+// (and the seam's upload memoization keeps holding).
+const clipFiles = new Map<string, Promise<File>>();
+
+function referenceClipFile(path: string): Promise<File> {
+  let file = clipFiles.get(path);
+  if (!file) {
+    file = fetch(path)
+      .then((res) => res.arrayBuffer())
+      .then((buf) => new File([buf], path.split("/").pop()!, { type: "video/mp4" }));
+    clipFiles.set(path, file);
+    file.catch(() => clipFiles.delete(path));
+  }
+  return file;
+}
 
 const GENERATION_STAGES = [
   "Studying the choreography…",
@@ -53,15 +73,44 @@ export default function Studio() {
   const [dragging, setDragging] = useState(false);
   const [dance, setDance] = useState<Dance | null>(null);
   const [customVideo, setCustomVideo] = useState<File | null>(null);
+  const [customUrl, setCustomUrl] = useState<string | null>(null);
+  const [urlDraft, setUrlDraft] = useState("");
   const [danceError, setDanceError] = useState<string | null>(null);
   const [engine, setEngine] = useState<Engine>(DEFAULT_ENGINE);
   const [genStatus, setGenStatus] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
 
-  // Real generation runs when the user brought their own reference clip and
-  // the chosen engine has a wired adapter; curated dances stay simulated.
-  const isRealRun = customVideo !== null && Boolean(engine.endpoint);
+  // Curated dances whose reference clip actually exists under public/dances/.
+  const [liveClipIds, setLiveClipIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const checks = await Promise.all(
+        DANCES.filter((d) => d.referenceClip).map(async (d) => {
+          try {
+            const res = await fetch(d.referenceClip!, { method: "HEAD" });
+            return res.ok ? d.id : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      if (!cancelled) setLiveClipIds(new Set(checks.filter((id) => id !== null)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Real generation runs when there's a reference clip to hand the engine —
+  // the user's own upload or link, or a curated dance whose bundled clip
+  // exists — and the chosen engine has a wired adapter. Everything else
+  // simulates. Link clips are only wired for Wan.
+  const danceHasLiveClip = dance !== null && liveClipIds.has(dance.id);
+  const isRealRun =
+    (customVideo !== null || customUrl !== null || danceHasLiveClip) &&
+    Boolean(engine.endpoint);
   const [stageIndex, setStageIndex] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,7 +151,9 @@ export default function Studio() {
     let cancelled = false;
     (async () => {
       try {
-        const url = await generateDanceVideo(photoFile!, customVideo!, engine, (msg) => {
+        const referenceVideo =
+          customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
+        const url = await generateDanceVideo(photoFile!, referenceVideo, engine, (msg) => {
           if (!cancelled) setGenStatus(msg);
         });
         if (!cancelled) {
@@ -111,12 +162,18 @@ export default function Studio() {
         }
       } catch (err) {
         if (!cancelled) {
-          setGenError(
-            err instanceof Error
-              ? `The engine tripped over its own feet: ${err.message}. Nothing was charged twice — try again.`
-              : "Something went wrong on the dance floor. Try again.",
-          );
-          setStep("dance");
+          if (err instanceof GenerationError && err.kind === "unavailable") {
+            setStep("closed");
+          } else {
+            setGenError(
+              err instanceof GenerationError && err.kind === "timeout"
+                ? "That render took too long — the floor was packed. Your photo and clip are still loaded, so just try again."
+                : err instanceof Error
+                  ? `The engine tripped over its own feet: ${err.message}. Your photo and clip are still loaded — try again.`
+                  : "Something went wrong on the dance floor. Try again.",
+            );
+            setStep("dance");
+          }
         }
       }
     })();
@@ -154,8 +211,8 @@ export default function Studio() {
 
   const acceptDanceVideo = (file: File | undefined) => {
     if (!file) return;
-    if (!file.type.startsWith("video/")) {
-      setDanceError("That's not a video. MP4 or MOV of the dance, please.");
+    if (!file.type.startsWith("video/") && file.type !== "image/gif") {
+      setDanceError("That's not a video. MP4, MOV, WebM, M4V or GIF of the dance, please.");
       return;
     }
     if (file.size > 100 * 1024 * 1024) {
@@ -163,10 +220,61 @@ export default function Studio() {
       return;
     }
     setCustomVideo(file);
+    setCustomUrl(null);
     setDance(null);
     setDanceError(null);
     setGenError(null);
   };
+
+  const acceptDanceUrl = (raw: string) => {
+    const trimmed = raw.trim();
+    let url: URL;
+    try {
+      url = new URL(trimmed);
+    } catch {
+      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      return;
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      return;
+    }
+    // Social pages aren't video files, and their clips belong to their
+    // creators — the app doesn't rip them.
+    const host = url.hostname.replace(/^www\./, "");
+    if (["tiktok.com", "youtube.com", "youtu.be", "instagram.com"].some((h) => host === h || host.endsWith(`.${h}`))) {
+      setDanceError(
+        "That's a page on a social app, not a video file — and those clips belong to their creators. Save the video to your device with the app's own save button, then drop the file here instead.",
+      );
+      return;
+    }
+    setCustomUrl(trimmed);
+    setCustomVideo(null);
+    setDance(null);
+    setDanceError(null);
+    setGenError(null);
+    // Link clips are only wired for Wan — snap back if another engine was picked.
+    setEngine(DEFAULT_ENGINE);
+  };
+
+  // On the dance step, ⌘V works too: a copied video file loads directly,
+  // copied text goes through the link path.
+  useEffect(() => {
+    if (step !== "dance") return;
+    const onPaste = (e: Event) => {
+      const clipboard = (e as ClipboardEvent).clipboardData;
+      const file = clipboard?.files?.[0];
+      if (file) {
+        acceptDanceVideo(file);
+        return;
+      }
+      const text = clipboard?.getData("text");
+      if (text?.trim()) acceptDanceUrl(text);
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+     
+  }, [step]);
 
   const reset = () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -177,6 +285,8 @@ export default function Studio() {
     setPhotoError(null);
     setDance(null);
     setCustomVideo(null);
+    setCustomUrl(null);
+    setUrlDraft("");
     setDanceError(null);
     setGenStatus(null);
     setGenError(null);
@@ -354,13 +464,21 @@ export default function Studio() {
                           onChange={() => {
                             setDance(d);
                             setCustomVideo(null);
+                            setCustomUrl(null);
                           }}
                           className="sr-only"
                         />
                         <span aria-hidden="true" className="text-3xl">{d.emoji}</span>
                         <span className="flex-1">
                           <span className="flex items-baseline justify-between gap-2">
-                            <span className="font-display text-xl">{d.name}</span>
+                            <span className="font-display text-xl">
+                              {d.name}
+                              {liveClipIds.has(d.id) && (
+                                <span className={`ml-2 rounded-full px-2 py-0.5 align-middle font-sans text-xs font-bold ${selected ? "bg-butter-ink/15" : "bg-brand/40 text-brand-bright"}`}>
+                                  real render
+                                </span>
+                              )}
+                            </span>
                             <SpiceMeter level={d.spice} />
                           </span>
                           <span className={`mt-1 block text-sm ${selected ? "text-butter-ink/80" : "text-muted"}`}>
@@ -370,28 +488,58 @@ export default function Studio() {
                       </label>
                     );
                   })}
-                  <label
-                    className={`flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed p-4 transition-colors ${
-                      customVideo ? "border-butter bg-butter/10 text-ink" : "border-line text-muted hover:border-muted"
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      acceptDanceVideo(e.dataTransfer.files[0]);
+                    }}
+                    className={`rounded-2xl border border-dashed p-4 transition-colors sm:col-span-2 ${
+                      customVideo || customUrl
+                        ? "border-butter bg-butter/10 text-ink"
+                        : "border-line text-muted hover:border-muted"
                     }`}
                   >
-                    <span aria-hidden="true" className="text-3xl">🎬</span>
-                    <span className="text-sm">
-                      <span className="font-medium text-ink">
-                        {customVideo ? `“${customVideo.name}” loaded` : "Got your own dance video?"}
-                      </span>{" "}
-                      {customVideo
-                        ? "— this clip's moves (and music) go to the real generator."
-                        : "Upload a reference clip (MP4/MOV, 10–30 s) and the real AI engine renders it."}
-                    </span>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="sr-only"
-                      aria-label="Upload your own reference dance video"
-                      onChange={(e) => acceptDanceVideo(e.target.files?.[0])}
-                    />
-                  </label>
+                    <label className="flex cursor-pointer items-center gap-4">
+                      <span aria-hidden="true" className="text-3xl">🎬</span>
+                      <span className="text-sm">
+                        <span className="font-medium text-ink">
+                          {customVideo
+                            ? `“${customVideo.name}” loaded`
+                            : customUrl
+                              ? "Link loaded"
+                              : "Got your own dance video?"}
+                        </span>{" "}
+                        {customVideo || customUrl
+                          ? "— this clip's moves (and music) go to the real generator."
+                          : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below (MP4, MOV, WebM, M4V or GIF, 10–30 s) — the real AI engine renders it."}
+                      </span>
+                      <input
+                        type="file"
+                        accept="video/*,image/gif"
+                        className="sr-only"
+                        aria-label="Upload your own reference dance video"
+                        onChange={(e) => acceptDanceVideo(e.target.files?.[0])}
+                      />
+                    </label>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <input
+                        type="url"
+                        value={urlDraft}
+                        onChange={(e) => setUrlDraft(e.target.value)}
+                        aria-label="Paste a video link"
+                        placeholder="https:// — direct link to a video file"
+                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => acceptDanceUrl(urlDraft)}
+                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform hover:-translate-y-0.5"
+                      >
+                        Use this link
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </fieldset>
 
@@ -404,7 +552,10 @@ export default function Studio() {
                 <div className="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Video generation engine">
                   {ENGINES.map((e) => {
                     const selected = engine.id === e.id;
-                    const soon = e.status === "coming-soon";
+                    // Link clips are only wired for Wan; a pasted link pins the engine.
+                    const soon =
+                      e.status === "coming-soon" ||
+                      (customUrl !== null && e.id !== DEFAULT_ENGINE.id);
                     return (
                       <label
                         key={e.id}
@@ -460,7 +611,7 @@ export default function Studio() {
                 </button>
                 <button
                   type="button"
-                  disabled={!dance && !customVideo}
+                  disabled={!dance && !customVideo && !customUrl}
                   onClick={() => {
                     setStageIndex(0);
                     setGenError(null);
@@ -510,6 +661,29 @@ export default function Studio() {
                   }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* PROVIDER UNAVAILABLE — the dance floor is closed */}
+          {step === "closed" && (
+            <div className="animate-pop-in flex flex-col items-center py-6 text-center">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+                The dance floor is closed 🪩
+              </h3>
+              <p className="mt-3 max-w-[45ch] text-muted">
+                Our engine room ran out of juice mid-party. We&apos;re topping it up —
+                back soon. Your photo and clip are safe right here.
+              </p>
+              <div className="mt-8 w-44 opacity-60">
+                <GrandmaDancer className="w-full" title="Grandma waiting for the dance floor to reopen" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep("dance")}
+                className="mt-8 rounded-full bg-butter px-8 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5"
+              >
+                Back to the studio
+              </button>
             </div>
           )}
 
@@ -580,13 +754,15 @@ export default function Studio() {
                       Make another
                     </button>
                   </div>
-                  <p className="mt-6 rounded-2xl bg-bg-deep/50 p-4 text-sm text-muted">
-                    <span className="font-bold text-butter">Demo mode.</span> This preview is
-                    simulated — in production this run goes to{" "}
-                    <span className="text-ink">{engine.name}</span> ({engine.vendor}),{" "}
-                    {engine.pricing.toLowerCase()}, and turns the real photo + dance video into
-                    the real thing, music included.
-                  </p>
+                  {!resultUrl && (
+                    <p className="mt-6 rounded-2xl bg-bg-deep/50 p-4 text-sm text-muted">
+                      <span className="font-bold text-butter">Demo mode.</span> This preview is
+                      simulated — in production this run goes to{" "}
+                      <span className="text-ink">{engine.name}</span> ({engine.vendor}),{" "}
+                      {engine.pricing.toLowerCase()}, and turns the real photo + dance video into
+                      the real thing, music included.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
