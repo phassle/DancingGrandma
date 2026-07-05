@@ -23,8 +23,9 @@ export type TrackOptions = {
  *   (fal 403 "User is locked. Reason: Exhausted balance").
  * - "timeout" — the run was accepted but didn't finish in time.
  * - "provider" — any other provider-side failure; worth a retry.
+ * - "moderation" — the uploaded photo was rejected by server-side moderation.
  */
-export type GenerationFailureKind = "unavailable" | "timeout" | "provider";
+export type GenerationFailureKind = "unavailable" | "timeout" | "provider" | "moderation";
 
 export type GenerationErrorMeta = {
   status?: number;
@@ -228,9 +229,64 @@ async function uploadPhotoOnce(file: File): Promise<string> {
   const cached = uploadedUrls.get(file);
   if (cached) return cached;
   const uploadable = await resizePhotoForProvider(file);
-  const url = await fal.storage.upload(uploadable);
+  // Upload with a 1-hour TTL so the file auto-expires even if our post-run
+  // cleanup doesn't reach the server.
+  const url = await fal.storage.upload(uploadable, { lifecycle: { expiresIn: "1h" } });
   uploadedUrls.set(file, url);
   return url;
+}
+
+/**
+ * Call the server-side moderation endpoint. Throws a GenerationError with
+ * kind "moderation" if the photo is rejected.
+ */
+async function moderatePhoto(photo: File): Promise<void> {
+  const form = new FormData();
+  form.set("photo", photo);
+  let res: Response;
+  try {
+    res = await fetch("/api/moderate", { method: "POST", body: form });
+  } catch (err) {
+    // Network error — treat as accepted so a connectivity blip doesn't block
+    // all runs. Real rejections come from a healthy server response.
+    console.warn("[dg:moderation-fetch-error]", err instanceof Error ? err.message : err);
+    return;
+  }
+  if (!res.ok) {
+    // Server error on moderation side — treat as accepted (best-effort).
+    console.warn("[dg:moderation-error]", { status: res.status });
+    return;
+  }
+  const body = (await res.json().catch(() => ({ accepted: true }))) as {
+    accepted: boolean;
+    reason?: string;
+  };
+  if (!body.accepted) {
+    throw new GenerationError(
+      "moderation",
+      body.reason ?? "This photo can't be used. Please choose a different one.",
+    );
+  }
+}
+
+/**
+ * Delete an uploaded photo from fal storage after the run (best-effort).
+ * The photo was also uploaded with a 1-hour TTL as a belt-and-suspenders
+ * measure, so this is an optimistic early deletion.
+ */
+export async function cleanupPhotoUpload(photo: File): Promise<void> {
+  const url = uploadedUrls.get(photo);
+  if (!url) return;
+  uploadedUrls.delete(photo);
+  try {
+    await fetch("/api/photo/cleanup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+  } catch {
+    // Best-effort — the 1-hour TTL handles cleanup if this call fails.
+  }
 }
 
 type GenerationAdapter = {
@@ -493,6 +549,7 @@ export async function submitDanceVideo(
   referenceVideo: File | string,
   engine: Engine,
 ): Promise<string> {
+  await moderatePhoto(photo);
   const requestId = await adapterFor(engine).submit(photo, referenceVideo, engine);
   recordAcceptedRun(requestId, engine);
   return requestId;
