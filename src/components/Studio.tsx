@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
+import { generateDanceVideo } from "@/lib/generate";
 
 type Step = "photo" | "dance" | "generating" | "done";
 
@@ -46,11 +47,21 @@ function SpiceMeter({ level }: { level: 1 | 2 | 3 }) {
 export default function Studio() {
   const [step, setStep] = useState<Step>("photo");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoName, setPhotoName] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [dance, setDance] = useState<Dance | null>(null);
+  const [customVideo, setCustomVideo] = useState<File | null>(null);
+  const [danceError, setDanceError] = useState<string | null>(null);
   const [engine, setEngine] = useState<Engine>(DEFAULT_ENGINE);
+  const [genStatus, setGenStatus] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+
+  // Real generation runs when the user brought their own reference clip and
+  // the chosen engine has a wired adapter; curated dances stay simulated.
+  const isRealRun = customVideo !== null && Boolean(engine.endpoint);
   const [stageIndex, setStageIndex] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,13 +88,43 @@ export default function Studio() {
   useEffect(() => {
     if (step !== "generating") return;
     const stageTimer = setInterval(() => {
-      setStageIndex((i) => Math.min(i + 1, GENERATION_STAGES.length - 1));
-    }, 1100);
-    const doneTimer = setTimeout(() => setStep("done"), 6800);
+      setStageIndex((i) => (i + 1) % GENERATION_STAGES.length);
+    }, 1600);
+
+    if (!isRealRun) {
+      const doneTimer = setTimeout(() => setStep("done"), 6800);
+      return () => {
+        clearInterval(stageTimer);
+        clearTimeout(doneTimer);
+      };
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = await generateDanceVideo(photoFile!, customVideo!, engine, (msg) => {
+          if (!cancelled) setGenStatus(msg);
+        });
+        if (!cancelled) {
+          setResultUrl(url);
+          setStep("done");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setGenError(
+            err instanceof Error
+              ? `The engine tripped over its own feet: ${err.message}. Nothing was charged twice — try again.`
+              : "Something went wrong on the dance floor. Try again.",
+          );
+          setStep("dance");
+        }
+      }
+    })();
     return () => {
+      cancelled = true;
       clearInterval(stageTimer);
-      clearTimeout(doneTimer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- inputs are frozen when the run starts
   }, [step]);
 
   useEffect(() => {
@@ -106,17 +147,40 @@ export default function Studio() {
     const url = URL.createObjectURL(file);
     objectUrlRef.current = url;
     setPhotoUrl(url);
+    setPhotoFile(file);
     setPhotoName(file.name);
     setPhotoError(null);
   }, []);
+
+  const acceptDanceVideo = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("video/")) {
+      setDanceError("That's not a video. MP4 or MOV of the dance, please.");
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      setDanceError("That clip is over 100 MB. Trim it down — 10–30 seconds is the sweet spot.");
+      return;
+    }
+    setCustomVideo(file);
+    setDance(null);
+    setDanceError(null);
+    setGenError(null);
+  };
 
   const reset = () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     objectUrlRef.current = null;
     setPhotoUrl(null);
+    setPhotoFile(null);
     setPhotoName(null);
     setPhotoError(null);
     setDance(null);
+    setCustomVideo(null);
+    setDanceError(null);
+    setGenStatus(null);
+    setGenError(null);
+    setResultUrl(null);
     setStep("photo");
   };
 
@@ -281,7 +345,10 @@ export default function Studio() {
                           name="dance"
                           value={d.id}
                           checked={selected}
-                          onChange={() => setDance(d)}
+                          onChange={() => {
+                            setDance(d);
+                            setCustomVideo(null);
+                          }}
                           className="sr-only"
                         />
                         <span aria-hidden="true" className="text-3xl">{d.emoji}</span>
@@ -297,13 +364,28 @@ export default function Studio() {
                       </label>
                     );
                   })}
-                  <div className="flex items-center gap-4 rounded-2xl border border-dashed border-line p-4 text-muted">
+                  <label
+                    className={`flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed p-4 transition-colors ${
+                      customVideo ? "border-butter bg-butter/10 text-ink" : "border-line text-muted hover:border-muted"
+                    }`}
+                  >
                     <span aria-hidden="true" className="text-3xl">🎬</span>
-                    <p className="text-sm">
-                      <span className="font-medium text-ink">Got your own dance video?</span>{" "}
-                      Uploading a reference clip lands with the real generator — coming soon.
-                    </p>
-                  </div>
+                    <span className="text-sm">
+                      <span className="font-medium text-ink">
+                        {customVideo ? `“${customVideo.name}” loaded` : "Got your own dance video?"}
+                      </span>{" "}
+                      {customVideo
+                        ? "— this clip's moves (and music) go to the real generator."
+                        : "Upload a reference clip (MP4/MOV, 10–30 s) and the real AI engine renders it."}
+                    </span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="sr-only"
+                      aria-label="Upload your own reference dance video"
+                      onChange={(e) => acceptDanceVideo(e.target.files?.[0])}
+                    />
+                  </label>
                 </div>
               </fieldset>
 
@@ -356,6 +438,12 @@ export default function Studio() {
                 </p>
               </fieldset>
 
+              {(danceError || genError) && (
+                <p role="alert" className="mt-4 rounded-xl bg-go/15 px-4 py-3 text-sm font-medium text-ink">
+                  ⚠️ {danceError ?? genError}
+                </p>
+              )}
+
               <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
                 <button
                   type="button"
@@ -366,9 +454,11 @@ export default function Studio() {
                 </button>
                 <button
                   type="button"
-                  disabled={!dance}
+                  disabled={!dance && !customVideo}
                   onClick={() => {
                     setStageIndex(0);
+                    setGenError(null);
+                    setGenStatus(null);
                     setStep("generating");
                   }}
                   className="rounded-full bg-go px-9 py-3.5 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
@@ -389,20 +479,29 @@ export default function Studio() {
                 <GrandmaDancer className="w-full" title="Grandma rehearsing her dance" />
               </div>
               <p aria-live="polite" className="mt-6 min-h-[1.75rem] font-medium text-brand-bright">
-                {GENERATION_STAGES[stageIndex]}
+                {isRealRun && genStatus ? genStatus : GENERATION_STAGES[stageIndex]}
               </p>
-              <p className="mt-1 text-sm text-muted">Rendering on {engine.name}</p>
+              <p className="mt-1 text-sm text-muted">
+                Rendering on {engine.name}
+                {isRealRun ? " — a real run can take a few minutes" : ""}
+              </p>
               <div
                 role="progressbar"
                 aria-label="Generating the video"
                 aria-valuemin={0}
                 aria-valuemax={GENERATION_STAGES.length}
-                aria-valuenow={stageIndex + 1}
+                aria-valuenow={isRealRun ? undefined : stageIndex + 1}
                 className="mt-4 h-3 w-full max-w-sm overflow-hidden rounded-full bg-bg-deep"
               >
                 <div
-                  className="h-full rounded-full bg-butter transition-[width] duration-700 ease-out"
-                  style={{ width: `${((stageIndex + 1) / GENERATION_STAGES.length) * 100}%` }}
+                  className={`h-full rounded-full bg-butter transition-[width] duration-700 ease-out ${
+                    isRealRun ? "animate-pulse" : ""
+                  }`}
+                  style={{
+                    width: isRealRun
+                      ? "100%"
+                      : `${((stageIndex + 1) / GENERATION_STAGES.length) * 100}%`,
+                  }}
                 />
               </div>
             </div>
@@ -422,9 +521,20 @@ export default function Studio() {
                 {/* 9:16 phone preview */}
                 <div className="relative w-56 shrink-0 rounded-[2rem] bg-bg-deep p-3 shadow-[var(--shadow-float)] ring-1 ring-line">
                   <div className="relative aspect-[9/16] overflow-hidden rounded-[1.5rem] bg-[linear-gradient(180deg,oklch(0.3_0.07_152),oklch(0.2_0.05_152))]">
-                    <GrandmaDancer className="absolute inset-x-0 bottom-0 mx-auto h-[88%]" title="Your generated video: grandma performing the dance" />
-                    <span className="absolute right-3 top-3 rounded-full bg-go px-2.5 py-1 text-xs font-bold uppercase tracking-[0.08em] text-ink">
-                      ● Preview
+                    {resultUrl ? (
+                      <video
+                        src={resultUrl}
+                        controls
+                        playsInline
+                        loop
+                        className="absolute inset-0 h-full w-full object-cover"
+                        aria-label="Your generated video"
+                      />
+                    ) : (
+                      <GrandmaDancer className="absolute inset-x-0 bottom-0 mx-auto h-[88%]" title="Your generated video: grandma performing the dance" />
+                    )}
+                    <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-go px-2.5 py-1 text-xs font-bold uppercase tracking-[0.08em] text-ink">
+                      {resultUrl ? "● Rendered" : "● Preview"}
                     </span>
                   </div>
                   {photoUrl && (
