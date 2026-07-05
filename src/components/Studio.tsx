@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
-import { generateDanceVideo } from "@/lib/generate";
+import { GenerationError, generateDanceVideo } from "@/lib/generate";
 
-type Step = "photo" | "dance" | "generating" | "done";
+type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
 type Dance = {
   id: string;
@@ -111,12 +111,18 @@ export default function Studio() {
         }
       } catch (err) {
         if (!cancelled) {
-          setGenError(
-            err instanceof Error
-              ? `The engine tripped over its own feet: ${err.message}. Nothing was charged twice — try again.`
-              : "Something went wrong on the dance floor. Try again.",
-          );
-          setStep("dance");
+          if (err instanceof GenerationError && err.kind === "unavailable") {
+            setStep("closed");
+          } else {
+            setGenError(
+              err instanceof GenerationError && err.kind === "timeout"
+                ? "That render took too long — the floor was packed. Your photo and clip are still loaded, so just try again."
+                : err instanceof Error
+                  ? `The engine tripped over its own feet: ${err.message}. Your photo and clip are still loaded — try again.`
+                  : "Something went wrong on the dance floor. Try again.",
+            );
+            setStep("dance");
+          }
         }
       }
     })();
@@ -510,6 +516,29 @@ export default function Studio() {
                   }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* PROVIDER UNAVAILABLE — the dance floor is closed */}
+          {step === "closed" && (
+            <div className="animate-pop-in flex flex-col items-center py-6 text-center">
+              <h3 ref={headingRef} tabIndex={-1} className="font-display text-3xl sm:text-4xl outline-none">
+                The dance floor is closed 🪩
+              </h3>
+              <p className="mt-3 max-w-[45ch] text-muted">
+                Our engine room ran out of juice mid-party. We&apos;re topping it up —
+                back soon. Your photo and clip are safe right here.
+              </p>
+              <div className="mt-8 w-44 opacity-60">
+                <GrandmaDancer className="w-full" title="Grandma waiting for the dance floor to reopen" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep("dance")}
+                className="mt-8 rounded-full bg-butter px-8 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5"
+              >
+                Back to the studio
+              </button>
             </div>
           )}
 
