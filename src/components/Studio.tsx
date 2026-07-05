@@ -75,6 +75,7 @@ export default function Studio() {
   const [customVideo, setCustomVideo] = useState<File | null>(null);
   const [customUrl, setCustomUrl] = useState<string | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
+  const [importing, setImporting] = useState(false);
   const [danceError, setDanceError] = useState<string | null>(null);
   const [engine, setEngine] = useState<Engine>(DEFAULT_ENGINE);
   const [genStatus, setGenStatus] = useState<string | null>(null);
@@ -226,35 +227,60 @@ export default function Studio() {
     setGenError(null);
   };
 
-  const acceptDanceUrl = (raw: string) => {
+  const acceptDanceUrl = async (raw: string) => {
     const trimmed = raw.trim();
     let url: URL;
     try {
       url = new URL(trimmed);
     } catch {
-      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      setDanceError("That link doesn't look like a URL. Paste a video link or a direct file link.");
       return;
     }
     if (url.protocol !== "https:" && url.protocol !== "http:") {
-      setDanceError("That link doesn't look like a URL. Paste a direct link to a video file.");
+      setDanceError("That link doesn't look like a URL. Paste a video link or a direct file link.");
       return;
     }
-    // Social pages aren't video files, and their clips belong to their
-    // creators — the app doesn't rip them.
-    const host = url.hostname.replace(/^www\./, "");
-    if (["tiktok.com", "youtube.com", "youtu.be", "instagram.com"].some((h) => host === h || host.endsWith(`.${h}`))) {
-      setDanceError(
-        "That's a page on a social app, not a video file — and those clips belong to their creators. Save the video to your device with the app's own save button, then drop the file here instead.",
-      );
+
+    // A direct video file goes straight to the engine (fal fetches it
+    // server-side). Anything else is a page — hand it to the importer, which
+    // downloads and transcodes it into a clip we can upload.
+    if (/\.(mp4|mov|webm|m4v|gif)($|\?)/i.test(url.pathname)) {
+      setCustomUrl(trimmed);
+      setCustomVideo(null);
+      setDance(null);
+      setDanceError(null);
+      setGenError(null);
+      // Link clips are only wired for Wan — snap back if another engine was picked.
+      setEngine(DEFAULT_ENGINE);
       return;
     }
-    setCustomUrl(trimmed);
-    setCustomVideo(null);
-    setDance(null);
+
+    setImporting(true);
     setDanceError(null);
     setGenError(null);
-    // Link clips are only wired for Wan — snap back if another engine was picked.
-    setEngine(DEFAULT_ENGINE);
+    try {
+      const res = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      if (!res.ok) {
+        const detail = await res
+          .json()
+          .then((b) => (b as { error?: string }).error)
+          .catch(() => null);
+        throw new Error(detail || `import failed (${res.status})`);
+      }
+      const name = decodeURIComponent(res.headers.get("X-Clip-Name") || "imported-clip.mp4");
+      const blob = await res.blob();
+      acceptDanceVideo(new File([blob], name, { type: "video/mp4" }));
+    } catch (err) {
+      setDanceError(
+        `Couldn't import that link: ${err instanceof Error ? err.message : "unknown error"}. Try another link, or save the video and drop the file here instead.`,
+      );
+    } finally {
+      setImporting(false);
+    }
   };
 
   // On the dance step, ⌘V works too: a copied video file loads directly,
@@ -273,7 +299,7 @@ export default function Studio() {
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- accept* handlers only touch stable setters
   }, [step]);
 
   const reset = () => {
@@ -512,7 +538,7 @@ export default function Studio() {
                         </span>{" "}
                         {customVideo || customUrl
                           ? "— this clip's moves (and music) go to the real generator."
-                          : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below (MP4, MOV, WebM, M4V or GIF, 10–30 s) — the real AI engine renders it."}
+                          : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below — a file link, or a YouTube/TikTok page we'll download for you (MP4, MOV, WebM, M4V or GIF, 10–30 s)."}
                       </span>
                       <input
                         type="file"
@@ -527,16 +553,19 @@ export default function Studio() {
                         type="url"
                         value={urlDraft}
                         onChange={(e) => setUrlDraft(e.target.value)}
+                        disabled={importing}
                         aria-label="Paste a video link"
-                        placeholder="https:// — direct link to a video file"
-                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter"
+                        placeholder="https:// — video file, or a YouTube / TikTok link"
+                        className="min-w-0 flex-1 rounded-full bg-bg-deep/60 px-4 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-butter disabled:opacity-50"
                       />
                       <button
                         type="button"
                         onClick={() => acceptDanceUrl(urlDraft)}
-                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform hover:-translate-y-0.5"
+                        disabled={importing || !urlDraft.trim()}
+                        aria-live="polite"
+                        className="rounded-full bg-surface-raised px-5 py-2 text-sm font-medium text-ink ring-1 ring-line transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-50"
                       >
-                        Use this link
+                        {importing ? "Importing…" : "Use this link"}
                       </button>
                     </div>
                   </div>
