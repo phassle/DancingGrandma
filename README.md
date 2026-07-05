@@ -22,7 +22,7 @@ Open http://localhost:3000.
 
 ## Docs
 
-- [PRD.md](PRD.md) — product requirements, engine strategy, unit economics, roadmap
+- [Epic #3](https://github.com/phassle/DancingGrandma/issues/3) — full context & tracking; PRDs in [#1](https://github.com/phassle/DancingGrandma/issues/1) (product) and [#2](https://github.com/phassle/DancingGrandma/issues/2) (Phase 1 remaining work)
 - [PRODUCT.md](PRODUCT.md) — brand strategy & design principles
 - [DESIGN.md](DESIGN.md) — visual system (color, type, motion)
 - `src/lib/engines.ts` — the video-engine registry (add/flip engines here)
