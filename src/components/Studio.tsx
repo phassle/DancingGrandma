@@ -186,8 +186,14 @@ export default function Studio() {
 
   const share = async () => {
     try {
-      await navigator.clipboard.writeText("https://dancinggrandma.example/v/grandma-goes-viral");
-      setToast("Link copied. The group chat is not ready. 💃");
+      await navigator.clipboard.writeText(
+        resultUrl ?? "https://dancinggrandma.example/v/grandma-goes-viral",
+      );
+      setToast(
+        resultUrl
+          ? "Video link copied. The group chat is not ready. 💃"
+          : "Demo link copied — real links arrive with real renders. 💃",
+      );
     } catch {
       setToast("Couldn't reach the clipboard — copy the URL from the address bar instead.");
     }
@@ -557,6 +563,15 @@ export default function Studio() {
                     >
                       Share the chaos
                     </button>
+                    {resultUrl && (
+                      <a
+                        href={resultUrl}
+                        download="dancing-grandma.mp4"
+                        className="rounded-full bg-butter px-7 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform hover:-translate-y-0.5"
+                      >
+                        Download
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={reset}
