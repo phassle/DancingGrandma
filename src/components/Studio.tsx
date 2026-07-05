@@ -63,6 +63,9 @@ type PendingRun = {
   startedAt: number;
 };
 
+type RenderPhase = "preparing" | "queued" | "rendering" | "finalizing";
+type CustomClipSource = "uploaded" | "imported" | "direct-url";
+
 function parsePendingRun(raw: string | null): PendingRun | null {
   if (!raw) return null;
   try {
@@ -91,6 +94,74 @@ function formatElapsed(seconds: number): string {
   return `${minutes}:${rest.toString().padStart(2, "0")}`;
 }
 
+function formatUpdateAge(seconds: number | null): string {
+  if (seconds === null) return "waiting";
+  if (seconds < 2) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  return `${formatElapsed(seconds)} ago`;
+}
+
+function queuePositionFromMessage(message: string): number | null {
+  const match = message.match(/^#(\d+)\s+in line/i);
+  return match ? Number(match[1]) : null;
+}
+
+function phaseFromMessage(message: string): RenderPhase {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("finalizing") || normalized.includes("watermark")) {
+    return "finalizing";
+  }
+  if (normalized.includes("rendering")) return "rendering";
+  if (
+    normalized.includes("queue") ||
+    normalized.includes("line") ||
+    normalized.includes("waiting")
+  ) {
+    return "queued";
+  }
+  return "preparing";
+}
+
+function renderPhaseLabel(phase: RenderPhase): string {
+  switch (phase) {
+    case "preparing":
+      return "Preparing";
+    case "queued":
+      return "Queued";
+    case "rendering":
+      return "Rendering";
+    case "finalizing":
+      return "Finalizing";
+  }
+}
+
+function realRenderProgressPercent(
+  phase: RenderPhase,
+  elapsedSeconds: number,
+  queuePosition: number | null,
+): number {
+  switch (phase) {
+    case "preparing":
+      return Math.min(12, 6 + Math.floor(elapsedSeconds / 6));
+    case "queued": {
+      const queueSignal =
+        queuePosition === null ? 16 : Math.max(12, 26 - Math.min(queuePosition, 14));
+      return Math.min(34, queueSignal + Math.floor(elapsedSeconds / 20));
+    }
+    case "rendering":
+      return Math.min(86, 38 + Math.floor(elapsedSeconds / 4));
+    case "finalizing":
+      return Math.min(96, 88 + Math.floor(elapsedSeconds / 30));
+  }
+}
+
+function renderExpectation(elapsedSeconds: number, phase: RenderPhase): string {
+  if (phase === "finalizing") return "Almost done";
+  if (elapsedSeconds < 30) return "Typical wait: 2-4 min";
+  if (elapsedSeconds < 180) return "Inside normal render time";
+  return "Long render; still polling";
+}
+
 function SpiceMeter({ level }: { level: 1 | 2 | 3 }) {
   return (
     <span aria-label={`Spice level ${level} of 3`} role="img" className="text-sm">
@@ -110,8 +181,11 @@ export default function Studio() {
   const [dance, setDance] = useState<Dance | null>(null);
   const [customVideo, setCustomVideo] = useState<File | null>(null);
   const [customUrl, setCustomUrl] = useState<string | null>(null);
+  const [customVideoPreviewUrl, setCustomVideoPreviewUrl] = useState<string | null>(null);
+  const [customClipSource, setCustomClipSource] = useState<CustomClipSource | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
   const [importing, setImporting] = useState(false);
+  const [importingUrl, setImportingUrl] = useState<string | null>(null);
   const [danceError, setDanceError] = useState<string | null>(null);
   const [engine, setEngine] = useState<Engine>(DEFAULT_ENGINE);
   const [genStatus, setGenStatus] = useState<string | null>(null);
@@ -120,6 +194,9 @@ export default function Studio() {
   const [pendingRun, setPendingRun] = useState<PendingRun | null>(null);
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [renderPhase, setRenderPhase] = useState<RenderPhase>("preparing");
+  const [lastRunUpdateAt, setLastRunUpdateAt] = useState<number | null>(null);
+  const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [resultDanceName, setResultDanceName] = useState<string | null>(null);
   const [resultIsGoldenClip, setResultIsGoldenClip] = useState(false);
 
@@ -159,6 +236,13 @@ export default function Studio() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const clipObjectUrlRef = useRef<string | null>(null);
+
+  const clearClipPreview = useCallback(() => {
+    if (clipObjectUrlRef.current) URL.revokeObjectURL(clipObjectUrlRef.current);
+    clipObjectUrlRef.current = null;
+    setCustomVideoPreviewUrl(null);
+  }, []);
 
   // Move focus to the step heading on step changes (not on initial page load)
   // so keyboard/screen-reader users follow along
@@ -187,6 +271,9 @@ export default function Studio() {
       setGenerationStartedAt(stored.startedAt);
       setElapsedSeconds(Math.max(0, Math.floor((Date.now() - stored.startedAt) / 1000)));
       setResultDanceName(stored.danceName);
+      setRenderPhase("queued");
+      setLastRunUpdateAt(Date.now());
+      setGenStatus("Checking the saved render…");
       setEngine(storedEngine);
       setStep("generating");
     }, 0);
@@ -196,6 +283,7 @@ export default function Studio() {
   useEffect(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      if (clipObjectUrlRef.current) URL.revokeObjectURL(clipObjectUrlRef.current);
     };
   }, []);
 
@@ -258,11 +346,19 @@ export default function Studio() {
             if (!cancelled) {
               setPendingRun(run);
               setResultDanceName(run.danceName);
+              setRenderPhase("queued");
+              setGenStatus("Render accepted. Waiting for provider queue…");
+              setLastRunUpdateAt(Date.now());
             }
             return id;
           })());
         const url = await trackDanceVideo(requestId, activeEngine, (msg) => {
-          if (!cancelled) setGenStatus(msg);
+          if (!cancelled) {
+            setGenStatus(msg);
+            setRenderPhase(phaseFromMessage(msg));
+            setQueuePosition(queuePositionFromMessage(msg));
+            setLastRunUpdateAt(Date.now());
+          }
         });
         if (!cancelled) {
           localStorage.removeItem(PENDING_RUN_KEY);
@@ -271,12 +367,14 @@ export default function Studio() {
           setResultIsGoldenClip(false);
           setStep("done");
           setGenerationStartedAt(null);
+          setLastRunUpdateAt(null);
         }
       } catch (err) {
         if (!cancelled) {
           localStorage.removeItem(PENDING_RUN_KEY);
           setPendingRun(null);
           setGenerationStartedAt(null);
+          setLastRunUpdateAt(null);
           if (err instanceof GenerationError && err.kind === "unavailable") {
             if (activeEngineForRun.goldenClip) {
               setResultUrl(activeEngineForRun.goldenClip);
@@ -330,21 +428,44 @@ export default function Studio() {
     setPhotoError(null);
   }, []);
 
-  const acceptDanceVideo = (file: File | undefined) => {
+  const acceptDanceVideo = (file: File | undefined, source: CustomClipSource = "uploaded") => {
     if (!file) return;
     if (!file.type.startsWith("video/") && file.type !== "image/gif") {
       setDanceError("That's not a video. MP4, MOV, WebM, M4V or GIF of the dance, please.");
+      return;
+    }
+    if (file.size === 0) {
+      setDanceError("That video is empty. Pick a clip that actually plays.");
       return;
     }
     if (file.size > 100 * 1024 * 1024) {
       setDanceError("That clip is over 100 MB. Trim it down — 10–30 seconds is the sweet spot.");
       return;
     }
+    clearClipPreview();
+    const previewUrl = URL.createObjectURL(file);
+    clipObjectUrlRef.current = previewUrl;
+    setCustomVideoPreviewUrl(previewUrl);
+    setCustomClipSource(source);
     setCustomVideo(file);
     setCustomUrl(null);
     setDance(null);
     setDanceError(null);
     setGenError(null);
+    if (source === "uploaded") setUrlDraft("");
+  };
+
+  const updateUrlDraft = (value: string) => {
+    setUrlDraft(value);
+    setDanceError(null);
+    if (!value.trim()) return;
+    setDance(null);
+    if (customVideo !== null || customUrl !== null || customClipSource !== null) {
+      setCustomVideo(null);
+      setCustomUrl(null);
+      setCustomClipSource(null);
+      clearClipPreview();
+    }
   };
 
   const acceptDanceUrl = async (raw: string) => {
@@ -365,17 +486,27 @@ export default function Studio() {
     // server-side). Anything else is a page — hand it to the importer, which
     // downloads and transcodes it into a clip we can upload.
     if (/\.(mp4|mov|webm|m4v|gif)($|\?)/i.test(url.pathname)) {
+      clearClipPreview();
       setCustomUrl(trimmed);
+      setCustomVideoPreviewUrl(trimmed);
+      setCustomClipSource("direct-url");
       setCustomVideo(null);
       setDance(null);
       setDanceError(null);
       setGenError(null);
+      setUrlDraft(trimmed);
       // Link clips are only wired for Wan — snap back if another engine was picked.
       setEngine(DEFAULT_ENGINE);
       return;
     }
 
     setImporting(true);
+    setImportingUrl(trimmed);
+    clearClipPreview();
+    setCustomVideo(null);
+    setCustomUrl(null);
+    setCustomClipSource(null);
+    setDance(null);
     setDanceError(null);
     setGenError(null);
     try {
@@ -393,13 +524,19 @@ export default function Studio() {
       }
       const name = decodeURIComponent(res.headers.get("X-Clip-Name") || "imported-clip.mp4");
       const blob = await res.blob();
-      acceptDanceVideo(new File([blob], name, { type: "video/mp4" }));
+      const contentType = blob.type || res.headers.get("Content-Type") || "video/mp4";
+      if (blob.size === 0) throw new Error("Downloaded clip is empty");
+      if (!contentType.startsWith("video/")) {
+        throw new Error("Downloaded clip was not a playable video");
+      }
+      acceptDanceVideo(new File([blob], name, { type: contentType }), "imported");
     } catch (err) {
       setDanceError(
         `Couldn't import that link: ${err instanceof Error ? err.message : "unknown error"}. Try another link, or save the video and drop the file here instead.`,
       );
     } finally {
       setImporting(false);
+      setImportingUrl(null);
     }
   };
 
@@ -415,7 +552,9 @@ export default function Studio() {
         return;
       }
       const text = clipboard?.getData("text");
-      if (text?.trim()) acceptDanceUrl(text);
+      if (text?.trim()) {
+        updateUrlDraft(text.trim());
+      }
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
@@ -425,6 +564,7 @@ export default function Studio() {
   const reset = () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     objectUrlRef.current = null;
+    clearClipPreview();
     setPhotoUrl(null);
     setPhotoFile(null);
     setPhotoName(null);
@@ -432,14 +572,19 @@ export default function Studio() {
     setDance(null);
     setCustomVideo(null);
     setCustomUrl(null);
+    setCustomClipSource(null);
     setUrlDraft("");
     setDanceError(null);
+    setImportingUrl(null);
     setGenStatus(null);
     setGenError(null);
     setResultUrl(null);
     setPendingRun(null);
     setGenerationStartedAt(null);
     setElapsedSeconds(0);
+    setRenderPhase("preparing");
+    setLastRunUpdateAt(null);
+    setQueuePosition(null);
     setResultDanceName(null);
     setResultIsGoldenClip(false);
     localStorage.removeItem(PENDING_RUN_KEY);
@@ -462,6 +607,33 @@ export default function Studio() {
   };
 
   const stepNumber = step === "photo" ? 1 : step === "dance" ? 2 : 3;
+  const lastUpdateOffsetSeconds =
+    generationStartedAt !== null && lastRunUpdateAt !== null
+      ? Math.max(0, Math.floor((lastRunUpdateAt - generationStartedAt) / 1000))
+      : null;
+  const secondsSinceLastUpdate =
+    isRealRun && lastUpdateOffsetSeconds !== null
+      ? Math.max(0, elapsedSeconds - lastUpdateOffsetSeconds)
+      : null;
+  const progressValue = isRealRun
+    ? realRenderProgressPercent(renderPhase, elapsedSeconds, queuePosition)
+    : Math.round(((stageIndex + 1) / GENERATION_STAGES.length) * 100);
+  const providerUpdateIsStale =
+    isRealRun && secondsSinceLastUpdate !== null && secondsSinceLastUpdate >= 30;
+  const pendingUrl = urlDraft.trim();
+  const showPendingUrl = pendingUrl !== "" && customVideo === null && customUrl === null;
+  const previewLinkLabel =
+    customClipSource === "imported"
+      ? "Preview downloaded clip"
+      : customClipSource === "direct-url"
+        ? "Open source clip"
+        : "Preview selected clip";
+  const clipReadyMessage =
+    customClipSource === "imported"
+      ? "Validated MP4 ready — open the preview before generating."
+      : customClipSource === "direct-url"
+        ? "Direct video link ready — the engine will fetch this source."
+        : "Video file ready — open the preview before generating.";
 
   return (
     <section id="studio" aria-labelledby="studio-title" className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-28">
@@ -617,6 +789,9 @@ export default function Studio() {
                             setDance(d);
                             setCustomVideo(null);
                             setCustomUrl(null);
+                            setCustomClipSource(null);
+                            setUrlDraft("");
+                            clearClipPreview();
                           }}
                           className="sr-only"
                         />
@@ -659,11 +834,11 @@ export default function Studio() {
                           {customVideo
                             ? `“${customVideo.name}” loaded`
                             : customUrl
-                              ? "Link loaded"
+                              ? "Direct link loaded"
                               : "Got your own dance video?"}
                         </span>{" "}
                         {customVideo || customUrl
-                          ? "— this clip's moves (and music) go to the real generator."
+                          ? `— ${clipReadyMessage}`
                           : "Drag a clip here, pick a file, paste one (⌘V), or drop a link below — a file link, or a YouTube/TikTok page we'll download for you (MP4, MOV, WebM, M4V or GIF, 10–30 s)."}
                       </span>
                       <input
@@ -678,7 +853,7 @@ export default function Studio() {
                       <input
                         type="url"
                         value={urlDraft}
-                        onChange={(e) => setUrlDraft(e.target.value)}
+                        onChange={(e) => updateUrlDraft(e.target.value)}
                         disabled={importing}
                         aria-label="Paste a video link"
                         placeholder="https:// — video file, or a YouTube / TikTok link"
@@ -693,6 +868,32 @@ export default function Studio() {
                       >
                         {importing ? "Importing…" : "Use this link"}
                       </button>
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm" aria-live="polite">
+                      {showPendingUrl && !importing && (
+                        <p className="text-muted">
+                          Ready to import:{" "}
+                          <span className="break-all font-medium text-ink">{pendingUrl}</span>
+                        </p>
+                      )}
+                      {importing && importingUrl && (
+                        <p className="text-muted">
+                          Downloading and validating:{" "}
+                          <span className="break-all font-medium text-ink">{importingUrl}</span>
+                        </p>
+                      )}
+                      {customVideoPreviewUrl && (
+                        <p>
+                          <a
+                            href={customVideoPreviewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-brand-bright underline underline-offset-4 hover:text-ink"
+                          >
+                            {previewLinkLabel}
+                          </a>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -775,8 +976,11 @@ export default function Studio() {
                   onClick={() => {
                     setStageIndex(0);
                     setGenError(null);
-                    setGenStatus(null);
+                    setGenStatus("Submitting photo and reference video…");
                     setElapsedSeconds(0);
+                    setRenderPhase("preparing");
+                    setLastRunUpdateAt(Date.now());
+                    setQueuePosition(null);
                     setResultUrl(null);
                     setResultIsGoldenClip(false);
                     setGenerationStartedAt(Date.now());
@@ -808,26 +1012,57 @@ export default function Studio() {
                 {isRealRun ? " — a real run can take a few minutes" : ""}
               </p>
               {isRealRun && (
-                <p className="mt-1 text-sm font-medium text-ink">
-                  Elapsed: {formatElapsed(elapsedSeconds)}
+                <div className="mt-5 grid w-full max-w-2xl grid-cols-2 gap-2 text-left sm:grid-cols-4">
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Phase</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {renderPhaseLabel(renderPhase)}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Elapsed</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {formatElapsed(elapsedSeconds)}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Queue</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {queuePosition === null ? "waiting" : `#${queuePosition}`}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-bg-deep/55 p-3 ring-1 ring-line/60">
+                    <span className="block text-xs text-muted">Last update</span>
+                    <span className="mt-1 block font-medium text-ink">
+                      {formatUpdateAge(secondsSinceLastUpdate)}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {isRealRun && (
+                <p className="mt-3 text-sm font-medium text-ink">
+                  Last update: {formatUpdateAge(secondsSinceLastUpdate)} ·{" "}
+                  {renderExpectation(elapsedSeconds, renderPhase)}
+                </p>
+              )}
+              {providerUpdateIsStale && (
+                <p role="status" className="mt-3 max-w-xl rounded-lg bg-butter/15 px-4 py-3 text-sm text-ink">
+                  No provider update for {formatElapsed(secondsSinceLastUpdate ?? 0)}.
+                  The render is still open, and the app is still polling.
                 </p>
               )}
               <div
                 role="progressbar"
                 aria-label="Generating the video"
                 aria-valuemin={0}
-                aria-valuemax={GENERATION_STAGES.length}
-                aria-valuenow={isRealRun ? undefined : stageIndex + 1}
+                aria-valuemax={100}
+                aria-valuenow={progressValue}
                 className="mt-4 h-3 w-full max-w-sm overflow-hidden rounded-full bg-bg-deep"
               >
                 <div
-                  className={`h-full rounded-full bg-butter transition-[width] duration-700 ease-out ${
-                    isRealRun ? "animate-pulse" : ""
-                  }`}
+                  className="h-full rounded-full bg-butter transition-[width] duration-700 ease-out"
                   style={{
-                    width: isRealRun
-                      ? "100%"
-                      : `${((stageIndex + 1) / GENERATION_STAGES.length) * 100}%`,
+                    width: `${progressValue}%`,
                   }}
                 />
               </div>

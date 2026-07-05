@@ -173,6 +173,7 @@ test("trackDanceVideo polls queue status and resolves the result video URL", asy
   expect(updates).toEqual([
     "#3 in line for the dance floor",
     "Rendering, frame by frame…",
+    "Finalizing audio and watermark…",
   ]);
   expect(fal.queue.result).toHaveBeenCalledWith(wan.endpoint, { requestId: "req-1" });
   expect(fetch).toHaveBeenCalledWith(

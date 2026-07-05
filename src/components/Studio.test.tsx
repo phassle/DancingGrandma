@@ -33,7 +33,11 @@ beforeEach(() => {
   track.mockResolvedValue("https://fal.media/out.mp4");
   localStorage.clear();
   // jsdom has no object URLs; the wizard only needs a stable string.
-  URL.createObjectURL = vi.fn(() => "blob:grandma");
+  URL.createObjectURL = vi.fn((value: Blob | MediaSource) =>
+    value instanceof File && value.type.startsWith("video/")
+      ? "blob:dance-preview"
+      : "blob:grandma",
+  );
   URL.revokeObjectURL = vi.fn();
   // No bundled reference clips unless a test serves them explicitly.
   vi.stubGlobal(
@@ -142,6 +146,9 @@ test("a pasted video link runs the real path on Wan with the URL handed through"
   await user.click(screen.getByRole("button", { name: /use this link/i }));
 
   // Link clips are only wired for Wan — other engines sit this one out.
+  expect(screen.getByRole("link", { name: "Open source clip" }).getAttribute("href")).toBe(
+    "https://example.com/griddy.mp4",
+  );
   expect(
     (screen.getByRole("radio", { name: /kling/i }) as HTMLInputElement).disabled,
   ).toBe(true);
@@ -152,7 +159,7 @@ test("a pasted video link runs the real path on Wan with the URL handed through"
   expect(submit.mock.calls[0][1]).toBe("https://example.com/griddy.mp4");
 });
 
-test("a YouTube page link is imported into a clip the generator can use", async () => {
+test("a YouTube page link is shown before import and becomes a previewable clip", async () => {
   const user = userEvent.setup();
   vi.mocked(fetch).mockImplementation(async (input, init) => {
     const url = (typeof input === "string" ? input : (input as Request).url).toString();
@@ -178,10 +185,25 @@ test("a YouTube page link is imported into a clip the generator can use", async 
     screen.getByLabelText(/paste a video link/i),
     "https://www.youtube.com/shorts/SJKl6PEXklU",
   );
+
+  expect(screen.getByText(/ready to import/i)).toBeDefined();
+  expect(screen.getByText("https://www.youtube.com/shorts/SJKl6PEXklU")).toBeDefined();
+  expect(
+    vi.mocked(fetch).mock.calls.some(([input]) =>
+      (typeof input === "string" ? input : (input as Request).url)
+        .toString()
+        .endsWith("/api/import"),
+    ),
+  ).toBe(false);
+
   await user.click(screen.getByRole("button", { name: /use this link/i }));
 
   // The imported file is loaded under the name the route reported.
   expect(await screen.findByText(/“griddy-tutorial.mp4” loaded/)).toBeDefined();
+  expect(screen.getByText(/validated mp4 ready/i)).toBeDefined();
+  expect(screen.getByRole("link", { name: "Preview downloaded clip" }).getAttribute("href")).toBe(
+    "blob:dance-preview",
+  );
   expect(
     (screen.getByRole("button", { name: "Make her dance 💃" }) as HTMLButtonElement)
       .disabled,
@@ -237,6 +259,40 @@ test("pasting a video from the clipboard loads it as the reference clip", async 
   });
 
   expect(await screen.findByText(/“pasted.mov” loaded/)).toBeDefined();
+  expect(screen.getByRole("link", { name: "Preview selected clip" }).getAttribute("href")).toBe(
+    "blob:dance-preview",
+  );
+});
+
+test("pasting a page link fills the link field without importing until clicked", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+
+  fireEvent.paste(window, {
+    clipboardData: {
+      files: [],
+      getData: () => "https://www.youtube.com/watch?v=abc123",
+    },
+  });
+
+  expect(
+    (screen.getByLabelText(/paste a video link/i) as HTMLInputElement).value,
+  ).toBe("https://www.youtube.com/watch?v=abc123");
+  expect(screen.getByText(/ready to import/i)).toBeDefined();
+  expect(screen.getByText("https://www.youtube.com/watch?v=abc123")).toBeDefined();
+  expect(
+    vi.mocked(fetch).mock.calls.some(([input]) =>
+      (typeof input === "string" ? input : (input as Request).url)
+        .toString()
+        .endsWith("/api/import"),
+    ),
+  ).toBe(false);
 });
 
 test("dropping a video file on the tile loads it as the reference clip", async () => {
@@ -412,9 +468,17 @@ test("queue position updates and elapsed time are visible during a real run", as
   await startRealRun(user);
 
   expect(await screen.findByText("#3 in line for the dance floor")).toBeDefined();
-  expect(screen.getByText(/elapsed: 0:00/i)).toBeDefined();
+  expect(screen.getByText("Queued")).toBeDefined();
+  expect(screen.getByText("Queue")).toBeDefined();
+  expect(screen.getByText("#3")).toBeDefined();
+  expect(screen.getByText(/last update: just now/i)).toBeDefined();
+  const progress = screen.getByRole("progressbar", { name: "Generating the video" });
+  expect(Number(progress.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
+  expect(Number(progress.getAttribute("aria-valuenow"))).toBeLessThan(100);
+  expect(screen.getByText("Elapsed")).toBeDefined();
+  expect(screen.getByText("0:00")).toBeDefined();
 
-  await waitFor(() => expect(screen.getByText(/elapsed: 0:01/i)).toBeDefined(), {
+  await waitFor(() => expect(screen.getByText("0:01")).toBeDefined(), {
     timeout: 1500,
   });
 });

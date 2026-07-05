@@ -196,6 +196,7 @@ function providerRouteAdapter(provider: Extract<EngineProvider, "replicate">): G
         throw new GenerationError("provider", `${engine.name} returned no playable video`);
       }
       immediateResults.delete(requestId);
+      onUpdate("Finalizing audio and watermark…");
       return finalizeDeliveredVideo(videoUrl, engine);
     },
   };
@@ -270,6 +271,7 @@ const falAdapter: GenerationAdapter = {
       }
       const referenceVideoUrl = submittedReferenceUrls.get(requestId);
       submittedReferenceUrls.delete(requestId);
+      onUpdate("Finalizing audio and watermark…");
       return finalizeDeliveredVideo(url, engine, referenceVideoUrl);
     } catch (err) {
       throw classifyFalError(err);
