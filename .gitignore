@@ -48,8 +48,9 @@ next-env.d.ts
 infra/main.bicepparam
 infra/*.local.bicepparam
 
-# Curated dance reference clips are local drop-ins (copyright) — only the
-# Pexels-licensed freestyle clip ships with the repo. See public/dances/README.md.
+# Trending-dance reference clips ship with the repo so every card renders for
+# real on a fresh clone. See public/dances/README.md for the roster and the
+# licensing note. Any other files dropped in here stay local.
 public/dances/*
 !public/dances/README.md
-!public/dances/freestyle.mp4
+!public/dances/*.mp4

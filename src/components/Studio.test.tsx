@@ -64,8 +64,8 @@ test("a successful run lands on the done step with the rendered video", async ()
 
 test("a curated dance with a bundled clip renders for real", async () => {
   const user = userEvent.setup();
-  serveClip("/dances/freestyle.mp4");
-  generate.mockResolvedValue("https://fal.media/freestyle-out.mp4");
+  serveClip("/dances/griddy.mp4");
+  generate.mockResolvedValue("https://fal.media/griddy-out.mp4");
 
   render(<Studio />);
   await user.upload(
@@ -73,24 +73,25 @@ test("a curated dance with a bundled clip renders for real", async () => {
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
-  await user.click(await screen.findByRole("radio", { name: /street freestyle/i }));
+  await user.click(await screen.findByRole("radio", { name: /the griddy/i }));
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
   expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
-    "https://fal.media/freestyle-out.mp4",
+    "https://fal.media/griddy-out.mp4",
   );
   // A real render is the real thing — no demo-mode disclaimer.
   expect(screen.queryByText(/demo mode/i)).toBeNull();
 
   const clip = generate.mock.calls[0][1];
   expect(clip).toBeInstanceOf(File);
-  expect((clip as File).name).toBe("freestyle.mp4");
+  expect((clip as File).name).toBe("griddy.mp4");
 });
 
 test("dance cards mark only the dances whose reference clip exists as real renders", async () => {
   const user = userEvent.setup();
-  serveClip("/dances/freestyle.mp4");
+  // Only Griddy's clip is reachable in this test; the rest 404.
+  serveClip("/dances/griddy.mp4");
 
   render(<Studio />);
   await user.upload(
@@ -100,11 +101,11 @@ test("dance cards mark only the dances whose reference clip exists as real rende
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
 
   expect(
-    await screen.findByRole("radio", { name: /street freestyle.*real render/i }),
+    await screen.findByRole("radio", { name: /the griddy.*real render/i }),
   ).toBeDefined();
-  // The Griddy's drop-in clip is missing, so it must not promise a real render.
-  expect(screen.getByRole("radio", { name: /the griddy/i })).toBeDefined();
-  expect(screen.queryByRole("radio", { name: /griddy.*real render/i })).toBeNull();
+  // Renegade's clip is unreachable here, so it must not promise a real render.
+  expect(screen.getByRole("radio", { name: /renegade/i })).toBeDefined();
+  expect(screen.queryByRole("radio", { name: /renegade.*real render/i })).toBeNull();
 });
 
 test("a pasted video link runs the real path on Wan with the URL handed through", async () => {
