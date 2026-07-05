@@ -1,21 +1,27 @@
-# Curated reference clips
+# Trending-dance reference clips
 
-Each curated dance in the studio can carry a reference video here. When the
-file exists, that dance card gets a "real render" badge and runs the real
-fal.ai generation path instead of the simulated preview.
+Every curated dance ships with a reference video here, so each card renders for
+real on a fresh clone — no setup, no drop-in step. Each clip carries its own
+audio, transcoded to an engine-friendly H.264/AAC MP4 (≤15 s, ≤720 px wide).
 
-| File | Dance card | Status |
-| --- | --- | --- |
-| `freestyle.mp4` | Street Freestyle | Bundled — [Pexels video 7958173](https://www.pexels.com/video/a-man-dancing-hip-hop-7958173/) by cottonbro studio, Pexels license (free for commercial use). 12 s, 720×1366. |
-| `griddy.mp4` | The Griddy | Drop-in slot — add your own clip. |
-| `renegade.mp4` | Renegade | Drop-in slot — add your own clip. |
+| File | Dance card |
+| --- | --- |
+| `griddy.mp4` | The Griddy |
+| `renegade.mp4` | Renegade |
+| `macarena.mp4` | Macarena Redux |
+| `disco.mp4` | Disco Inferno |
+| `woah.mp4` | The Woah |
 
-## Drop-in rules
+## How they got here
 
-- 10–30 seconds, one person, full body visible, vertical (9:16) preferred.
-- A real render costs ~$0.08 per video-second on Wan (a 12 s reference ≈ $0.96 per run).
-- Only `freestyle.mp4` is committed. Everything else in this directory is
-  gitignored on purpose: clips saved from TikTok/YouTube are other creators'
-  copyrighted content — fine to experiment with locally, not ours to
-  redistribute in the repo. Bundle only clips whose license allows it
-  (Pexels/Pixabay or your own footage), and update this table when you do.
+Fetched with the in-app import pipeline (`yt-dlp` + `ffmpeg`, see
+`src/lib/import-clip.ts`) from public dance clips, then transcoded with the
+audio track preserved. To refresh or add one, drop a new `<id>.mp4` here and add
+a matching entry to `DANCES` in `src/components/Studio.tsx`.
+
+## Licensing note
+
+This is a public repo, so these committed clips are other creators' content
+published here for a demo. The repo owner accepted that tradeoff. For anything
+shipped more broadly, prefer licensed/owned footage (e.g. Pexels/Pixabay) or
+keep clips local via `.gitignore`.

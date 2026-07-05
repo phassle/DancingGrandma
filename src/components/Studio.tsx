@@ -20,12 +20,11 @@ type Dance = {
 };
 
 const DANCES: Dance[] = [
-  { id: "freestyle", name: "Street Freestyle", emoji: "📻", bpm: 100, spice: 2, blurb: "Boombox out, limbs loose. Full send.", referenceClip: "/dances/freestyle.mp4" },
   { id: "griddy", name: "The Griddy", emoji: "🏈", bpm: 140, spice: 2, blurb: "Arms pumping, knees flying. Touchdown energy.", referenceClip: "/dances/griddy.mp4" },
   { id: "renegade", name: "Renegade", emoji: "🔥", bpm: 128, spice: 3, blurb: "The classic. Eight counts of pure chaos.", referenceClip: "/dances/renegade.mp4" },
-  { id: "macarena", name: "Macarena Redux", emoji: "🙌", bpm: 103, spice: 1, blurb: "She already knows this one. Trust." },
-  { id: "disco", name: "Disco Inferno", emoji: "🪩", bpm: 118, spice: 2, blurb: "Point up, point down, own the room." },
-  { id: "woah", name: "The Woah", emoji: "🎯", bpm: 145, spice: 2, blurb: "One move. Perfectly timed. Devastating." },
+  { id: "macarena", name: "Macarena Redux", emoji: "🙌", bpm: 103, spice: 1, blurb: "She already knows this one. Trust.", referenceClip: "/dances/macarena.mp4" },
+  { id: "disco", name: "Disco Inferno", emoji: "🪩", bpm: 118, spice: 2, blurb: "Point up, point down, own the room.", referenceClip: "/dances/disco.mp4" },
+  { id: "woah", name: "The Woah", emoji: "🎯", bpm: 145, spice: 2, blurb: "One move. Perfectly timed. Devastating.", referenceClip: "/dances/woah.mp4" },
 ];
 
 // Fetched reference clips, cached per path so a retry reuses the same File
