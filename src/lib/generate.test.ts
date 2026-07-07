@@ -297,6 +297,26 @@ test("trackDanceVideo polls queue status and resolves the result video URL", asy
   );
 });
 
+test("trackDanceVideo accepts persisted URLs returned by finalize", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.endsWith("/api/video/finalize")) {
+        return Response.json({
+          videoUrl: "/api/video/11111111-1111-4111-8111-111111111111",
+          shareUrl: "/v/11111111-1111-4111-8111-111111111111",
+        });
+      }
+      return new Response(null, { status: 404, statusText: "Not Found" });
+    }),
+  );
+
+  await expect(trackDanceVideo("req-1", wan, () => {})).resolves.toBe(
+    "/api/video/11111111-1111-4111-8111-111111111111",
+  );
+});
+
 test("generateDanceVideo composes submit and track without fal.subscribe", async () => {
   await expect(
     generateDanceVideo(photo(), "https://example.com/griddy.mp4", wan, () => {}),

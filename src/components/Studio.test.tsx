@@ -125,35 +125,24 @@ test("download fetches the rendered video and starts a file download", async () 
   expect(await screen.findByText(/download started/i)).toBeDefined();
 });
 
-test("share uses native file sharing when the browser supports video files", async () => {
+test("share copies the persistent /v/{id} link for real renders", async () => {
   const user = userEvent.setup();
-  const share = vi.fn().mockResolvedValue(undefined);
-  const canShare = vi.fn().mockReturnValue(true);
-  track.mockResolvedValue("https://fal.media/out.mp4");
-  vi.mocked(fetch).mockImplementation(async (input) => {
-    const url = typeof input === "string" ? input : (input as Request).url;
-    if (url === "https://fal.media/out.mp4") {
-      return new Response("video-bytes", {
-        status: 200,
-        headers: { "Content-Type": "video/mp4" },
-      });
-    }
-    return new Response(null, { status: 404 });
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  track.mockResolvedValue("/api/video/11111111-1111-4111-8111-111111111111");
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText },
   });
-  Object.defineProperty(navigator, "share", { configurable: true, value: share });
-  Object.defineProperty(navigator, "canShare", { configurable: true, value: canShare });
 
   await startRealRun(user);
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
 
   await user.click(screen.getByRole("button", { name: "Share the chaos" }));
 
-  await waitFor(() => expect(share).toHaveBeenCalled());
-  const payload = share.mock.calls[0][0] as ShareData;
-  expect(payload.title).toBe("DancingGrandma");
-  expect(payload.files?.[0]).toBeInstanceOf(File);
-  expect(payload.files?.[0].name).toBe("dancing-grandma.mp4");
-  expect(payload.files?.[0].type).toBe("video/mp4");
+  await waitFor(() => expect(writeText).toHaveBeenCalled());
+  expect(writeText).toHaveBeenCalledWith(
+    "http://localhost:3000/v/11111111-1111-4111-8111-111111111111",
+  );
 });
 
 test("Kling is the preselected recommended engine", async () => {

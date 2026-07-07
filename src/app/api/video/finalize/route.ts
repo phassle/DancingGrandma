@@ -5,6 +5,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { promisify } from "util";
 import { deflateSync } from "zlib";
+import { saveVideoBytes } from "@/lib/server/blob";
 
 export const runtime = "nodejs";
 
@@ -192,11 +193,20 @@ export async function POST(request: Request): Promise<Response> {
 
     await execFileAsync("ffmpeg", args);
     const output = await readFile(outputPath);
-    return new Response(output, {
-      headers: {
-        "Content-Type": "video/mp4",
-        "Content-Disposition": `inline; filename="dancing-grandma-${randomUUID()}.mp4"`,
-      },
+    const shareId = randomUUID();
+    try {
+      await saveVideoBytes(shareId, output);
+    } catch (err) {
+      console.error("[dg:finalize-storage-error]", {
+        shareId,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      throw err;
+    }
+    return Response.json({
+      videoUrl: `/api/video/${shareId}`,
+      shareUrl: `/v/${shareId}`,
     });
   } catch (err) {
     logFinalizeError(body, err);
