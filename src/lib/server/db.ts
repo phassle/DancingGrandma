@@ -52,6 +52,8 @@ export type User = {
   email: string | null;
   display_name: string | null;
   last_activity_at: string;
+  /** The user is a Stripe Customer under DancingGrandma's merchant account. */
+  stripe_customer_id: string | null;
 };
 
 /** Operational credit balances — the lockable projection, not the ledger sum. */
