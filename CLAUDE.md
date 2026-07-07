@@ -21,6 +21,9 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 - New work happens on `feature/<short-name>` branches cut from `develop`, merged back
   into `develop` (PRs welcome). Releases: merge `develop` → `main`.
 - Hotfixes: `hotfix/<name>` from `main`, merged to both `main` and `develop`.
+- Agent worktrees (`.claude/worktrees/`, `EnterWorktree`, `isolation: worktree`) must be
+  cut from `develop`, never `main`. Keep the primary checkout on `develop` so new
+  worktrees start there by default.
 
 ## graphify
 
