@@ -23,7 +23,9 @@ export async function GET(
 
   try {
     const output = await readVideoBytes(`${id}.mp4`);
-    return new Response(output, {
+    // Copy into a plain Uint8Array<ArrayBuffer> — Buffer's ArrayBufferLike
+    // generic is not assignable to BodyInit under strict TS.
+    return new Response(Uint8Array.from(output), {
       headers: {
         "Content-Type": "video/mp4",
         "Cache-Control": "public, max-age=31536000, immutable",

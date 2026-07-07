@@ -5,6 +5,7 @@
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
   "sslRequired": "external",
+  "accessTokenLifespan": 3600,
   "clients": [
     {
       "clientId": "web",

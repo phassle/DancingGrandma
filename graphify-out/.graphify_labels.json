@@ -204,6 +204,7 @@
   "202": "Design It Twice (Ousterhout)",
   "203": "Codebase Design Skill",
   "204": "Adapter",
+  "205": "PR-prep tail",
   "206": "Interface Is the Test Surface",
   "207": "Seam (Feathers)",
   "208": "Tight Feedback Loop",
@@ -414,5 +415,18 @@
   "413": "Bundled Clip Licensing Tradeoff",
   "414": "Video Engine Registry (src/lib/engines.ts)",
   "415": "Kling 2.6 Motion Control",
-  "416": "Wan 2.2 Animate 14B via fal.ai"
+  "416": "Wan 2.2 Animate 14B via fal.ai",
+  "417": "PR-prep tail",
+  "418": "implement-prompt.md",
+  "419": "SKILL.md",
+  "420": "implement-prompt.md",
+  "421": "dynamic-tdd.workflow.mjs",
+  "422": "dynamic-tdd.workflow.mjs",
+  "423": "AccountBadge.tsx",
+  "424": "merge-prompt.md",
+  "425": "merge-prompt.md",
+  "426": "plan-prompt.md",
+  "427": "plan-prompt.md",
+  "428": "sync-skills.sh",
+  "429": "server-only-stub.ts"
 }

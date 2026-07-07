@@ -1,16 +1,16 @@
-# Graph Report - DancingGrandma  (2026-07-08)
+# Graph Report - wf_5152ce62-acf-2  (2026-07-08)
 
 ## Corpus Check
-- 186 files · ~128,404 words
+- 218 files · ~141,220 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1672 nodes · 1416 edges · 416 communities (96 shown, 320 thin omitted)
+- 1822 nodes · 1611 edges · 430 communities (109 shown, 321 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a772524a`
+- Built from commit: `38d7603a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -218,6 +218,7 @@
 - [[_COMMUNITY_Design It Twice (Ousterhout)|Design It Twice (Ousterhout)]]
 - [[_COMMUNITY_Codebase Design Skill|Codebase Design Skill]]
 - [[_COMMUNITY_Adapter|Adapter]]
+- [[_COMMUNITY_PR-prep tail|PR-prep tail]]
 - [[_COMMUNITY_Interface Is the Test Surface|Interface Is the Test Surface]]
 - [[_COMMUNITY_Seam (Feathers)|Seam (Feathers)]]
 - [[_COMMUNITY_Tight Feedback Loop|Tight Feedback Loop]]
@@ -411,13 +412,25 @@
 - [[_COMMUNITY_Video Engine Registry (srclibengines.ts)|Video Engine Registry (src/lib/engines.ts)]]
 - [[_COMMUNITY_Kling 2.6 Motion Control|Kling 2.6 Motion Control]]
 - [[_COMMUNITY_Wan 2.2 Animate 14B via fal.ai|Wan 2.2 Animate 14B via fal.ai]]
+- [[_COMMUNITY_PR-prep tail|PR-prep tail]]
+- [[_COMMUNITY_implement-prompt|implement-prompt.md]]
+- [[_COMMUNITY_SKILL|SKILL.md]]
+- [[_COMMUNITY_implement-prompt|implement-prompt.md]]
+- [[_COMMUNITY_dynamic-tdd.workflow.mjs|dynamic-tdd.workflow.mjs]]
+- [[_COMMUNITY_dynamic-tdd.workflow.mjs|dynamic-tdd.workflow.mjs]]
+- [[_COMMUNITY_AccountBadge.tsx|AccountBadge.tsx]]
+- [[_COMMUNITY_merge-prompt|merge-prompt.md]]
+- [[_COMMUNITY_merge-prompt|merge-prompt.md]]
+- [[_COMMUNITY_plan-prompt|plan-prompt.md]]
+- [[_COMMUNITY_plan-prompt|plan-prompt.md]]
+- [[_COMMUNITY_sync-skills.sh|sync-skills.sh]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Studio()` - 20 edges
 2. `compilerOptions` - 16 edges
 3. `POST()` - 13 edges
-4. `User accounts, credits, and paid generation research` - 13 edges
-5. `getPool()` - 10 edges
+4. `getPool()` - 13 edges
+5. `User accounts, credits, and paid generation research` - 13 edges
 6. `POST()` - 9 edges
 7. `submitDanceVideo()` - 9 edges
 8. `Triage` - 9 edges
@@ -427,8 +440,8 @@
 ## Surprising Connections (you probably didn't know these)
 - `Studio()` --indirect_call--> `run()`  [INFERRED]
   src/components/Studio.tsx → src/lib/import-clip.ts
-- `GET()` --calls--> `isShareId()`  [EXTRACTED]
-  src/app/api/video/[id]/route.ts → src/lib/share-id.ts
+- `persistentShareUrl()` --calls--> `isShareId()`  [EXTRACTED]
+  src/components/Studio.tsx → src/lib/share-id.ts
 - `Studio()` --references--> `ENGINES`  [EXTRACTED]
   src/components/Studio.tsx → src/lib/engines.ts
 - `Studio()` --calls--> `cleanupPhotoUpload()`  [EXTRACTED]
@@ -442,15 +455,15 @@
 ## Hyperedges (group relationships)
 - **Landing page conversion flow: headline -> value prop -> CTA -> ticker reinforcement** — docs_hero_screenshot_headline_stacked_tricolor, docs_hero_screenshot_value_prop_copy, docs_hero_screenshot_cta_make_grandma_dance, docs_hero_screenshot_marquee_ticker [INFERRED 0.85]
 
-## Communities (416 total, 320 thin omitted)
+## Communities (430 total, 321 thin omitted)
 
 ### Community 1 - "Studio Wizard UI"
-Cohesion: 0.12
-Nodes (25): clipFiles, CustomClipSource, Dance, DANCES, errorForLog(), fetchResultBlob(), formatElapsed(), formatUpdateAge() (+17 more)
+Cohesion: 0.13
+Nodes (24): clipFiles, CustomClipSource, Dance, DANCES, errorForLog(), fetchResultBlob(), formatElapsed(), formatUpdateAge() (+16 more)
 
 ### Community 3 - "Package Dependencies"
 Cohesion: 0.05
-Nodes (37): dependencies, @azure/identity, @azure/storage-blob, @fal-ai/client, @fal-ai/server-proxy, next, pg, react (+29 more)
+Nodes (39): dependencies, @azure/identity, @azure/storage-blob, @fal-ai/client, @fal-ai/server-proxy, jose, next, pg (+31 more)
 
 ### Community 4 - "Issues & PRD Workflow"
 Cohesion: 0.29
@@ -553,8 +566,8 @@ Cohesion: 0.07
 Nodes (28): 1. State the question, 2. Pick the language, 3. Isolate the logic in a portable module, 4. Build the smallest TUI that exposes the state, 5. Make it runnable in one command, 6. Hand it over, 7. Capture the answer, Anti-patterns (+20 more)
 
 ### Community 45 - "route.ts"
-Cohesion: 0.11
-Nodes (22): blobMocks, execFileAsync, aiWatermarkPng(), crc32(), CRC_TABLE, download(), errorResponse(), execFileAsync (+14 more)
+Cohesion: 0.10
+Nodes (23): blobMocks, execFileAsync, aiWatermarkPng(), crc32(), CRC_TABLE, download(), errorResponse(), execFileAsync (+15 more)
 
 ### Community 46 - "SKILL.md"
 Cohesion: 0.07
@@ -641,8 +654,8 @@ Cohesion: 0.15
 Nodes (10): Designing for Mockability, When to Mock, Anti-patterns, Rules of the loop, Seams — where tests go, Test-Driven Development, What a good test is, Bad Tests (+2 more)
 
 ### Community 67 - "db.ts"
-Cohesion: 0.27
-Nodes (12): addCredits(), completeGeneration(), createGeneration(), failGeneration(), getCreditBalance(), getPool(), listGenerations(), parseAdoConnectionString() (+4 more)
+Cohesion: 0.09
+Nodes (37): GET(), oidcMocks, GET(), GET(), GET(), oidcMocks, authenticateRequest(), clearedCookie() (+29 more)
 
 ### Community 68 - "Process"
 Cohesion: 0.17
@@ -713,8 +726,8 @@ Cohesion: 0.25
 Nodes (3): FAQS, MARQUEE_WORDS, STEPS
 
 ### Community 85 - "Agent skills"
-Cohesion: 0.29
-Nodes (6): Agent skills, Domain docs, Git workflow — gitflow, always, graphify, Issue tracker, Triage labels
+Cohesion: 0.25
+Nodes (7): Agent skills, Domain docs, Git workflow — gitflow, always, graphify, Issue tracker, Skills sync, Triage labels
 
 ### Community 86 - "sora.ts"
 Cohesion: 0.52
@@ -748,25 +761,73 @@ Nodes (3): GLOSSARY.md Format, Rules, Structure
 Cohesion: 0.50
 Nodes (3): How they got here, Licensing note, Trending-dance reference clips
 
+### Community 205 - "PR-prep tail"
+Cohesion: 0.10
+Nodes (16): Inputs, Naming when there's no PRD/label, Notes, PR-prep tail, Run, Unresolved questions, COMMIT, GATE (+8 more)
+
+### Community 417 - "PR-prep tail"
+Cohesion: 0.10
+Nodes (16): Inputs, Naming when there's no PRD/label, Notes, PR-prep tail, Run, Unresolved questions, COMMIT, GATE (+8 more)
+
+### Community 418 - "implement-prompt.md"
+Cohesion: 0.20
+Nodes (9): COMMIT, CONTEXT, EXECUTION, EXPLORATION, FEEDBACK LOOPS, FINAL RULES, OUTPUT, TASK (+1 more)
+
+### Community 419 - "SKILL.md"
+Cohesion: 0.20
+Nodes (9): Chart the map, Fog of war, Invocation, Refer by name, The Map, The map body, Ticket Types, Tickets (+1 more)
+
+### Community 420 - "implement-prompt.md"
+Cohesion: 0.20
+Nodes (9): COMMIT, CONTEXT, EXECUTION, EXPLORATION, FEEDBACK LOOPS, FINAL RULES, OUTPUT, TASK (+1 more)
+
+### Community 421 - "dynamic-tdd.workflow.mjs"
+Cohesion: 0.33
+Nodes (5): done, IMPL_SCHEMA, mergedIssues, meta, PLAN_SCHEMA
+
+### Community 422 - "dynamic-tdd.workflow.mjs"
+Cohesion: 0.33
+Nodes (5): done, IMPL_SCHEMA, mergedIssues, meta, PLAN_SCHEMA
+
+### Community 423 - "AccountBadge.tsx"
+Cohesion: 0.40
+Nodes (4): AccountBadge(), BadgeState, Me, fetchMock
+
+### Community 424 - "merge-prompt.md"
+Cohesion: 0.40
+Nodes (4): CLEANUP — remove each merged worktree, CONSTRAINTS, DO NOT CLOSE ISSUES, TASK
+
+### Community 425 - "merge-prompt.md"
+Cohesion: 0.40
+Nodes (4): CLEANUP — remove each merged worktree, CONSTRAINTS, DO NOT CLOSE ISSUES, TASK
+
+### Community 426 - "plan-prompt.md"
+Cohesion: 0.50
+Nodes (3): ISSUES, OUTPUT, TASK
+
+### Community 427 - "plan-prompt.md"
+Cohesion: 0.50
+Nodes (3): ISSUES, OUTPUT, TASK
+
 ## Knowledge Gaps
-- **1117 isolated node(s):** `$schema`, `commandName`, `dotnetRunMessages`, `launchBrowser`, `applicationUrl` (+1112 more)
+- **1202 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1197 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **320 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **321 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `isShareId()` connect `Studio Wizard UI` to `route.ts`?**
+- **Why does `isShareId()` connect `route.ts` to `Studio Wizard UI`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `Studio()` connect `Studio Wizard UI` to `Import Clip API`, `Studio.test.tsx`, `generate.test.ts`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `run()` connect `Import Clip API` to `Studio Wizard UI`?**
-  _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **What connects `Return (regex_or_None, error_message_or_None).`, `$schema`, `commandName` to the rest of the system?**
-  _1157 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA` to the rest of the system?**
+  _1242 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Studio Wizard UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.11904761904761904 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12615384615384614 - nodes in this community are weakly interconnected._
 - **Should `Package Dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.05263157894736842 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Design System & Sora Infra` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
+- **Should `Aspire AppHost Config` be split into smaller, more focused modules?**
+  _Cohesion score 0.12105263157894737 - nodes in this community are weakly interconnected._
+- **Should `TypeScript Config` be split into smaller, more focused modules?**
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._

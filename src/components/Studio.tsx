@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import AccountBadge from "./AccountBadge";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
 import { GenerationError, cleanupPhotoUpload, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
@@ -792,9 +793,12 @@ export default function Studio() {
       <div className="overflow-hidden rounded-[1.35rem] bg-surface shadow-[var(--shadow-float)] ring-1 ring-line/60 sm:rounded-[2rem]">
         {/* Studio header */}
         <div className="flex flex-col items-start justify-between gap-3 border-b border-line/60 bg-bg-deep/40 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-10 sm:py-5">
-          <h2 id="studio-title" className="font-display text-2xl sm:text-3xl">
-            The Dance Studio
-          </h2>
+          <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-start">
+            <h2 id="studio-title" className="font-display text-2xl sm:text-3xl">
+              The Dance Studio
+            </h2>
+            <AccountBadge />
+          </div>
           <ol className="-mx-1 flex w-full items-center gap-1 overflow-x-auto px-1 text-sm font-medium sm:mx-0 sm:w-auto sm:gap-2 sm:overflow-visible sm:px-0" aria-label="Progress">
             {(["Photo", "Dance", "Showtime"] as const).map((label, i) => {
               const active = stepNumber === i + 1;

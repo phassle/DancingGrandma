@@ -39,11 +39,25 @@ export function getPool(): Pool {
   return pool;
 }
 
+export async function closePool(): Promise<void> {
+  if (!pool) return;
+  const closing = pool;
+  pool = undefined;
+  await closing.end();
+}
+
 export type User = {
   id: string;
   external_id: string;
   email: string | null;
   display_name: string | null;
+  last_activity_at: string;
+};
+
+/** Operational credit balances — the lockable projection, not the ledger sum. */
+export type Wallet = {
+  available: number;
+  reserved: number;
 };
 
 export type VideoGeneration = {
@@ -59,18 +73,38 @@ export type VideoGeneration = {
   completed_at: string | null;
 };
 
-/** Find-or-create a user from their Keycloak identity (sub claim). */
+/**
+ * Find-or-create a user from their Keycloak identity (sub claim), refresh
+ * their last-activity timestamp, and make sure their wallet row exists.
+ * Called on every authenticated request, so activity tracking is automatic.
+ */
 export async function upsertUser(externalId: string, email?: string, displayName?: string): Promise<User> {
   const { rows } = await getPool().query<User>(
-    `insert into users (external_id, email, display_name)
-     values ($1, $2, $3)
-     on conflict (external_id) do update
-       set email = coalesce(excluded.email, users.email),
-           display_name = coalesce(excluded.display_name, users.display_name)
-     returning *`,
+    `with u as (
+       insert into users (external_id, email, display_name)
+       values ($1, $2, $3)
+       on conflict (external_id) do update
+         set email = coalesce(excluded.email, users.email),
+             display_name = coalesce(excluded.display_name, users.display_name),
+             last_activity_at = now()
+       returning *
+     ), w as (
+       insert into credit_wallets (user_id)
+       select id from u
+       on conflict (user_id) do nothing
+     )
+     select * from u`,
     [externalId, email ?? null, displayName ?? null],
   );
   return rows[0];
+}
+
+export async function getWallet(userId: string): Promise<Wallet> {
+  const { rows } = await getPool().query<Wallet>(
+    `select available, reserved from credit_wallets where user_id = $1`,
+    [userId],
+  );
+  return rows[0] ?? { available: 0, reserved: 0 };
 }
 
 export async function listGenerations(userId: string): Promise<VideoGeneration[]> {
