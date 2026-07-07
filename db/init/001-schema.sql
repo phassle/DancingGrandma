@@ -16,16 +16,28 @@ create table users (
   last_activity_at timestamptz not null default now()
 );
 
+-- Durable server-side generation jobs (PRD #54). A paid run moves through
+-- explicit states: reserve credit → submit to provider → run → copy output
+-- to blob storage → capture the reservation (or release it on failure).
 create table video_generations (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references users(id) on delete cascade,
   engine        text not null,                  -- engine id from src/lib/engines.ts, or 'sora-2'
   prompt        text,
-  status        text not null default 'pending'
-                check (status in ('pending', 'running', 'completed', 'failed')),
-  video_url     text,                           -- provider URL while fresh
+  status        text not null default 'draft'
+                check (status in ('draft', 'awaiting_credit', 'reserved', 'submitted',
+                                  'running', 'finalizing', 'completed', 'failed', 'cancelled')),
+  -- Provider identity, so support can trace exactly what happened.
+  provider      text,                           -- 'fal' | 'replicate' | ...
+  endpoint      text,                           -- provider model path
+  provider_request_id text,
+  reference_source_kind text
+                check (reference_source_kind in ('curated', 'upload', 'direct_url', 'imported_url')),
+  credit_price  integer not null default 1 check (credit_price > 0),
+  video_url     text,                           -- provider URL: transport only, never product storage
   blob_path     text,                           -- durable copy in the videos container
   credits_spent integer not null default 0 check (credits_spent >= 0),
+  error_kind    text,                           -- 'provider' | 'timeout' | 'unavailable' | 'storage' | ...
   error         text,
   created_at    timestamptz not null default now(),
   completed_at  timestamptz
@@ -88,6 +100,14 @@ create table credit_ledger (
 );
 
 create index credit_ledger_user on credit_ledger (user_id);
+
+-- Wallet invariants (PRD #54): at most one active reservation per generation,
+-- and a generation is settled (captured or released) at most once.
+create unique index credit_ledger_one_reserve_per_generation
+  on credit_ledger (generation_id) where entry_type = 'generation_reserve';
+create unique index credit_ledger_one_settlement_per_generation
+  on credit_ledger (generation_id)
+  where entry_type in ('generation_capture', 'generation_release');
 
 -- Ledger rows are never updated or deleted — enforced, not just assumed.
 create function credit_ledger_forbid_change() returns trigger
