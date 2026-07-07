@@ -1,16 +1,16 @@
-# Graph Report - wf_5152ce62-acf-6  (2026-07-08)
+# Graph Report - DancingGrandma  (2026-07-08)
 
 ## Corpus Check
-- 226 files · ~146,440 words
+- 240 files · ~152,085 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1892 nodes · 1807 edges · 437 communities (116 shown, 321 thin omitted)
+- 1956 nodes · 1959 edges · 439 communities (118 shown, 321 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f08f9266`
+- Built from commit: `f3282a8c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -431,30 +431,32 @@
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_provider.ts|provider.ts]]
 - [[_COMMUNITY_route.integration.test.ts|route.integration.test.ts]]
+- [[_COMMUNITY_billing.ts|billing.ts]]
+- [[_COMMUNITY_CheckoutSuccess.tsx|CheckoutSuccess.tsx]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `getPool()` - 22 edges
+1. `getPool()` - 35 edges
 2. `Studio()` - 20 edges
-3. `POST()` - 16 edges
-4. `compilerOptions` - 16 edges
-5. `POST()` - 13 edges
-6. `authenticateRequest()` - 13 edges
+3. `authenticateRequest()` - 19 edges
+4. `POST()` - 16 edges
+5. `compilerOptions` - 16 edges
+6. `POST()` - 13 edges
 7. `User accounts, credits, and paid generation research` - 13 edges
 8. `advance()` - 10 edges
 9. `POST()` - 9 edges
-10. `submitDanceVideo()` - 9 edges
+10. `POST()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `wallet()` --calls--> `getPool()`  [EXTRACTED]
   src/app/api/generations/generations.integration.test.ts → src/lib/server/db.ts
 - `ledgerEntries()` --calls--> `getPool()`  [EXTRACTED]
   src/app/api/generations/generations.integration.test.ts → src/lib/server/db.ts
+- `createPendingCheckout()` --calls--> `getPool()`  [EXTRACTED]
+  src/app/api/stripe/webhook/route.integration.test.ts → src/lib/server/db.ts
+- `snapshot()` --calls--> `getPool()`  [EXTRACTED]
+  src/app/api/stripe/webhook/route.integration.test.ts → src/lib/server/db.ts
 - `Studio()` --indirect_call--> `run()`  [INFERRED]
   src/components/Studio.tsx → src/lib/import-clip.ts
-- `POST()` --calls--> `authenticateRequest()`  [EXTRACTED]
-  src/app/api/dev/credits/route.ts → src/lib/server/auth.ts
-- `advance()` --calls--> `saveVideoFromUrl()`  [EXTRACTED]
-  src/app/api/generations/[id]/route.ts → src/lib/server/blob.ts
 
 ## Import Cycles
 - None detected.
@@ -462,7 +464,7 @@
 ## Hyperedges (group relationships)
 - **Landing page conversion flow: headline -> value prop -> CTA -> ticker reinforcement** — docs_hero_screenshot_headline_stacked_tricolor, docs_hero_screenshot_value_prop_copy, docs_hero_screenshot_cta_make_grandma_dance, docs_hero_screenshot_marquee_ticker [INFERRED 0.85]
 
-## Communities (437 total, 321 thin omitted)
+## Communities (439 total, 321 thin omitted)
 
 ### Community 1 - "Studio Wizard UI"
 Cohesion: 0.13
@@ -661,8 +663,8 @@ Cohesion: 0.15
 Nodes (10): Designing for Mockability, When to Mock, Anti-patterns, Rules of the loop, Seams — where tests go, Test-Driven Development, What a good test is, Bad Tests (+2 more)
 
 ### Community 67 - "db.ts"
-Cohesion: 0.18
-Nodes (18): GET(), GET(), GET(), GET(), authenticateRequest(), clearedCookie(), readCookie(), sessionCookie() (+10 more)
+Cohesion: 0.17
+Nodes (20): GET(), GET(), GET(), POST(), authenticateRequest(), clearedCookie(), readCookie(), sessionCookie() (+12 more)
 
 ### Community 68 - "Process"
 Cohesion: 0.17
@@ -818,15 +820,15 @@ Nodes (3): ISSUES, OUTPUT, TASK
 
 ### Community 430 - "route.ts"
 Cohesion: 0.22
-Nodes (14): generationDto, badRequest(), GET(), isFileLike(), POST(), REFERENCE_SOURCE_KINDS, ENGINES, getWallet() (+6 more)
+Nodes (14): generationDto, badRequest(), GET(), isFileLike(), POST(), REFERENCE_SOURCE_KINDS, ENGINES, InsufficientCreditsError (+6 more)
 
 ### Community 431 - "paid-generation.ts"
 Cohesion: 0.22
 Nodes (12): bodyOf(), fetchActivePaidGeneration(), fetchGeneration(), PaidGeneration, PaidGenerationError, PaidGenerationStatus, startPaidGeneration(), TERMINAL (+4 more)
 
 ### Community 432 - "db.ts"
-Cohesion: 0.22
-Nodes (14): ACTIVE_GENERATION_STATUSES, addCredits(), completeGeneration(), createGeneration(), failGeneration(), GenerationStatus, getCreditBalance(), getPool() (+6 more)
+Cohesion: 0.16
+Nodes (18): GET(), oidcMocks, userIdOf(), GET(), getCurrentSubscription(), ACTIVE_GENERATION_STATUSES, addCredits(), completeGeneration() (+10 more)
 
 ### Community 433 - "generations.integration.test.ts"
 Cohesion: 0.21
@@ -841,28 +843,36 @@ Cohesion: 0.36
 Nodes (11): classifyFalError(), FalApiErrorLike, falInputFor(), getFalClient(), providerError(), ProviderFailureKind, ProviderJobStatus, providerResult() (+3 more)
 
 ### Community 436 - "route.integration.test.ts"
-Cohesion: 0.29
-Nodes (6): oidcMocks, oidcMocks, closePool(), execFileAsync, startTestPostgres(), TestPostgres
+Cohesion: 0.13
+Nodes (13): oidcMocks, oidcMocks, stripeMocks, oidcMocks, stripeMocks, oidcMocks, createPendingCheckout(), snapshot() (+5 more)
+
+### Community 437 - "billing.ts"
+Cohesion: 0.15
+Nodes (23): stripe, POST(), deliver(), POST(), applyCheckoutCompleted(), applyInvoicePaid(), applyStatusFromStripe(), createPendingSubscription() (+15 more)
+
+### Community 438 - "CheckoutSuccess.tsx"
+Cohesion: 0.20
+Nodes (5): metadata, CheckoutSuccess(), SubscriptionState, fetchMock, ViewState
 
 ## Knowledge Gaps
-- **1213 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1208 more)
+- **1225 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1220 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **321 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Studio()` connect `Studio Wizard UI` to `Import Clip API`, `Studio.test.tsx`, `route.ts`, `generate.test.ts`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `run()` connect `Import Clip API` to `Studio Wizard UI`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `ENGINES` connect `route.ts` to `Studio Wizard UI`, `generate.ts`, `generate.test.ts`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `Package Dependencies` to `billing.ts`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **Why does `stripe` connect `billing.ts` to `Package Dependencies`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA` to the rest of the system?**
-  _1253 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1265 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Studio Wizard UI` be split into smaller, more focused modules?**
   _Cohesion score 0.12615384615384614 - nodes in this community are weakly interconnected._
 - **Should `Package Dependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Design System & Sora Infra` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
+- **Should `Aspire AppHost Config` be split into smaller, more focused modules?**
+  _Cohesion score 0.12105263157894737 - nodes in this community are weakly interconnected._
