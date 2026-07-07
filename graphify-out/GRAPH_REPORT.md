@@ -1,16 +1,16 @@
 # Graph Report - DancingGrandma  (2026-07-08)
 
 ## Corpus Check
-- 186 files · ~128,345 words
+- 186 files · ~128,404 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1673 nodes · 1416 edges · 417 communities (96 shown, 321 thin omitted)
+- 1672 nodes · 1416 edges · 416 communities (96 shown, 320 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3a406390`
+- Built from commit: `a772524a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -218,7 +218,6 @@
 - [[_COMMUNITY_Design It Twice (Ousterhout)|Design It Twice (Ousterhout)]]
 - [[_COMMUNITY_Codebase Design Skill|Codebase Design Skill]]
 - [[_COMMUNITY_Adapter|Adapter]]
-- [[_COMMUNITY_Deletion Test|Deletion Test]]
 - [[_COMMUNITY_Interface Is the Test Surface|Interface Is the Test Surface]]
 - [[_COMMUNITY_Seam (Feathers)|Seam (Feathers)]]
 - [[_COMMUNITY_Tight Feedback Loop|Tight Feedback Loop]]
@@ -443,7 +442,7 @@
 ## Hyperedges (group relationships)
 - **Landing page conversion flow: headline -> value prop -> CTA -> ticker reinforcement** — docs_hero_screenshot_headline_stacked_tricolor, docs_hero_screenshot_value_prop_copy, docs_hero_screenshot_cta_make_grandma_dance, docs_hero_screenshot_marquee_ticker [INFERRED 0.85]
 
-## Communities (417 total, 321 thin omitted)
+## Communities (416 total, 320 thin omitted)
 
 ### Community 1 - "Studio Wizard UI"
 Cohesion: 0.12
@@ -750,9 +749,9 @@ Cohesion: 0.50
 Nodes (3): How they got here, Licensing note, Trending-dance reference clips
 
 ## Knowledge Gaps
-- **1118 isolated node(s):** `$schema`, `commandName`, `dotnetRunMessages`, `launchBrowser`, `applicationUrl` (+1113 more)
+- **1117 isolated node(s):** `$schema`, `commandName`, `dotnetRunMessages`, `launchBrowser`, `applicationUrl` (+1112 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **321 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **320 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -764,7 +763,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `run()` connect `Import Clip API` to `Studio Wizard UI`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `Return (regex_or_None, error_message_or_None).`, `$schema`, `commandName` to the rest of the system?**
-  _1158 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1157 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Studio Wizard UI` be split into smaller, more focused modules?**
   _Cohesion score 0.11904761904761904 - nodes in this community are weakly interconnected._
 - **Should `Package Dependencies` be split into smaller, more focused modules?**

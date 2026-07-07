@@ -15049,20 +15049,6 @@
       "id": "_claude_skills_codebase_design_skill_interface_as_test_surface"
     },
     {
-      "label": "Deletion Test",
-      "file_type": "concept",
-      "source_file": ".claude/skills/codebase-design/SKILL.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "rationale": "Imagine deleting the module: if complexity vanishes it was a pass-through; if complexity reappears across N callers it was earning its keep.",
-      "community": 205,
-      "norm_label": "deletion test",
-      "id": "_claude_skills_codebase_design_skill_deletion_test"
-    },
-    {
       "label": "Deepening Guide",
       "file_type": "document",
       "source_file": ".claude/skills/codebase-design/DEEPENING.md",
@@ -32316,5 +32302,5 @@
       "source_file": "docs/hero-screenshot.png"
     }
   ],
-  "built_at_commit": "3a406390d10e1cf8f3a752b8ad5fdba6f22ed97f"
+  "built_at_commit": "a772524af9d08838ead7c2ecc4a4d186a3fb3896"
 }
