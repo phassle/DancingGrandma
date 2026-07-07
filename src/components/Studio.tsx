@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
-import { GenerationError, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
+import { GenerationError, cleanupPhotoUpload, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
 import { isShareId } from "@/lib/share-id";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
@@ -271,6 +271,7 @@ export default function Studio() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoName, setPhotoName] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [consentGiven, setConsentGiven] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dance, setDance] = useState<Dance | null>(null);
   const [customVideo, setCustomVideo] = useState<File | null>(null);
@@ -463,9 +464,35 @@ export default function Studio() {
           setStep("done");
           setGenerationStartedAt(null);
           setLastRunUpdateAt(null);
+          // Honour the "used once, deleted" promise — photo is no longer needed.
+          if (photoFile) void cleanupPhotoUpload(photoFile);
         }
       } catch (err) {
         if (!cancelled) {
+          localStorage.removeItem(PENDING_RUN_KEY);
+          setPendingRun(null);
+          setGenerationStartedAt(null);
+          setLastRunUpdateAt(null);
+
+          if (err instanceof GenerationError && err.kind === "moderation") {
+            // Photo rejected by moderation — clear it so the user picks a new one.
+            if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+            objectUrlRef.current = null;
+            setPhotoUrl(null);
+            setPhotoFile(null);
+            setPhotoName(null);
+            setConsentGiven(false);
+            setPhotoError(
+              err.message ||
+              "We can't use that photo. Please choose a different one — grandma's debut is worth getting right.",
+            );
+            setStep("photo");
+            return;
+          }
+
+          // Photo was uploaded to fal — clean up even on failure.
+          if (photoFile) void cleanupPhotoUpload(photoFile);
+
           logStudioError("generation", err, {
             engineId: activeEngineForRun.id,
             engineName: activeEngineForRun.name,
@@ -475,10 +502,6 @@ export default function Studio() {
             renderPhase,
             elapsedSeconds,
           });
-          localStorage.removeItem(PENDING_RUN_KEY);
-          setPendingRun(null);
-          setGenerationStartedAt(null);
-          setLastRunUpdateAt(null);
           if (err instanceof GenerationError && err.kind === "unavailable") {
             if (activeEngineForRun.goldenClip) {
               setResultUrl(activeEngineForRun.goldenClip);
@@ -666,6 +689,7 @@ export default function Studio() {
     setPhotoFile(null);
     setPhotoName(null);
     setPhotoError(null);
+    setConsentGiven(false);
     setDance(null);
     setCustomVideo(null);
     setCustomUrl(null);
@@ -871,10 +895,25 @@ export default function Studio() {
                 </p>
               )}
 
+              {photoUrl && (
+                <label className="mt-5 flex cursor-pointer items-start gap-3 sm:mt-6">
+                  <input
+                    type="checkbox"
+                    checked={consentGiven}
+                    onChange={(e) => setConsentGiven(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-butter"
+                    aria-label="I have permission to use this photo"
+                  />
+                  <span className="text-sm text-muted">
+                    I have permission to use this photo — it will be uploaded once for the render, then deleted.
+                  </span>
+                </label>
+              )}
+
               <div className="mt-6 flex justify-end sm:mt-8">
                 <button
                   type="button"
-                  disabled={!photoUrl}
+                  disabled={!photoUrl || !consentGiven}
                   onClick={() => setStep("dance")}
                   className="w-full rounded-full bg-butter px-8 py-3 font-display text-lg text-butter-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                 >

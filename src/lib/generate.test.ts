@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { fal } from "@fal-ai/client";
 import {
+  cleanupPhotoUpload,
   generateDanceVideo,
   hasWiredGenerationAdapter,
   submitDanceVideo,
@@ -51,6 +52,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
   vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.stubGlobal(
     "createImageBitmap",
     vi.fn(async () => ({
@@ -68,6 +70,12 @@ beforeEach(() => {
         return new Response("final-video", {
           headers: { "Content-Type": "video/mp4" },
         });
+      }
+      if (url.endsWith("/api/moderate")) {
+        return Response.json({ accepted: true });
+      }
+      if (url.endsWith("/api/photo/cleanup")) {
+        return Response.json({ deleted: true });
       }
       return new Response(null, { status: 404, statusText: "Not Found" });
     }),
@@ -398,4 +406,82 @@ test("retrying after a render failure reuses the uploads instead of re-uploading
     "blob:finalized-video",
   );
   expect(fal.storage.upload).not.toHaveBeenCalled();
+});
+
+test("moderation rejection blocks submission and throws with kind 'moderation'", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.endsWith("/api/moderate")) {
+        return Response.json({ accepted: false, reason: "This photo can't be used for dancing." });
+      }
+      if (url.endsWith("/api/video/finalize")) {
+        return new Response("final-video", { headers: { "Content-Type": "video/mp4" } });
+      }
+      return new Response(null, { status: 404 });
+    }),
+  );
+
+  await expect(
+    submitDanceVideo(photo(), clip(), wan),
+  ).rejects.toMatchObject({
+    kind: "moderation",
+    message: "This photo can't be used for dancing.",
+  });
+
+  // Provider was never called — photo didn't reach fal.
+  expect(fal.storage.upload).not.toHaveBeenCalled();
+  expect(fal.queue.submit).not.toHaveBeenCalled();
+});
+
+test("a moderation server error does not block the run (best-effort)", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.endsWith("/api/moderate")) {
+        return new Response(null, { status: 500, statusText: "Internal Server Error" });
+      }
+      if (url.endsWith("/api/video/finalize")) {
+        return new Response("final-video", { headers: { "Content-Type": "video/mp4" } });
+      }
+      return new Response(null, { status: 404 });
+    }),
+  );
+
+  // Moderation 500 should be treated as accepted — run goes through.
+  await expect(
+    generateDanceVideo(photo(), clip(), wan, () => {}),
+  ).resolves.toBe("blob:finalized-video");
+  expect(console.warn).toHaveBeenCalledWith(
+    "[dg:moderation-error]",
+    expect.objectContaining({ status: 500 }),
+  );
+});
+
+test("cleanupPhotoUpload deletes the fal URL and clears the cache", async () => {
+  const star = photo();
+  // Use a URL reference so only the photo is uploaded.
+  await submitDanceVideo(star, "https://example.com/griddy.mp4", wan);
+  expect(fal.storage.upload).toHaveBeenCalledTimes(1);
+
+  await cleanupPhotoUpload(star);
+
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/photo/cleanup",
+    expect.objectContaining({
+      method: "POST",
+      body: expect.stringContaining("fal.media"),
+    }),
+  );
+});
+
+test("photo upload uses a 1-hour TTL lifecycle to honour auto-expiry", async () => {
+  await submitDanceVideo(photo(), "https://example.com/griddy.mp4", wan);
+
+  expect(fal.storage.upload).toHaveBeenCalledWith(
+    expect.any(File),
+    expect.objectContaining({ lifecycle: { expiresIn: "1h" } }),
+  );
 });

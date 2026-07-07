@@ -4,6 +4,7 @@ import userEvent, { type UserEvent } from "@testing-library/user-event";
 import Studio from "./Studio";
 import {
   GenerationError,
+  cleanupPhotoUpload,
   generateDanceVideo,
   submitDanceVideo,
   trackDanceVideo,
@@ -18,17 +19,21 @@ vi.mock("@/lib/generate", async (importOriginal) => {
     generateDanceVideo: vi.fn(),
     submitDanceVideo: vi.fn(),
     trackDanceVideo: vi.fn(),
+    cleanupPhotoUpload: vi.fn().mockResolvedValue(undefined),
   };
 });
 
 const generate = vi.mocked(generateDanceVideo);
 const submit = vi.mocked(submitDanceVideo);
 const track = vi.mocked(trackDanceVideo);
+const cleanup = vi.mocked(cleanupPhotoUpload);
 
 beforeEach(() => {
   generate.mockReset();
   submit.mockReset();
   track.mockReset();
+  cleanup.mockReset();
+  cleanup.mockResolvedValue(undefined);
   vi.spyOn(console, "error").mockImplementation(() => {});
   submit.mockResolvedValue("req-1");
   track.mockResolvedValue("https://fal.media/out.mp4");
@@ -64,6 +69,7 @@ async function startRealRun(user: UserEvent) {
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.upload(
     screen.getByLabelText("Upload your own reference dance video"),
@@ -153,6 +159,7 @@ test("Kling is the preselected recommended engine", async () => {
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
 
   expect(screen.getByRole("radio", { name: /kling 2.6 motion control/i })).toHaveProperty(
@@ -172,6 +179,7 @@ test("a curated dance with a bundled clip renders for real", async () => {
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.click(await screen.findByRole("radio", { name: /the griddy/i }));
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
@@ -198,6 +206,7 @@ test("dance cards mark only the dances whose reference clip exists as real rende
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
 
   expect(
@@ -217,6 +226,7 @@ test("a pasted video link can run through Kling with the URL handed through", as
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.type(
     screen.getByLabelText(/paste a video link/i),
@@ -260,6 +270,7 @@ test("a YouTube page link imports a clip that can run through Kling", async () =
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.type(
     screen.getByLabelText(/paste a video link/i),
@@ -315,6 +326,7 @@ test("a failed import shows a helpful message, not a doomed run", async () => {
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.type(
     screen.getByLabelText(/paste a video link/i),
@@ -339,6 +351,7 @@ test("pasting a video from the clipboard loads it as the reference clip", async 
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
 
   fireEvent.paste(window, {
@@ -362,6 +375,7 @@ test("pasting a page link fills the link field without importing until clicked",
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
 
   fireEvent.paste(window, {
@@ -393,6 +407,7 @@ test("dropping a video file on the tile loads it as the reference clip", async (
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
 
   fireEvent.drop(screen.getByText(/got your own dance video/i), {
@@ -638,6 +653,7 @@ test("simulated runs do not store pending runs or trigger the unload guard", asy
     screen.getByLabelText("Upload a photo of the star"),
     new File(["p"], "grandma.png", { type: "image/png" }),
   );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
   await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
   await user.click(screen.getByRole("radio", { name: /the griddy/i }));
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
@@ -647,4 +663,74 @@ test("simulated runs do not store pending runs or trigger the unload guard", asy
   window.dispatchEvent(leaving);
   expect(leaving.defaultPrevented).toBe(false);
   expect(submit).not.toHaveBeenCalled();
+});
+
+test("consent checkbox must be checked before proceeding to the dance step", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+
+  // Button is disabled before consent is given.
+  expect(
+    (screen.getByRole("button", { name: "Pick her dance →" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
+
+  // Button is now enabled.
+  expect(
+    (screen.getByRole("button", { name: "Pick her dance →" }) as HTMLButtonElement).disabled,
+  ).toBe(false);
+
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+  expect(screen.getByRole("heading", { name: /pick the choreography/i })).toBeDefined();
+});
+
+test("moderation rejection returns to the photo step with an affectionate message", async () => {
+  const user = userEvent.setup();
+  submit.mockRejectedValue(
+    new GenerationError("moderation", "This photo can't be used for dancing. Please choose another."),
+  );
+
+  await startRealRun(user);
+
+  // Wizard returns to the photo step with the rejection message.
+  expect(await screen.findByRole("heading", { name: /who's the star/i })).toBeDefined();
+  const alert = screen.getByRole("alert");
+  expect(alert.textContent).toMatch(/can't be used for dancing/i);
+
+  // The rejected photo is cleared — user must pick a new one.
+  expect(
+    (screen.getByRole("button", { name: "Pick her dance →" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+});
+
+test("source photo is cleaned up after a successful run", async () => {
+  const user = userEvent.setup();
+  track.mockResolvedValue("https://fal.media/out.mp4");
+
+  await startRealRun(user);
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+
+  await waitFor(() => expect(cleanup).toHaveBeenCalled());
+  const photo = cleanup.mock.calls[0][0];
+  expect(photo).toBeInstanceOf(File);
+  expect((photo as File).name).toBe("grandma.png");
+});
+
+test("source photo is cleaned up after a failed run", async () => {
+  const user = userEvent.setup();
+  track.mockRejectedValue(new GenerationError("provider", "Internal server error"));
+
+  await startRealRun(user);
+  await screen.findByRole("alert");
+
+  await waitFor(() => expect(cleanup).toHaveBeenCalled());
+  const photo = cleanup.mock.calls[0][0];
+  expect(photo).toBeInstanceOf(File);
+  expect((photo as File).name).toBe("grandma.png");
 });
