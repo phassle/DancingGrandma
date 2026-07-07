@@ -2,6 +2,13 @@
 
 ## Agent skills
 
+### Skills sync
+
+Skills live canonically in `.agents/skills/` (agent-agnostic) and are mirrored to
+`.claude/skills/`. After adding or editing a skill in either directory, run
+`scripts/sync-skills.sh` — it adopts `.claude`-only skills into `.agents/skills/`,
+mirrors canonical → `.claude/skills/`, and fails if the trees still differ.
+
 ### Issue tracker
 
 Issues and PRDs live as GitHub issues in `phassle/DancingGrandma` (via the `gh` CLI). External PRs are also a triage surface. See `docs/agents/issue-tracker.md`.
