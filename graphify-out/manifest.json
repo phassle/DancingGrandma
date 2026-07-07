@@ -10,9 +10,9 @@
     "semantic_hash": "5edd7fe1b43f2c1c556e523d1479bda0"
   },
   ".claude/settings.json": {
-    "mtime": 1783259219.2858977,
-    "ast_hash": "3474618ced007f63b1f38511aa1e452c",
-    "semantic_hash": "3474618ced007f63b1f38511aa1e452c"
+    "mtime": 1783463033.4952686,
+    "ast_hash": "1ea5f1ec9de4d937a2721d16fdc0c699",
+    "semantic_hash": ""
   },
   ".claude/skills/diagnosing-bugs/scripts/hitl-loop.template.sh": {
     "mtime": 1783247668.216031,
@@ -30,7 +30,7 @@
     "semantic_hash": "5202e4b802881e3228072077a6076a4c"
   },
   ".impeccable/hook.cache.json": {
-    "mtime": 1783462911.9173586,
+    "mtime": 1783463199.78199,
     "ast_hash": "c642c615dd02738203b5c7ec84900755",
     "semantic_hash": "c642c615dd02738203b5c7ec84900755"
   },
@@ -805,7 +805,7 @@
     "semantic_hash": "e36988ba4e45c7686ceeed21171dd403"
   },
   "CLAUDE.md": {
-    "mtime": 1783462911.873759,
+    "mtime": 1783462974.5589414,
     "ast_hash": "162782835dc07b260aa93f59f99fd5e9",
     "semantic_hash": ""
   },
@@ -950,12 +950,12 @@
     "semantic_hash": ""
   },
   "CONTEXT.md": {
-    "mtime": 1783462816.8671865,
-    "ast_hash": "761bd87b70695ac20a846437adbf946e",
+    "mtime": 1783463199.740314,
+    "ast_hash": "20b0ba05d42011048e2abdfb11fe8d94",
     "semantic_hash": ""
   },
   "docs/research/user-accounts-credits-paid-generations.md": {
-    "mtime": 1783462816.8556557,
+    "mtime": 1783462974.559226,
     "ast_hash": "9ebe418049d58d19a497c31ed65b0ef1",
     "semantic_hash": ""
   },

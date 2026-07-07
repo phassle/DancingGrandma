@@ -40,6 +40,10 @@ _Avoid_: token, point, provider cost
 The user's spendable and reserved credit position.
 _Avoid_: balance column, payment account
 
+**Credit Ledger**:
+The append-only record of every credit event — grants, reservations, captures, releases, expirations, and adjustments. Corrections are new compensating entries; history is never edited.
+_Avoid_: transaction table, balance history, mutable log
+
 **Credit Purchase**:
 A paid top-up that grants credits to a user's credit wallet after payment is confirmed.
 _Avoid_: subscription, invoice, recharge
@@ -53,8 +57,8 @@ A temporary hold on credits for a generation that has started but has not yet de
 _Avoid_: charge, spend, payment
 
 **Credit Expiration**:
-The removal of unused credits after the user has been inactive for the product-defined inactivity window.
-_Avoid_: refund, provider timeout
+The removal of available (unreserved) credits after the user has been inactive for the product-defined inactivity window. A reserved credit on an in-flight generation job is never expired; it resolves by capture or release.
+_Avoid_: refund, provider timeout, expiring reserved credits
 
 **Account Activity**:
 An authenticated user presence in DancingGrandma that keeps the user's paid credits from expiring.
