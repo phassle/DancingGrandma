@@ -27,7 +27,11 @@ var soraDeployment = builder.AddParameter("sora-deployment", value: "sora-2");
 // --- Postgres: users, video generations, credits ledger -------------------
 var postgres = builder.AddAzurePostgresFlexibleServer("postgres")
     .WithPasswordAuthentication()
-    .RunAsContainer(c => c.WithInitFiles("./db/init"));
+    .RunAsContainer(c => c
+        // Make grandmadb the container's default database so the init
+        // scripts run against it (initdb happens before AddDatabase kicks in).
+        .WithEnvironment("POSTGRES_DB", "grandmadb")
+        .WithInitFiles("./db/init"));
 var db = postgres.AddDatabase("grandmadb");
 
 // --- Blob storage for generated videos (Azurite locally) ------------------
