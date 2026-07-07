@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import GrandmaDancer from "./GrandmaDancer";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
 import { GenerationError, cleanupPhotoUpload, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
+import { isShareId } from "@/lib/share-id";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
@@ -209,10 +210,6 @@ async function fetchResultBlob(url: string): Promise<Blob> {
   return blob;
 }
 
-function resultFile(blob: Blob): File {
-  return new File([blob], RESULT_FILE_NAME, { type: blob.type || "video/mp4" });
-}
-
 function triggerDownload(blob: Blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -223,6 +220,18 @@ function triggerDownload(blob: Blob) {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+function persistentShareUrl(resultUrl: string): string | null {
+  try {
+    const parsed = new URL(resultUrl, window.location.origin);
+    const match = parsed.pathname.match(/^\/api\/video\/([^/]+)$/);
+    if (!match) return null;
+    if (!isShareId(match[1])) return null;
+    return new URL(`/v/${match[1]}`, window.location.origin).toString();
+  } catch {
+    return null;
+  }
 }
 
 function generationFailureMessage(err: unknown, engine: Engine): string {
@@ -728,27 +737,16 @@ export default function Studio() {
   };
 
   const share = async () => {
-    const shareUrl = resultUrl ?? "https://dancinggrandma.example/v/grandma-goes-viral";
+    const shareUrl =
+      (resultUrl ? persistentShareUrl(resultUrl) : null) ??
+      "https://dancinggrandma.example/v/grandma-goes-viral";
     setIsSharing(true);
     try {
-      if (resultUrl && typeof navigator.share === "function") {
-        const file = resultFile(await fetchResultBlob(resultUrl));
-        const fileShare = { files: [file] };
-        if (typeof navigator.canShare !== "function" || navigator.canShare(fileShare)) {
-          await navigator.share({
-            title: "DancingGrandma",
-            text: "Generated Dance Video",
-            files: [file],
-          });
-          setToast("Share sheet opened.");
-          return;
-        }
-      }
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard is unavailable");
       await navigator.clipboard.writeText(shareUrl);
       setToast(
-        resultUrl
-          ? "Video link copied. Download first if the link only works in this browser."
+        resultUrl && shareUrl.includes("/v/")
+          ? "Share link copied."
           : "Demo link copied — real links arrive with real renders. 💃",
       );
     } catch (err) {

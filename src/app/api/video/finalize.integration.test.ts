@@ -3,10 +3,21 @@ import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { promisify } from "util";
-import { expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { POST } from "./finalize/route";
 
 const execFileAsync = promisify(execFile);
+const blobMocks = vi.hoisted(() => ({
+  saveVideoBytes: vi.fn(),
+}));
+
+vi.mock("@/lib/server/blob", () => ({
+  saveVideoBytes: blobMocks.saveVideoBytes,
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 function videoDataUrl(bytes: Buffer): string {
   return `data:video/mp4;base64,${bytes.toString("base64")}`;
@@ -19,6 +30,11 @@ test("delivered Wan-style output has an audio stream when the reference clip has
   const outputPath = join(dir, "output.mp4");
 
   try {
+    let persisted: Buffer | undefined;
+    blobMocks.saveVideoBytes.mockImplementation(async (_id: string, bytes: Buffer) => {
+      persisted = bytes;
+      return "stored.mp4";
+    });
     await execFileAsync("ffmpeg", [
       "-y",
       "-f",
@@ -64,7 +80,12 @@ test("delivered Wan-style output has an audio stream when the reference clip has
     );
 
     expect(res.status, await res.clone().text()).toBe(200);
-    await writeFile(outputPath, Buffer.from(await res.arrayBuffer()));
+    await expect(res.json()).resolves.toEqual({
+      videoUrl: expect.stringMatching(/^\/api\/video\/[0-9a-f-]{36}$/),
+      shareUrl: expect.stringMatching(/^\/v\/[0-9a-f-]{36}$/),
+    });
+    expect(persisted).toBeDefined();
+    await writeFile(outputPath, persisted!);
     const { stdout } = await execFileAsync("ffprobe", [
       "-v",
       "error",

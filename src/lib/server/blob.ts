@@ -41,13 +41,22 @@ export function getVideosContainer(): ContainerClient {
  * Copy a provider-hosted video (fal/Sora URLs expire) into durable storage.
  * Returns the blob path recorded on the generation row.
  */
-export async function saveVideoFromUrl(generationId: string, url: string): Promise<string> {
+export async function saveVideoFromUrl(videoId: string, url: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`fetching video failed: ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());
-  const blobPath = `${generationId}.mp4`;
+  return saveVideoBytes(videoId, bytes);
+}
+
+export async function saveVideoBytes(videoId: string, bytes: Buffer): Promise<string> {
+  const blobPath = `${videoId}.mp4`;
   await getVideosContainer()
     .getBlockBlobClient(blobPath)
     .uploadData(bytes, { blobHTTPHeaders: { blobContentType: "video/mp4" } });
   return blobPath;
+}
+
+export async function readVideoBytes(blobPath: string): Promise<Buffer> {
+  // Callers decide how to map storage failures (missing blob vs transient error).
+  return getVideosContainer().getBlockBlobClient(blobPath).downloadToBuffer();
 }

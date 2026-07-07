@@ -379,6 +379,12 @@ async function finalizeDeliveredVideo(
     }),
   });
   if (!res.ok) throw await classifyProviderResponse(res);
+  const contentType = res.headers.get("Content-Type") || "";
+  if (contentType.includes("application/json")) {
+    const body = (await res.json()) as { videoUrl?: string };
+    if (body.videoUrl) return body.videoUrl;
+    throw new GenerationError("provider", "Finalize route returned no video URL");
+  }
   const video = await res.blob();
   return URL.createObjectURL(video);
 }

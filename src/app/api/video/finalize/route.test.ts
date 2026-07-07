@@ -14,6 +14,10 @@ const fsMocks = vi.hoisted(() => ({
   rm: vi.fn(),
 }));
 
+const blobMocks = vi.hoisted(() => ({
+  saveVideoBytes: vi.fn(),
+}));
+
 vi.mock("child_process", () => ({
   default: { execFile: execMocks.execFile },
   execFile: execMocks.execFile,
@@ -24,12 +28,17 @@ vi.mock("fs/promises", () => ({
   ...fsMocks,
 }));
 
+vi.mock("@/lib/server/blob", () => ({
+  saveVideoBytes: blobMocks.saveVideoBytes,
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   fsMocks.mkdtemp.mockResolvedValue("/tmp/dg-video-test");
   fsMocks.writeFile.mockResolvedValue(undefined);
   fsMocks.readFile.mockResolvedValue(Buffer.from("final"));
   fsMocks.rm.mockResolvedValue(undefined);
+  blobMocks.saveVideoBytes.mockResolvedValue("id.mp4");
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
@@ -56,9 +65,15 @@ test("burns in the AI watermark and muxes reference audio when the provider has 
   );
 
   expect(res.status).toBe(200);
-  expect(res.headers.get("Content-Type")).toBe("video/mp4");
-  await expect(res.text()).resolves.toBe("final");
+  await expect(res.json()).resolves.toEqual({
+    videoUrl: expect.stringMatching(/^\/api\/video\/[0-9a-f-]{36}$/),
+    shareUrl: expect.stringMatching(/^\/v\/[0-9a-f-]{36}$/),
+  });
   expect(fetch).toHaveBeenCalledTimes(2);
+  expect(blobMocks.saveVideoBytes).toHaveBeenCalledWith(
+    expect.stringMatching(/^[0-9a-f-]{36}$/),
+    expect.any(Buffer),
+  );
   expect(fsMocks.writeFile).toHaveBeenCalledWith(
     "/tmp/dg-video-test/input.mp4",
     expect.any(Buffer),
