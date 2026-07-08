@@ -1,7 +1,7 @@
 "use client";
 
 // Type-only import — erased at compile time, so no server code is bundled.
-import type { ReferenceSourceKind } from "@/lib/server/db";
+import type { GenerationStatus, ReferenceSourceKind } from "@/lib/server/db";
 import {
   GenerationError,
   moderatePhoto,
@@ -19,7 +19,9 @@ import {
  * route, which is also what advances capture/release on the server.
  */
 
-export type Account = { status: "anonymous" } | { status: "signed-in"; credits: number };
+export type Account =
+  | { status: "anonymous" }
+  | { status: "signed-in"; credits: number; name?: string | null };
 
 /** The wallet can't cover the run — send the user to Stripe Checkout. */
 export class CheckoutRequiredError extends Error {
@@ -46,8 +48,15 @@ export async function fetchAccount(): Promise<Account> {
   try {
     const res = await fetch("/api/me");
     if (!res.ok) return { status: "anonymous" };
-    const body = (await res.json()) as { wallet: { available: number } };
-    return { status: "signed-in", credits: body.wallet.available };
+    const body = (await res.json()) as {
+      user?: { email: string | null; displayName: string | null };
+      wallet: { available: number };
+    };
+    return {
+      status: "signed-in",
+      credits: body.wallet.available,
+      name: body.user?.displayName ?? body.user?.email ?? null,
+    };
   } catch {
     return { status: "anonymous" };
   }
@@ -113,7 +122,7 @@ export async function createServerGeneration(
 
 type GenerationStatusDto = {
   id: string;
-  status: "draft" | "reserved" | "submitted" | "running" | "finalizing" | "completed" | "failed" | "cancelled";
+  status: GenerationStatus;
   errorKind?: string | null;
   error?: string | null;
 };

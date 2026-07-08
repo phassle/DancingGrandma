@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import { getCurrentSubscription } from "@/lib/server/billing";
 import { getWallet } from "@/lib/server/db";
 
@@ -10,10 +10,8 @@ export const runtime = "nodejs";
  * side checkout success is never trusted for fulfillment.
  */
 export async function GET(request: Request): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
   const [subscription, wallet] = await Promise.all([
     getCurrentSubscription(user.id),
     getWallet(user.id),

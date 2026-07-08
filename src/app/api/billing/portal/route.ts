@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import { createPortalSession } from "@/lib/server/stripe";
 
 export const runtime = "nodejs";
@@ -10,10 +10,8 @@ export const runtime = "nodejs";
  * which only ever changes subscription status, never the wallet.
  */
 export async function POST(request: Request): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
   if (!user.stripe_customer_id) {
     return Response.json({ error: "no_stripe_customer" }, { status: 409 });
   }

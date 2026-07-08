@@ -5,6 +5,7 @@ import {
   type AdjustmentEntryType,
 } from "@/lib/server/db";
 import { maintenanceGuard } from "../guard";
+import { isShareId } from "@/lib/share-id";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,6 @@ export const runtime = "nodejs";
  * negative.
  */
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ENTRY_TYPES: AdjustmentEntryType[] = ["admin_adjustment", "refund_reversal"];
 
 export async function POST(request: Request): Promise<Response> {
@@ -45,7 +45,7 @@ export async function POST(request: Request): Promise<Response> {
   if (entryType === "refund_reversal" && amount > 0) {
     return Response.json({ error: "a refund reversal must remove credits" }, { status: 400 });
   }
-  if (!UUID_PATTERN.test(body.userId)) {
+  if (!isShareId(body.userId)) {
     return Response.json({ error: "user not found" }, { status: 404 });
   }
   const note = typeof body.note === "string" && body.note ? body.note : "support adjustment";

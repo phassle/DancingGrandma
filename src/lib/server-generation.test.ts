@@ -53,7 +53,7 @@ test("fetchAccount reports a signed-in user's spendable credits", async () => {
     });
   });
 
-  expect(await fetchAccount()).toEqual({ status: "signed-in", credits: 3 });
+  expect(await fetchAccount()).toEqual({ status: "signed-in", credits: 3, name: "Grandma" });
 });
 
 test("fetchAccount treats 401 and network failures as anonymous", async () => {

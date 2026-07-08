@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import {
   createSourcePhotoAsset,
   getWallet,
@@ -46,10 +46,8 @@ function badRequest(message: string): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
 
   // --- Pre-reservation validation: rejections here cost nothing. ---
   const form = await request.formData().catch(() => null);
@@ -100,33 +98,45 @@ export async function POST(request: Request): Promise<Response> {
     throw err;
   }
 
-  // --- Persist the source photo, then submit; failure releases the
-  // reservation and purges the photo bytes (retention, issue #60). ---
-  let phase: "storage" | "provider" = "storage";
+  // --- Persist the source photo and upload the inputs (independent I/O,
+  // run concurrently), then submit; failure releases the reservation and
+  // purges the photo bytes (retention, issue #60). allSettled, not all: the
+  // cleanup below must not race a still-running storage write. ---
+  let failedPhase: "storage" | "provider" = "provider";
   try {
-    const photoBytes = Buffer.from(await photo.arrayBuffer());
-    const blobPath = await saveSourcePhotoBytes(
-      generation.id,
-      photoBytes,
-      photo.type || "application/octet-stream",
-    );
-    await createSourcePhotoAsset({
-      userId: user.id,
-      generationId: generation.id,
-      blobPath,
-      contentType: photo.type || "application/octet-stream",
-      byteSize: photoBytes.byteLength,
-      sha256: createHash("sha256").update(photoBytes).digest("hex"),
-    });
-    phase = "provider";
-    const imageUrl = await uploadToProvider(photo);
-    const videoUrl = hasReferenceUrl
-      ? (referenceUrl as string)
-      : await uploadToProvider(referenceVideo as File);
-    const { requestId } = await submitToProvider(engine, imageUrl, videoUrl);
+    const [stored, image, video] = await Promise.allSettled([
+      (async () => {
+        const photoBytes = Buffer.from(await photo.arrayBuffer());
+        const blobPath = await saveSourcePhotoBytes(
+          generation.id,
+          photoBytes,
+          photo.type || "application/octet-stream",
+        );
+        await createSourcePhotoAsset({
+          userId: user.id,
+          generationId: generation.id,
+          blobPath,
+          contentType: photo.type || "application/octet-stream",
+          byteSize: photoBytes.byteLength,
+          sha256: createHash("sha256").update(photoBytes).digest("hex"),
+        });
+      })(),
+      uploadToProvider(photo),
+      hasReferenceUrl
+        ? Promise.resolve(referenceUrl as string)
+        : uploadToProvider(referenceVideo as File),
+    ]);
+    if (stored.status === "rejected") {
+      failedPhase = "storage";
+      throw stored.reason;
+    }
+    if (image.status === "rejected") throw image.reason;
+    if (video.status === "rejected") throw video.reason;
+
+    const { requestId } = await submitToProvider(engine, image.value, video.value);
     generation = (await markGenerationSubmitted(generation.id, requestId)) ?? generation;
   } catch (err) {
-    const kind = failureKindOf(err, phase === "storage" ? "storage" : "provider");
+    const kind = failureKindOf(err, failedPhase);
     const message = err instanceof Error ? err.message : String(err);
     await releaseGeneration(generation.id, kind, message);
     await purgeSourcePhotos(generation.id);
@@ -143,10 +153,8 @@ export async function POST(request: Request): Promise<Response> {
 }
 
 export async function GET(request: Request): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
   const generation = await latestActiveGeneration(user.id);
   return Response.json({ generation: generation ? generationDto(generation) : null });
 }

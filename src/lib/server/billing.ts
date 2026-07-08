@@ -1,6 +1,6 @@
 import "server-only";
 import type { PoolClient } from "pg";
-import { getPool } from "./db";
+import { getPool, withTransaction } from "./db";
 import type { StripeEvent } from "./stripe";
 
 /** The $9.99/month plan grants 5 credits per paid billing period. */
@@ -76,10 +76,7 @@ export async function getCurrentSubscription(userId: string): Promise<Subscripti
  * the work and a replay of an applied event does nothing.
  */
 export async function processStripeEvent(event: StripeEvent): Promise<void> {
-  const client = await getPool().connect();
-  try {
-    await client.query("begin");
-
+  return withTransaction(async (client) => {
     const { rowCount } = await client.query(
       `insert into stripe_webhook_events (stripe_event_id, event_type)
        values ($1, $2) on conflict (stripe_event_id) do nothing`,
@@ -87,7 +84,6 @@ export async function processStripeEvent(event: StripeEvent): Promise<void> {
     );
     if (rowCount === 0) {
       // Replay of an already-applied event.
-      await client.query("commit");
       return;
     }
 
@@ -110,14 +106,7 @@ export async function processStripeEvent(event: StripeEvent): Promise<void> {
         // Recorded but otherwise ignored event type.
         break;
     }
-
-    await client.query("commit");
-  } catch (err) {
-    await client.query("rollback");
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }
 
 function str(value: unknown): string | null {

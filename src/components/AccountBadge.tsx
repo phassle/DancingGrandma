@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type Me = {
-  user: { id: string; email: string | null; displayName: string | null };
-  wallet: { available: number; reserved: number };
-};
+import { fetchAccount } from "@/lib/server-generation";
 
 type BadgeState =
   | { status: "loading" }
@@ -23,23 +19,13 @@ export default function AccountBadge() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const res = await fetch("/api/me");
-        if (cancelled) return;
-        if (!res.ok) {
-          setState({ status: "anonymous" });
-          return;
-        }
-        const me = (await res.json()) as Me;
-        if (cancelled) return;
-        setState({
-          status: "signed-in",
-          name: me.user.displayName ?? me.user.email ?? "Signed in",
-          credits: me.wallet.available,
-        });
-      } catch {
-        if (!cancelled) setState({ status: "anonymous" });
-      }
+      const account = await fetchAccount();
+      if (cancelled) return;
+      setState(
+        account.status === "signed-in"
+          ? { status: "signed-in", name: account.name ?? "Signed in", credits: account.credits }
+          : { status: "anonymous" },
+      );
     })();
     return () => {
       cancelled = true;

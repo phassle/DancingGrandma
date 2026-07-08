@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import {
   createPendingSubscription,
   getCurrentSubscription,
@@ -16,10 +16,8 @@ export const runtime = "nodejs";
  * the verified webhook after the subscription invoice is paid.
  */
 export async function POST(request: Request): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
 
   const existing = await getCurrentSubscription(user.id);
   if (existing && (existing.status === "active" || existing.status === "past_due")) {

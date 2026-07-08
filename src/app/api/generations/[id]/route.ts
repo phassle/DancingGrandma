@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import {
   captureGeneration,
   getGenerationForUser,
@@ -9,10 +9,10 @@ import {
   TERMINAL_GENERATION_STATUSES,
   type VideoGeneration,
 } from "@/lib/server/db";
-import { deleteVideoBlob, saveVideoFromUrl } from "@/lib/server/blob";
+import { deleteBlob, saveVideoFromUrl } from "@/lib/server/blob";
 import { purgeSourcePhotos } from "@/lib/server/retention";
 import { providerResult, providerStatus } from "@/lib/server/provider";
-import { failureKindOf, refreshedDto } from "../dto";
+import { failureKindOf, generationDto, refreshedDto } from "../dto";
 import { SHARE_ID_PATTERN } from "@/lib/share-id";
 
 export const runtime = "nodejs";
@@ -61,10 +61,8 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
 
   const { id } = await context.params;
   if (!SHARE_ID_PATTERN.test(id)) {
@@ -76,9 +74,11 @@ export async function GET(
     return Response.json({ error: "not found" }, { status: 404 });
   }
 
-  if (POLLABLE.includes(generation.status)) {
-    await advance(generation);
+  // Only a poll that actually advanced the job can have changed the row.
+  if (!POLLABLE.includes(generation.status)) {
+    return Response.json({ generation: generationDto(generation) });
   }
+  await advance(generation);
   return Response.json({ generation: await refreshedDto(id, user.id) });
 }
 
@@ -92,10 +92,8 @@ export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
 
   const { id } = await context.params;
   if (!SHARE_ID_PATTERN.test(id)) {
@@ -115,7 +113,7 @@ export async function DELETE(
     return Response.json({ error: "not found" }, { status: 404 });
   }
   if (deleted.blob_path) {
-    await deleteVideoBlob(deleted.blob_path);
+    await deleteBlob(deleted.blob_path);
   }
   return Response.json({ deleted: true });
 }

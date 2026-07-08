@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import { getGenerationForUser, setGenerationSharing } from "@/lib/server/db";
-import { SHARE_ID_PATTERN } from "@/lib/share-id";
+import { SHARE_ID_PATTERN, shareUrlOf } from "@/lib/share-id";
 
 export const runtime = "nodejs";
 
@@ -16,10 +16,8 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
 
   const { id } = await context.params;
   if (!SHARE_ID_PATTERN.test(id)) {
@@ -45,6 +43,6 @@ export async function POST(
   }
   return Response.json({
     shared: updated.visibility === "shared",
-    shareUrl: updated.share_slug ? `/v/${updated.share_slug}` : null,
+    shareUrl: updated.share_slug ? shareUrlOf(updated.share_slug) : null,
   });
 }

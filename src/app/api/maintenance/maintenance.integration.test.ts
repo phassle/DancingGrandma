@@ -39,7 +39,7 @@ import { POST as adjustRoute } from "./adjustments/route";
 import { POST as startGeneration } from "../generations/route";
 import { GET as getGeneration } from "../generations/[id]/route";
 import { GET as whoAmI } from "../me/route";
-import { POST as grantDevCredits } from "../dev/credits/route";
+import { cookieFor, seedCredits } from "@/test/session";
 import { closePool, getPool } from "@/lib/server/db";
 
 const TOKEN = "test-maintenance-token";
@@ -72,20 +72,6 @@ beforeEach(async () => {
   await getPool().query("truncate users cascade");
 });
 
-function cookieFor(sub: string): { cookie: string } {
-  return { cookie: `dg_session=token-${sub}` };
-}
-
-async function seedUserWithCredits(sub: string, amount: number): Promise<void> {
-  const res = await grantDevCredits(
-    new Request("http://localhost/api/dev/credits", {
-      method: "POST",
-      headers: { ...cookieFor(sub), "content-type": "application/json" },
-      body: JSON.stringify({ amount }),
-    }),
-  );
-  expect(res.status).toBe(200);
-}
 
 async function setLastActivityDaysAgo(sub: string, days: number): Promise<void> {
   await getPool().query(
@@ -174,7 +160,7 @@ test("maintenance routes are disabled when no token is configured", async () => 
 // --- 90-day credit expiry ---------------------------------------------------
 
 test("credits of a 90+ day inactive user expire via an explicit ledger entry", async () => {
-  await seedUserWithCredits("sleeper", 5);
+  await seedCredits("sleeper", 5);
   await setLastActivityDaysAgo("sleeper", 91);
 
   const res = await runRetention(retentionRequest(TOKEN));
@@ -196,7 +182,7 @@ test("credits of a 90+ day inactive user expire via an explicit ledger entry", a
 });
 
 test("a user inside the 90-day window is never expired", async () => {
-  await seedUserWithCredits("recent", 5);
+  await seedCredits("recent", 5);
   await setLastActivityDaysAgo("recent", 89);
 
   const res = await runRetention(retentionRequest(TOKEN));
@@ -206,7 +192,7 @@ test("a user inside the 90-day window is never expired", async () => {
 });
 
 test("any authenticated visit resets the expiration clock", async () => {
-  await seedUserWithCredits("returning", 5);
+  await seedCredits("returning", 5);
   await setLastActivityDaysAgo("returning", 120);
 
   // The user comes back: any authenticated request refreshes activity.
@@ -222,7 +208,7 @@ test("any authenticated visit resets the expiration clock", async () => {
 });
 
 test("expiration never touches credits reserved on a non-terminal generation", async () => {
-  await seedUserWithCredits("walker", 2);
+  await seedCredits("walker", 2);
   const startRes = await startGeneration(startRequest("walker"));
   expect(startRes.status).toBe(201);
   const { generation } = await startRes.json();
@@ -249,7 +235,7 @@ test("expiration never touches credits reserved on a non-terminal generation", a
 // --- Admin adjustments and refund reversals ---------------------------------
 
 test("admin adjustments and refund reversals append compensating ledger entries", async () => {
-  await seedUserWithCredits("customer", 5);
+  await seedCredits("customer", 5);
   const userId = await userIdOf("customer");
 
   const grant = await adjustRoute(
@@ -272,7 +258,7 @@ test("admin adjustments and refund reversals append compensating ledger entries"
 });
 
 test("a refund reversal cannot drive the wallet negative", async () => {
-  await seedUserWithCredits("light", 1);
+  await seedCredits("light", 1);
   const userId = await userIdOf("light");
 
   const res = await adjustRoute(
@@ -287,7 +273,7 @@ test("a refund reversal cannot drive the wallet negative", async () => {
 });
 
 test("adjustment validation: bad entry type, zero amount, positive reversal, unknown user", async () => {
-  await seedUserWithCredits("valid", 1);
+  await seedCredits("valid", 1);
   const userId = await userIdOf("valid");
 
   expect((await adjustRoute(adjustmentRequest({ userId, amount: 1, entryType: "generation_reserve" }))).status).toBe(400);
@@ -309,7 +295,7 @@ test("adjustment validation: bad entry type, zero amount, positive reversal, unk
 });
 
 test("ledger history is never mutated — updates and deletes are rejected", async () => {
-  await seedUserWithCredits("audited", 1);
+  await seedCredits("audited", 1);
 
   await expect(getPool().query(`update credit_ledger set note = 'tampered'`)).rejects.toThrow(
     /append-only/,

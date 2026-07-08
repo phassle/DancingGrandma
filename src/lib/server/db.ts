@@ -188,57 +188,8 @@ export async function getWallet(userId: string): Promise<Wallet> {
   return rows[0] ?? { available: 0, reserved: 0 };
 }
 
-export async function listGenerations(userId: string): Promise<VideoGeneration[]> {
-  const { rows } = await getPool().query<VideoGeneration>(
-    `select * from video_generations where user_id = $1 order by created_at desc`,
-    [userId],
-  );
-  return rows;
-}
-
-export async function createGeneration(userId: string, engine: string, prompt?: string): Promise<VideoGeneration> {
-  const { rows } = await getPool().query<VideoGeneration>(
-    `insert into video_generations (user_id, engine, prompt, status)
-     values ($1, $2, $3, 'running') returning *`,
-    [userId, engine, prompt ?? null],
-  );
-  return rows[0];
-}
-
-export async function completeGeneration(id: string, videoUrl: string, blobPath?: string): Promise<void> {
-  await getPool().query(
-    `update video_generations
-     set status = 'completed', video_url = $2, blob_path = $3, completed_at = now()
-     where id = $1`,
-    [id, videoUrl, blobPath ?? null],
-  );
-}
-
-export async function failGeneration(id: string, error: string): Promise<void> {
-  await getPool().query(
-    `update video_generations set status = 'failed', error = $2, completed_at = now() where id = $1`,
-    [id, error],
-  );
-}
-
-export async function getCreditBalance(userId: string): Promise<number> {
-  const { rows } = await getPool().query<{ balance: number }>(
-    `select balance from credit_balances where user_id = $1`,
-    [userId],
-  );
-  return rows[0]?.balance ?? 0;
-}
-
-export async function addCredits(userId: string, amount: number, reason = "topup"): Promise<void> {
-  if (amount <= 0) throw new Error("top-up amount must be positive");
-  await getPool().query(
-    `insert into credit_transactions (user_id, amount, reason) values ($1, $2, $3)`,
-    [userId, amount, reason],
-  );
-}
-
 /** Run one function inside a transaction, releasing the client either way. */
-async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await getPool().connect();
   try {
     await client.query("begin");
@@ -665,37 +616,3 @@ export async function markMediaAssetPurged(id: string): Promise<void> {
   );
 }
 
-/**
- * Spend credits atomically against the ledger; throws if the balance would
- * go negative, so a generation can be refused before it starts.
- */
-export async function spendCredits(userId: string, amount: number, generationId: string): Promise<void> {
-  if (amount <= 0) throw new Error("spend amount must be positive");
-  const client = await getPool().connect();
-  try {
-    await client.query("begin");
-    const { rows } = await client.query<{ balance: number }>(
-      `select coalesce(sum(amount), 0)::integer as balance
-       from credit_transactions where user_id = $1 for update`,
-      [userId],
-    );
-    if ((rows[0]?.balance ?? 0) < amount) {
-      throw new Error("insufficient credits");
-    }
-    await client.query(
-      `insert into credit_transactions (user_id, amount, reason, generation_id)
-       values ($1, $2, 'generation', $3)`,
-      [userId, -amount, generationId],
-    );
-    await client.query(
-      `update video_generations set credits_spent = $2 where id = $1`,
-      [generationId, amount],
-    );
-    await client.query("commit");
-  } catch (err) {
-    await client.query("rollback");
-    throw err;
-  } finally {
-    client.release();
-  }
-}

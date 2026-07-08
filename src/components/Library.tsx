@@ -115,6 +115,7 @@ export default function Library() {
                 src={video.videoUrl}
                 controls
                 playsInline
+                preload="metadata"
                 className="absolute inset-0 h-full w-full object-cover"
                 aria-label="Your generated dance video"
               />

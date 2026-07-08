@@ -1,4 +1,5 @@
 import type { VideoGeneration } from "@/lib/server/db";
+import { shareUrlOf } from "@/lib/share-id";
 
 /** Wire shape of one private-library video (issue #59, PRD #54). */
 export type LibraryVideoDto = {
@@ -21,6 +22,6 @@ export function libraryVideoDto(row: VideoGeneration): LibraryVideoDto {
     videoUrl: `/api/video/${row.id}`,
     downloadUrl: `/api/video/${row.id}?download=1`,
     shared: row.visibility === "shared",
-    shareUrl: row.share_slug ? `/v/${row.share_slug}` : null,
+    shareUrl: row.share_slug ? shareUrlOf(row.share_slug) : null,
   };
 }

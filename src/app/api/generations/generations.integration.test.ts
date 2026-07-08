@@ -35,6 +35,7 @@ vi.mock("@/lib/server/blob", () => blobMocks);
 import { GET as getActive, POST as startGeneration } from "./route";
 import { GET as getGeneration } from "./[id]/route";
 import { POST as grantDevCredits } from "../dev/credits/route";
+import { cookieFor, seedCredits } from "@/test/session";
 import { closePool, getPool } from "@/lib/server/db";
 
 let pg: TestPostgres;
@@ -61,28 +62,10 @@ beforeEach(async () => {
   await getPool().query("truncate users cascade");
 });
 
-function cookieFor(sub: string): { cookie: string } {
-  // The token value is opaque to the routes; the faked verifier maps any
-  // token to whatever claims it is programmed with. Encode the sub in the
-  // token so multi-user tests can switch identity per request.
-  return { cookie: `dg_session=token-${sub}` };
-}
-
 function signInAll() {
   oidcMocks.verifyIdToken.mockImplementation(async (token: string) => ({
     sub: token.replace(/^token-/, ""),
   }));
-}
-
-async function seedCredits(sub: string, amount: number): Promise<void> {
-  const res = await grantDevCredits(
-    new Request("http://localhost/api/dev/credits", {
-      method: "POST",
-      headers: { ...cookieFor(sub), "content-type": "application/json" },
-      body: JSON.stringify({ amount }),
-    }),
-  );
-  expect(res.status).toBe(200);
 }
 
 function startRequest(sub?: string): Request {

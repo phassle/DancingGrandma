@@ -50,3 +50,12 @@ export async function authenticateRequest(request: Request): Promise<User | null
     return null;
   }
 }
+
+/**
+ * The shared route guard: the authenticated user, or the 401 response the
+ * route should return as-is (mirrors the maintenanceGuard pattern).
+ */
+export async function requireUser(request: Request): Promise<User | Response> {
+  const user = await authenticateRequest(request);
+  return user ?? Response.json({ error: "unauthenticated" }, { status: 401 });
+}

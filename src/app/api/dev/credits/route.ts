@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import { grantAdminCredits } from "@/lib/server/db";
 
 export const runtime = "nodejs";
@@ -13,10 +13,8 @@ export async function POST(request: Request): Promise<Response> {
   if (process.env.NODE_ENV === "production") {
     return Response.json({ error: "not found" }, { status: 404 });
   }
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
 
   const body = (await request.json().catch(() => ({}))) as { amount?: unknown };
   const amount = typeof body.amount === "number" ? body.amount : 5;

@@ -31,9 +31,10 @@ function videoResponse(
   id: string,
   opts: { cacheControl: string; download: boolean },
 ): Response {
-  // Copy into a plain Uint8Array<ArrayBuffer> — Buffer's ArrayBufferLike
-  // generic is not assignable to BodyInit under strict TS.
-  return new Response(Uint8Array.from(bytes), {
+  // Zero-copy view over the Buffer's bytes; the cast is needed because
+  // Buffer's ArrayBufferLike generic is not assignable to BodyInit.
+  const body = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength) as Uint8Array<ArrayBuffer>;
+  return new Response(body, {
     headers: {
       "Content-Type": "video/mp4",
       "Cache-Control": opts.cacheControl,
@@ -67,15 +68,19 @@ export async function GET(
   }
   const download = new URL(request.url).searchParams.get("download") === "1";
 
+  // One id, two possible meanings — resolve both concurrently.
+  const [shared, generation] = await Promise.all([
+    getSharedGeneration(id),
+    getGenerationById(id),
+  ]);
+
   // Share-by-link: the slug resolves only while the owner keeps sharing on.
-  const shared = await getSharedGeneration(id);
   if (shared?.blob_path) {
     // Kept out of shared caches so revoking the link takes effect promptly.
     return streamBlob(shared.blob_path, id, { cacheControl: "private, max-age=0", download });
   }
 
   // A generation id names a private account asset — owner only.
-  const generation = await getGenerationById(id);
   if (generation) {
     const user = await authenticateRequest(request);
     if (!user) {

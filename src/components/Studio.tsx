@@ -17,6 +17,7 @@ import {
   trackServerGeneration,
 } from "@/lib/server-generation";
 import { isShareId } from "@/lib/share-id";
+import type { ReferenceSourceKind } from "@/lib/server/db";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
 
@@ -119,6 +120,17 @@ function formatUpdateAge(seconds: number | null): string {
 function queuePositionFromMessage(message: string): number | null {
   const match = message.match(/^#(\d+)\s+in line/i);
   return match ? Number(match[1]) : null;
+}
+
+/** DraftReference → the server-side reference source kind, one discrimination. */
+function sourceKindOf(reference: DraftReference): ReferenceSourceKind {
+  return reference.kind === "clip"
+    ? reference.source === "imported"
+      ? "imported_url"
+      : "upload"
+    : reference.kind === "url"
+      ? "direct_url"
+      : "curated";
 }
 
 function phaseFromMessage(message: string): RenderPhase {
@@ -393,16 +405,30 @@ export default function Studio() {
     await saveDraft({ photo: photoFile, reference, engineId: engine.id });
   };
 
-  /** Signed in but the wallet can't cover the run: draft → Stripe Checkout. */
-  const leaveForCheckout = async () => {
+  /** Leave for Stripe Checkout, surfacing a studio error if it can't open. */
+  const goToCheckout = async (opts: {
+    tag: string;
+    errorCopy: string;
+    before?: () => Promise<void>;
+    onError?: () => Promise<void>;
+  }) => {
     try {
-      await persistDraft();
+      await opts.before?.();
       redirectTo(await startCheckout());
     } catch (err) {
-      logStudioError("checkout", err);
-      setGenError("Couldn't open checkout. Your draft is safe in this tab — try again.");
+      await opts.onError?.();
+      logStudioError(opts.tag, err);
+      setGenError(opts.errorCopy);
     }
   };
+
+  /** Signed in but the wallet can't cover the run: draft → Stripe Checkout. */
+  const leaveForCheckout = () =>
+    goToCheckout({
+      tag: "checkout",
+      errorCopy: "Couldn't open checkout. Your draft is safe in this tab — try again.",
+      before: persistDraft,
+    });
 
   // Move focus to the step heading on step changes (not on initial page load)
   // so keyboard/screen-reader users follow along
@@ -511,13 +537,11 @@ export default function Studio() {
         return;
       }
       if (account.credits < 1) {
-        try {
-          redirectTo(await startCheckout());
-        } catch (err) {
-          await clearDraft();
-          logStudioError("draft-resume-checkout", err);
-          setGenError("Couldn't open checkout. Your draft is still here — try again.");
-        }
+        await goToCheckout({
+          tag: "draft-resume-checkout",
+          errorCopy: "Couldn't open checkout. Your draft is still here — try again.",
+          onError: clearDraft,
+        });
         return;
       }
       await clearDraft();
@@ -584,16 +608,14 @@ export default function Studio() {
           (await (async () => {
             // Recreate the browser draft as a server-side generation tied to
             // the signed-in user — inputs become private media only now.
+            const draft = draftReference();
             const reference =
-              customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
-            const sourceKind =
-              customVideo !== null
-                ? customClipSource === "imported"
-                  ? "imported_url"
-                  : "upload"
-                : customUrl !== null
-                  ? "direct_url"
-                  : "curated";
+              draft?.kind === "clip"
+                ? draft.file
+                : draft?.kind === "url"
+                  ? draft.url
+                  : await referenceClipFile(dance!.referenceClip!);
+            const sourceKind = draft ? sourceKindOf(draft) : "curated";
             const { id } = await createServerGeneration({
               photo: photoFile!,
               reference,

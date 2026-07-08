@@ -43,9 +43,6 @@ const blobMocks = vi.hoisted(() => {
       if (!bytes) throw Object.assign(new Error("BlobNotFound"), { statusCode: 404 });
       return bytes;
     }),
-    deleteVideoBlob: vi.fn(async (path: string) => {
-      store.delete(path);
-    }),
     saveSourcePhotoBytes: vi.fn(async (generationId: string, bytes: Buffer) => {
       const path = `sources/${generationId}`;
       store.set(path, bytes);
@@ -59,7 +56,6 @@ const blobMocks = vi.hoisted(() => {
 vi.mock("@/lib/server/blob", () => ({
   saveVideoFromUrl: blobMocks.saveVideoFromUrl,
   readVideoBytes: blobMocks.readVideoBytes,
-  deleteVideoBlob: blobMocks.deleteVideoBlob,
   saveSourcePhotoBytes: blobMocks.saveSourcePhotoBytes,
   deleteBlob: blobMocks.deleteBlob,
 }));
@@ -69,7 +65,7 @@ import { POST as startGeneration } from "../generations/route";
 import { DELETE as deleteGeneration, GET as pollGeneration } from "../generations/[id]/route";
 import { POST as toggleShare } from "../generations/[id]/share/route";
 import { GET as getVideo } from "../video/[id]/route";
-import { POST as grantDevCredits } from "../dev/credits/route";
+import { cookieFor, seedCredits } from "@/test/session";
 import { closePool, getPool } from "@/lib/server/db";
 
 let pg: TestPostgres;
@@ -97,23 +93,8 @@ beforeEach(async () => {
   await getPool().query("truncate users cascade");
 });
 
-function cookieFor(sub: string): { cookie: string } {
-  return { cookie: `dg_session=token-${sub}` };
-}
-
 function idParams(id: string): { params: Promise<{ id: string }> } {
   return { params: Promise.resolve({ id }) };
-}
-
-async function seedCredits(sub: string, amount: number): Promise<void> {
-  const res = await grantDevCredits(
-    new Request("http://localhost/api/dev/credits", {
-      method: "POST",
-      headers: { ...cookieFor(sub), "content-type": "application/json" },
-      body: JSON.stringify({ amount }),
-    }),
-  );
-  expect(res.status).toBe(200);
 }
 
 /** Run one paid generation to completion for `sub`; returns the generation id. */
@@ -366,7 +347,7 @@ test("delete removes the video from the library, kills playback and share links,
 
   const res = await deleteGeneration(...deleteRequest(id, "cleaner"));
   expect(res.status).toBe(200);
-  expect(blobMocks.deleteVideoBlob).toHaveBeenCalledWith(`${id}.mp4`);
+  expect(blobMocks.deleteBlob).toHaveBeenCalledWith(`${id}.mp4`);
 
   const { videos: after } = await (await getLibrary(libraryRequest("cleaner"))).json();
   expect(after).toEqual([]);

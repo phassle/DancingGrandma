@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/lib/server/auth";
+import { requireUser } from "@/lib/server/auth";
 import { listLibraryGenerations } from "@/lib/server/db";
 import { libraryVideoDto } from "./dto";
 
@@ -12,10 +12,8 @@ export const runtime = "nodejs";
  */
 
 export async function GET(request: Request): Promise<Response> {
-  const user = await authenticateRequest(request);
-  if (!user) {
-    return Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const user = await requireUser(request);
+  if (user instanceof Response) return user;
   const videos = await listLibraryGenerations(user.id);
   return Response.json({ videos: videos.map(libraryVideoDto) });
 }
