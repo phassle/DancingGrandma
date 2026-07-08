@@ -78,10 +78,17 @@ Phase prompts: [reference/simplify-prompt.md](reference/simplify-prompt.md), [re
    `Closes #N` references from the PR body and close each with a comment pointing at the PR:
    ```bash
    pr=<pr-number>
-   gh pr view "$pr" --json body,url \
-     --jq '.body' | grep -oiE '(clos|fix|resolv)[a-z]* #[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | sort -u \
+   # Only after the PR is actually merged (idempotent — safe to re-run).
+   merged=$(gh pr view "$pr" --json mergedAt --jq '.mergedAt // empty')
+   [ -n "$merged" ] || { echo "PR #$pr not merged yet — skipping close."; exit 0; }
+   url=$(gh pr view "$pr" --json url --jq .url)
+   # Grab every #N on a line carrying a closing keyword (handles grouped "Closes #55, #56").
+   gh pr view "$pr" --json body --jq '.body' \
+     | grep -iE '(clos|fix|resolv)[a-z]*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u \
    | while read -r n; do
-       gh issue close "$n" --comment "Resolved by $(gh pr view "$pr" --json url --jq .url) (merged into develop)."
+       state=$(gh issue view "$n" --json state --jq '.state')
+       [ "$state" = "OPEN" ] || { echo "#$n already $state — skipping."; continue; }
+       gh issue close "$n" --comment "Resolved by $url (merged into develop)."
      done
    ```
    Do this whether the merge was agent-driven or a manual PR merge into `develop`. (This

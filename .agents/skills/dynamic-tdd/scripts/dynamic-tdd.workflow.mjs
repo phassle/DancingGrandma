@@ -94,7 +94,15 @@ Return the plan via the structured-output tool per the file's OUTPUT section.`,
     throw err
   }
 
-  const unblocked = (plan?.issues || []).filter((i) => !done.has(String(i.id)))
+  // A null/invalid plan means the planner DIED (agent() returns null on terminal failure),
+  // not that the backlog is empty — do not confuse it with a clean "nothing left". An empty
+  // `issues` array is the legitimate done signal; a missing array is a resumable failure.
+  if (!plan || !Array.isArray(plan.issues)) {
+    log(`Iteration ${iter}: planner returned no usable plan — pausing (resumable).`)
+    return pause('planner-failed', [])
+  }
+
+  const unblocked = plan.issues.filter((i) => !done.has(String(i.id)))
   let todo = unblocked.slice(0, maxParallel)
   if (!todo.length) { log(`Iteration ${iter}: no unblocked issues left — stopping.`); break }
 
@@ -114,11 +122,13 @@ Return the plan via the structured-output tool per the file's OUTPUT section.`,
 
   // --- Phase 2: Implement (parallel, isolated worktrees) -------------------
   // Barrier is intentional: the merge phase needs ALL completed branches together.
-  let built
-  try {
-    built = await parallel(
-      todo.map((issue) => () =>
-        agent(
+  // parallel() converts a throwing thunk to `null`, so a wave-wide try/catch can NEVER see
+  // a token-exhaustion throw — each thunk must catch its own and return a `__token` sentinel
+  // (a plain task failure rethrows → parallel yields null → counted as attempted).
+  const built = await parallel(
+    todo.map((issue) => async () => {
+      try {
+        return await agent(
           `You are an IMPLEMENTER. Read and follow ${REF}/implement-prompt.md exactly.
 Substitutions:
   {{TASK_ID}} = ${issue.id}; {{ISSUE_TITLE}} = ${issue.title}; {{BRANCH}} = ${issue.branch}; {{PRD}} = ${prd}; {{BASE}} = ${base}.
@@ -127,16 +137,26 @@ ${(issue.reuse && issue.reuse.length) ? issue.reuse.map((r) => `  - ${r}`).join(
 You are in a fresh isolated git worktree branched off ${featureBranch}. Work ONLY on issue #${issue.id}.
 Return {id, branch, committed, summary} via the structured-output tool per the file's OUTPUT section.`,
           { label: `tdd:#${issue.id}`, phase: 'Implement', schema: IMPL_SCHEMA, isolation: 'worktree' },
-        ),
-      ),
-    )
-  } catch (err) {
-    if (isTokenExhaustion(err)) { log(`Iteration ${iter}: token exhaustion during implement — pausing.`); return pause('token-exhaustion', todo.map((i) => String(i.id)).concat(deferred)) }
-    throw err
-  }
+        )
+      } catch (err) {
+        if (isTokenExhaustion(err)) return { id: String(issue.id), branch: issue.branch, committed: false, __token: true }
+        throw err
+      }
+    }),
+  )
 
-  todo.forEach((i) => done.add(String(i.id)))
-  const committed = built.filter(Boolean).filter((b) => b.committed)
+  // Mark every issue we ATTEMPTED as done (success, plain failure/null, but NOT the ones the
+  // token limit aborted — those must be retried on resume). built[i] aligns with todo[i].
+  const exhausted = []
+  built.forEach((b, i) => {
+    if (b && b.__token) { exhausted.push(String(todo[i].id)); return }
+    done.add(String(todo[i].id))
+  })
+  if (exhausted.length) {
+    log(`Iteration ${iter}: token exhaustion during implement — pausing (${exhausted.length} unfinished).`)
+    return pause('token-exhaustion', exhausted.concat(deferred))
+  }
+  const committed = built.filter(Boolean).filter((b) => b.committed && !b.__token)
   if (!committed.length) {
     dryRounds++
     log(`Iteration ${iter}: no commits produced.`)
@@ -149,8 +169,9 @@ Return {id, branch, committed, summary} via the structured-output tool per the f
   // Runs with NO isolation, in the main worktree which the orchestrator has
   // checked out to ${featureBranch}. Serial merges so conflicts resolve cleanly.
   phase('Merge')
+  let mergeResult
   try {
-    await agent(
+    mergeResult = await agent(
       `You are the MERGER. Read and follow ${REF}/merge-prompt.md exactly.
 Substitutions:
   {{FEATURE_BRANCH}} = ${featureBranch}; {{BASE}} = ${base}.
@@ -166,6 +187,12 @@ You are in the main worktree on branch ${featureBranch}.`,
     // (SKILL.md resume notes) keeps commits-ahead worktrees for the resumed merger.
     if (isTokenExhaustion(err)) { log(`Iteration ${iter}: token exhaustion during merge — pausing.`); return pause('token-exhaustion', committed.map((b) => String(b.id)).concat(deferred)) }
     throw err
+  }
+  // agent() returns null on terminal death — the merge did NOT happen. Do not record these
+  // as merged; they remain committed stragglers the resumed merger picks up (straggler rule).
+  if (mergeResult == null) {
+    log(`Iteration ${iter}: merger failed (no result) — pausing; committed branches are stragglers for resume.`)
+    return pause('merge-failed', committed.map((b) => String(b.id)).concat(deferred))
   }
   mergedIssues.push(...committed.map((b) => b.id))
   log(`Iteration ${iter}: merged ${committed.length} branch(es) into ${featureBranch}.`)

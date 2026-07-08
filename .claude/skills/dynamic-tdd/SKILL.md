@@ -39,9 +39,11 @@ Fan-out phase prompts live in [reference/](reference/) (`plan-prompt.md`, `imple
      args: { prd: "<PRD#>", featureBranch: "feature/<prd-slug>", base: "develop", maxIterations: 10, maxParallel: 6 }
    })
    ```
-   Wait for the `<task-notification>`; watch live with `/workflows`. It returns `{ mergedIssues, ... }`. Confirm `git worktree list` shows only the main worktree afterwards (prune any stragglers: `git worktree prune` + `git worktree remove`).
+   Wait for the `<task-notification>`; watch live with `/workflows`. It returns `{ mergedIssues, ... }`.
 
-   **If the result has `paused: true`** (token/session-limit exhaustion — see *Token-limit pause & resume* below): do **not** open the PR. Apply the straggler rule, print the resume invocation, and offer to schedule the resume. Any already-merged issues stay merged on the feature branch; the run continues from there on resume.
+   **If the result has `paused: true`** (token/session-limit exhaustion, or a `planner-failed`/`merge-failed` death — see *Token-limit pause & resume* below): do **not** open the PR and do **not** prune worktrees wholesale. Apply the *straggler cleanup* rule (below) — committed straggler worktrees are kept for the resumed merger — then print the resume invocation and offer to schedule the resume. Any already-merged issues stay merged on the feature branch; the run continues from there on resume.
+
+   **Only on a completed (non-paused) run** should `git worktree list` show just the main worktree — prune leftovers then (`git worktree prune` + `git worktree remove`), since a clean completion has already merged and removed every issue worktree.
 
    The tail runs **only if the run completed (not paused) and `mergedIssues` is non-empty**. Stop and report if it fails — do not open the PR.
 
