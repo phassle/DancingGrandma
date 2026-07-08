@@ -111,6 +111,34 @@ export class InsufficientCreditsError extends Error {
   }
 }
 
+/** Credit adjustment targeted a user without a wallet row. */
+export class WalletNotFoundError extends Error {
+  constructor() {
+    super("wallet not found");
+    this.name = "WalletNotFoundError";
+  }
+}
+
+export type MediaAssetKind = "source_photo" | "reference_video" | "generated_video" | "poster";
+
+/**
+ * One record per stored object (PRD #54): source photo, reference video,
+ * generated video, poster. Purging deletes the blob bytes and clears
+ * blob_path while the hash and metadata survive for abuse/debugging.
+ */
+export type MediaAsset = {
+  id: string;
+  user_id: string;
+  generation_id: string | null;
+  kind: MediaAssetKind;
+  blob_path: string | null;
+  content_type: string | null;
+  byte_size: number | null;
+  sha256: string | null;
+  purged_at: string | null;
+  created_at: string;
+};
+
 /**
  * Find-or-create a user from their Keycloak identity (sub claim), refresh
  * their last-activity timestamp, and make sure their wallet row exists.
@@ -383,9 +411,51 @@ export async function latestActiveGeneration(userId: string): Promise<VideoGener
   return rows[0];
 }
 
+export type AdjustmentEntryType = "admin_adjustment" | "refund_reversal";
+
 /**
- * Manual credit adjustment (support / dev seeding): wallet mutation plus an
- * explicit admin_adjustment ledger entry in one transaction.
+ * Support corrections and refund reversals (PRD #54, issue #60): always a
+ * new compensating ledger entry plus the matching wallet mutation in one
+ * transaction — history is never edited. A negative delta may not drive the
+ * available balance below zero.
+ */
+export async function adjustCredits(
+  userId: string,
+  delta: number,
+  entryType: AdjustmentEntryType,
+  note: string,
+): Promise<Wallet> {
+  if (!Number.isInteger(delta) || delta === 0) {
+    throw new Error("adjustment delta must be a nonzero integer");
+  }
+  if (entryType === "refund_reversal" && delta >= 0) {
+    throw new Error("a refund reversal must remove credits");
+  }
+  return withTransaction(async (client) => {
+    const { rows } = await client.query<Wallet>(
+      `select available, reserved from credit_wallets where user_id = $1 for update`,
+      [userId],
+    );
+    if (rows.length === 0) throw new WalletNotFoundError();
+    if (rows[0].available + delta < 0) throw new InsufficientCreditsError();
+    const { rows: updated } = await client.query<Wallet>(
+      `update credit_wallets
+       set available = available + $2, updated_at = now()
+       where user_id = $1
+       returning available, reserved`,
+      [userId, delta],
+    );
+    await client.query(
+      `insert into credit_ledger (user_id, entry_type, available_delta, reserved_delta, note)
+       values ($1, $2, $3, 0, $4)`,
+      [userId, entryType, delta, note],
+    );
+    return updated[0];
+  });
+}
+
+/**
+ * Manual credit grant (support / dev seeding): a positive admin_adjustment.
  */
 export async function grantAdminCredits(
   userId: string,
@@ -395,22 +465,101 @@ export async function grantAdminCredits(
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error("adjustment amount must be a positive integer");
   }
+  return adjustCredits(userId, amount, "admin_adjustment", note);
+}
+
+/** Credits expire after this many days without an authenticated visit. */
+export const CREDIT_EXPIRY_DAYS = 90;
+
+/**
+ * Expire unused credits of users inactive for 90+ days (PRD #54 story 27):
+ * an explicit credit_expiration ledger entry per wallet — never an edit to
+ * the original grant — zeroing only the available balance. Reserved credits
+ * belong to a non-terminal generation and are never touched; upsertUser
+ * refreshes last_activity_at on every authenticated visit, so any visit
+ * inside the window resets the clock.
+ */
+export async function expireStaleCredits(): Promise<{
+  expiredWallets: number;
+  expiredCredits: number;
+}> {
   return withTransaction(async (client) => {
-    const { rows } = await client.query<Wallet>(
-      `update credit_wallets
-       set available = available + $2, updated_at = now()
-       where user_id = $1
-       returning available, reserved`,
-      [userId, amount],
+    const { rows: stale } = await client.query<{ user_id: string; available: number }>(
+      `select w.user_id, w.available
+       from credit_wallets w
+       join users u on u.id = w.user_id
+       where w.available > 0
+         and u.last_activity_at < now() - make_interval(days => $1)
+       for update of w`,
+      [CREDIT_EXPIRY_DAYS],
     );
-    if (rows.length === 0) throw new Error("wallet not found");
-    await client.query(
-      `insert into credit_ledger (user_id, entry_type, available_delta, reserved_delta, note)
-       values ($1, 'admin_adjustment', $2, 0, $3)`,
-      [userId, amount, note],
-    );
-    return rows[0];
+    for (const { user_id: userId, available } of stale) {
+      await client.query(
+        `insert into credit_ledger (user_id, entry_type, available_delta, reserved_delta, note)
+         values ($1, 'credit_expiration', $2, 0, $3)`,
+        [userId, -available, `expired after ${CREDIT_EXPIRY_DAYS} days of inactivity`],
+      );
+      await client.query(
+        `update credit_wallets set available = 0, updated_at = now() where user_id = $1`,
+        [userId],
+      );
+    }
+    return {
+      expiredWallets: stale.length,
+      expiredCredits: stale.reduce((sum, row) => sum + row.available, 0),
+    };
   });
+}
+
+/**
+ * Record the user's source photo as a media asset while its generation is
+ * in flight; the bytes are purged as soon as the run reaches a terminal
+ * state (PRD #54 story 38).
+ */
+export async function createSourcePhotoAsset(params: {
+  userId: string;
+  generationId: string;
+  blobPath: string;
+  contentType: string;
+  byteSize: number;
+  sha256: string;
+}): Promise<MediaAsset> {
+  const { rows } = await getPool().query<MediaAsset>(
+    `insert into media_assets (user_id, generation_id, kind, blob_path, content_type, byte_size, sha256)
+     values ($1, $2, 'source_photo', $3, $4, $5, $6)
+     returning *`,
+    [params.userId, params.generationId, params.blobPath, params.contentType, params.byteSize, params.sha256],
+  );
+  return rows[0];
+}
+
+/** Source photos of one generation whose bytes still exist. */
+export async function unpurgedSourcePhotoAssets(generationId: string): Promise<MediaAsset[]> {
+  const { rows } = await getPool().query<MediaAsset>(
+    `select * from media_assets
+     where generation_id = $1 and kind = 'source_photo' and purged_at is null`,
+    [generationId],
+  );
+  return rows;
+}
+
+/** Source photos that outlived their terminal generation (sweep input). */
+export async function unpurgedTerminalSourcePhotoAssets(): Promise<MediaAsset[]> {
+  const { rows } = await getPool().query<MediaAsset>(
+    `select m.* from media_assets m
+     join video_generations g on g.id = m.generation_id
+     where m.kind = 'source_photo' and m.purged_at is null
+       and g.status in ('completed', 'failed', 'cancelled')`,
+  );
+  return rows;
+}
+
+/** The blob bytes are gone: clear the path, keep hash and metadata. */
+export async function markMediaAssetPurged(id: string): Promise<void> {
+  await getPool().query(
+    `update media_assets set blob_path = null, purged_at = now() where id = $1`,
+    [id],
+  );
 }
 
 /**
