@@ -22,9 +22,13 @@ let pg: TestPostgres;
 let userId: string;
 let eventSeq = 0;
 
+/** The configured plan price — grants are scoped to invoices billing it. */
+const PLAN_PRICE = "price_test_999";
+
 beforeAll(async () => {
   pg = await startTestPostgres();
   process.env.ConnectionStrings__grandmadb = pg.connectionString;
+  process.env.STRIPE_PRICE_ID = PLAN_PRICE;
 }, 120_000);
 
 afterAll(async () => {
@@ -78,13 +82,14 @@ function checkoutCompleted(sessionId = "cs_1", subscription = "sub_1") {
   };
 }
 
-function invoicePaid(invoiceId = "in_1", subscription = "sub_1") {
+function invoicePaid(invoiceId = "in_1", subscription = "sub_1", price = PLAN_PRICE) {
   return {
     type: "invoice.paid",
     data: {
       object: {
         id: invoiceId,
         customer: "cus_test_1",
+        lines: { data: [{ pricing: { price_details: { price } } }] },
         parent: {
           subscription_details: { subscription, metadata: { user_id: userId } },
         },
@@ -267,6 +272,34 @@ test("wallet, ledger, and reconciliation view agree after a burst of duplicate a
   );
   expect(wallet).toEqual({ available: 10, reserved: 0 });
   expect(rows[0]).toEqual({ ledger_available: 10, ledger_reserved: 0 });
+});
+
+test("a paid invoice for a different price grants nothing but is recorded as processed", async () => {
+  await createPendingCheckout();
+  await deliver(checkoutCompleted());
+
+  // Same customer, different subscription and price — e.g. another product
+  // sold under the same Stripe account. Must never grant plan credits.
+  const foreign = invoicePaid("in_other", "sub_other", "price_something_else");
+  expect((await deliver({ id: "evt_foreign", ...foreign })).status).toBe(200);
+
+  const { wallet, ledger } = await snapshot();
+  expect(wallet).toEqual({ available: 0, reserved: 0 });
+  expect(ledger).toEqual([]);
+  const { rows: subs } = await getPool().query(
+    `select count(*)::int as n from subscriptions where stripe_subscription_id = 'sub_other'`,
+  );
+  expect(subs[0].n).toBe(0);
+
+  // Recorded: replaying the same event id is a no-op, not a re-evaluation.
+  const events = await getPool().query(
+    `select count(*)::int as n from stripe_webhook_events where stripe_event_id = 'evt_foreign'`,
+  );
+  expect(events.rows[0].n).toBe(1);
+
+  // The real plan invoice still grants normally afterwards.
+  await deliver(invoicePaid("in_real"));
+  expect((await snapshot()).wallet).toEqual({ available: 5, reserved: 0 });
 });
 
 test("unhandled event types are acknowledged and recorded, changing nothing", async () => {

@@ -343,6 +343,111 @@ test("provider success: output copied to blob before completed; reservation capt
   ]);
 });
 
+test("two concurrent polls on a finished run capture exactly once, never fail it", async () => {
+  signInAll();
+  await seedCredits("dueling", 1);
+  const { generation } = await (await startGeneration(startRequest("dueling"))).json();
+  providerMocks.providerStatus.mockResolvedValue("completed");
+
+  const [a, b] = await Promise.all([
+    getGeneration(...statusRequest(generation.id, "dueling")),
+    getGeneration(...statusRequest(generation.id, "dueling")),
+  ]);
+  expect(a.status).toBe(200);
+  expect(b.status).toBe(200);
+
+  // Exactly one poll won the finalize claim and ran the side effects.
+  expect(providerMocks.providerResult).toHaveBeenCalledTimes(1);
+  expect(blobMocks.saveVideoFromUrl).toHaveBeenCalledTimes(1);
+
+  const again = await getGeneration(...statusRequest(generation.id, "dueling"));
+  await expect(again.json()).resolves.toMatchObject({ generation: { status: "completed" } });
+  expect(await wallet("dueling")).toEqual({ available: 0, reserved: 0 });
+  const settlements = (await ledgerEntries("dueling")).filter((e) =>
+    ["generation_capture", "generation_release"].includes(e.entry_type),
+  );
+  expect(settlements).toEqual([
+    { entry_type: "generation_capture", available_delta: 0, reserved_delta: -1 },
+  ]);
+});
+
+test("a poll that loses the finalize claim returns current state without side effects", async () => {
+  signInAll();
+  await seedCredits("patient", 1);
+  const { generation } = await (await startGeneration(startRequest("patient"))).json();
+  // Another worker holds a fresh finalize lease.
+  await getPool().query(
+    `update video_generations set status = 'finalizing', finalizing_at = now() where id = $1`,
+    [generation.id],
+  );
+  providerMocks.providerStatus.mockResolvedValue("completed");
+
+  const res = await getGeneration(...statusRequest(generation.id, "patient"));
+
+  expect(res.status).toBe(200);
+  await expect(res.json()).resolves.toMatchObject({ generation: { status: "finalizing" } });
+  expect(providerMocks.providerResult).not.toHaveBeenCalled();
+  expect(blobMocks.saveVideoFromUrl).not.toHaveBeenCalled();
+  expect(await wallet("patient")).toEqual({ available: 0, reserved: 1 });
+});
+
+test("an abandoned finalize lease is re-claimed by a later poll and completes", async () => {
+  signInAll();
+  await seedCredits("phoenix", 1);
+  const { generation } = await (await startGeneration(startRequest("phoenix"))).json();
+  // A worker died mid-finalize: stale lease, nothing terminal.
+  await getPool().query(
+    `update video_generations
+     set status = 'finalizing', finalizing_at = now() - interval '10 minutes'
+     where id = $1`,
+    [generation.id],
+  );
+  providerMocks.providerStatus.mockResolvedValue("completed");
+
+  const res = await getGeneration(...statusRequest(generation.id, "phoenix"));
+
+  await expect(res.json()).resolves.toMatchObject({ generation: { status: "completed" } });
+  expect(await wallet("phoenix")).toEqual({ available: 0, reserved: 0 });
+});
+
+test("a stale reserved job (start request died pre-submission) is released on poll", async () => {
+  signInAll();
+  await seedCredits("orphaned", 1);
+  const { generation } = await (await startGeneration(startRequest("orphaned"))).json();
+  // Rewind the job to the state a dying start request leaves behind.
+  await getPool().query(
+    `update video_generations
+     set status = 'reserved', provider_request_id = null,
+         created_at = now() - interval '10 minutes'
+     where id = $1`,
+    [generation.id],
+  );
+
+  const res = await getGeneration(...statusRequest(generation.id, "orphaned"));
+
+  expect(res.status).toBe(200);
+  await expect(res.json()).resolves.toMatchObject({
+    generation: { status: "failed", errorKind: "stuck_submission" },
+  });
+  expect(await wallet("orphaned")).toEqual({ available: 1, reserved: 0 });
+  expect(providerMocks.providerStatus).not.toHaveBeenCalled();
+});
+
+test("a fresh reserved job polls as reserved; its reservation is untouched", async () => {
+  signInAll();
+  await seedCredits("brand-new", 1);
+  const { generation } = await (await startGeneration(startRequest("brand-new"))).json();
+  await getPool().query(
+    `update video_generations set status = 'reserved', provider_request_id = null where id = $1`,
+    [generation.id],
+  );
+
+  const res = await getGeneration(...statusRequest(generation.id, "brand-new"));
+
+  await expect(res.json()).resolves.toMatchObject({ generation: { status: "reserved" } });
+  expect(await wallet("brand-new")).toEqual({ available: 0, reserved: 1 });
+});
+
 test("blob persistence failure never reports completed and releases the reservation", async () => {
   signInAll();
   await seedCredits("stormy", 1);

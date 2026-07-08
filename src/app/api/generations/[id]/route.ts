@@ -1,8 +1,8 @@
 import { requireUser } from "@/lib/server/auth";
 import {
   captureGeneration,
+  claimGenerationFinalizing,
   getGenerationForUser,
-  markGenerationFinalizing,
   markGenerationRunning,
   releaseGeneration,
   softDeleteGeneration,
@@ -33,6 +33,7 @@ async function advance(generation: VideoGeneration): Promise<void> {
   if (!endpoint || !requestId) return;
 
   let phase: "provider" | "storage" = "provider";
+  let claimed = false;
   try {
     const status = await providerStatus(endpoint, requestId);
     if (status === "queued") return;
@@ -40,7 +41,11 @@ async function advance(generation: VideoGeneration): Promise<void> {
       await markGenerationRunning(id);
       return;
     }
-    await markGenerationFinalizing(id);
+    // Provider says done: exactly one poll claims the finalize step; the
+    // others return the current row untouched, so a slow finalizer can never
+    // be failed-and-refunded by a concurrent poll's error.
+    claimed = await claimGenerationFinalizing(id);
+    if (!claimed) return;
     const videoUrl = await providerResult(endpoint, requestId);
     phase = "storage";
     const blobPath = await saveVideoFromUrl(id, videoUrl);
@@ -51,10 +56,35 @@ async function advance(generation: VideoGeneration): Promise<void> {
   } catch (err) {
     const kind = failureKindOf(err, phase === "storage" ? "storage" : "provider");
     const message = err instanceof Error ? err.message : String(err);
-    if (await releaseGeneration(id, kind, message)) {
+    // Only the claim winner may settle a finalizing job; a pre-claim failure
+    // settles only pre-finalize states, leaving another worker's claim alone.
+    const released = await releaseGeneration(id, kind, message, {
+      from: claimed ? "finalize-claim" : "active",
+    });
+    if (released) {
       await purgeSourcePhotos(id);
     }
   }
+}
+
+/**
+ * A job stuck in 'reserved' means its start request died between reserving
+ * the credit and recording the provider submission — nothing will ever
+ * advance it. Once the reservation is clearly abandoned, release it so the
+ * credit returns to the wallet; a fresh reservation is left alone (its POST
+ * may still be submitting).
+ */
+async function releaseStuckReservation(id: string): Promise<boolean> {
+  const released = await releaseGeneration(
+    id,
+    "stuck_submission",
+    "start request never recorded a provider submission",
+    { from: "stale-reserved" },
+  );
+  if (released) {
+    await purgeSourcePhotos(id);
+  }
+  return released;
 }
 
 export async function GET(
@@ -72,6 +102,15 @@ export async function GET(
   const generation = await getGenerationForUser(id, user.id);
   if (!generation) {
     return Response.json({ error: "not found" }, { status: 404 });
+  }
+
+  // A stale 'reserved' job has no provider request to poll — recover the
+  // credit instead of reporting it in-flight forever.
+  if (generation.status === "reserved") {
+    if (await releaseStuckReservation(id)) {
+      return Response.json({ generation: await refreshedDto(id, user.id) });
+    }
+    return Response.json({ generation: generationDto(generation) });
   }
 
   // Only a poll that actually advanced the job can have changed the row.

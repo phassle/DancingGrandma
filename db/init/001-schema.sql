@@ -40,6 +40,9 @@ create table video_generations (
   error_kind    text,                           -- 'provider' | 'timeout' | 'unavailable' | 'storage' | ...
   error         text,
   created_at    timestamptz not null default now(),
+  -- Finalize-claim lease: only the poll that stamps this runs the
+  -- download/persist/capture step; a stale lease can be re-claimed.
+  finalizing_at timestamptz,
   completed_at  timestamptz
 );
 

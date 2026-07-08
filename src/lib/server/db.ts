@@ -102,6 +102,8 @@ export type VideoGeneration = {
   error_kind: string | null;
   error: string | null;
   created_at: string;
+  /** When the current finalize-claim lease was taken (see claimGenerationFinalizing). */
+  finalizing_at: string | null;
   completed_at: string | null;
   /** Private by default; 'shared' opts the video into its share-by-link page. */
   visibility: GenerationVisibility;
@@ -275,12 +277,25 @@ export async function markGenerationRunning(id: string): Promise<void> {
   );
 }
 
-export async function markGenerationFinalizing(id: string): Promise<void> {
-  await getPool().query(
-    `update video_generations set status = 'finalizing'
-     where id = $1 and status in ('submitted', 'running', 'finalizing')`,
+/**
+ * Claim the finalize step — download the output, persist it, capture the
+ * reservation. Exactly one concurrent poll wins the claim (the UPDATE
+ * serializes on the row lock); the winner is the only caller allowed to run
+ * the finalize side effects or settle the job on their failure. A lease older
+ * than FINALIZE_LEASE is presumed abandoned (its worker died mid-finalize)
+ * and can be re-claimed by a later poll.
+ */
+const FINALIZE_LEASE = "2 minutes";
+
+export async function claimGenerationFinalizing(id: string): Promise<boolean> {
+  const { rowCount } = await getPool().query(
+    `update video_generations set status = 'finalizing', finalizing_at = now()
+     where id = $1
+       and (status in ('submitted', 'running')
+            or (status = 'finalizing' and finalizing_at < now() - interval '${FINALIZE_LEASE}'))`,
     [id],
   );
+  return (rowCount ?? 0) === 1;
 }
 
 /**
@@ -330,17 +345,32 @@ export async function captureGeneration(
  * Fail a paid run on technical/provider failure: record the error kind and
  * message and release the reservation back to available. Idempotent like
  * captureGeneration — an already-terminal job is left alone.
+ *
+ * `from` scopes which states the caller may settle, so a poll that did NOT
+ * win the finalize claim can never fail a job another worker is finalizing:
+ *  - 'active' (default): reserved/submitted/running — pre-finalize failures.
+ *  - 'finalize-claim': adds 'finalizing' — only for the claim winner.
+ *  - 'stale-reserved': only a 'reserved' row whose start request died before
+ *    provider submission (older than the lease), refunding the stuck credit.
  */
+const RELEASE_GUARDS = {
+  active: `status in ('reserved', 'submitted', 'running')`,
+  "finalize-claim": `status in ('reserved', 'submitted', 'running', 'finalizing')`,
+  "stale-reserved": `status = 'reserved' and created_at < now() - interval '${FINALIZE_LEASE}'`,
+} as const;
+
 export async function releaseGeneration(
   id: string,
   errorKind: string,
   errorMessage: string,
+  opts: { from?: keyof typeof RELEASE_GUARDS } = {},
 ): Promise<boolean> {
+  const guard = RELEASE_GUARDS[opts.from ?? "active"];
   return withTransaction(async (client) => {
     const { rows } = await client.query<{ user_id: string; credit_price: number }>(
       `update video_generations
        set status = 'failed', error_kind = $2, error = $3, completed_at = now()
-       where id = $1 and status in ('reserved', 'submitted', 'running', 'finalizing')
+       where id = $1 and ${guard}
        returning user_id, credit_price`,
       [id, errorKind, errorMessage],
     );
@@ -538,13 +568,17 @@ export async function expireStaleCredits(): Promise<{
   expiredCredits: number;
 }> {
   return withTransaction(async (client) => {
+    // Lock the users row too: an authenticated visit refreshing
+    // last_activity_at serializes against the sweep, so staleness is decided
+    // on a stable, locked timestamp — a user signing in mid-sweep either
+    // blocks the sweep (and keeps their credits) or waits for it to commit.
     const { rows: stale } = await client.query<{ user_id: string; available: number }>(
       `select w.user_id, w.available
        from credit_wallets w
        join users u on u.id = w.user_id
        where w.available > 0
          and u.last_activity_at < now() - make_interval(days => $1)
-       for update of w`,
+       for update of w, u`,
       [CREDIT_EXPIRY_DAYS],
     );
     for (const { user_id: userId, available } of stale) {

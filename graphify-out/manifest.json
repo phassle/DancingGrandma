@@ -30,8 +30,8 @@
     "semantic_hash": "5202e4b802881e3228072077a6076a4c"
   },
   ".impeccable/hook.cache.json": {
-    "mtime": 1783512854.3594456,
-    "ast_hash": "48b8a758c99bca28d12cd2e4060a5e6e",
+    "mtime": 1783515397.805694,
+    "ast_hash": "fa75827b597be4e817b13ccd622ebc38",
     "semantic_hash": ""
   },
   ".pi/skills/diagnosing-bugs/scripts/hitl-loop.template.sh": {
@@ -55,8 +55,8 @@
     "semantic_hash": "2faa87dbb6f48449c4c6e37bdf1a3442"
   },
   "db/init/001-schema.sql": {
-    "mtime": 1783466953.1010487,
-    "ast_hash": "786b4fa4bce190413a3ccb2c64873c35",
+    "mtime": 1783515236.9471464,
+    "ast_hash": "7b47b6e44461880127058f35da033027",
     "semantic_hash": ""
   },
   "eslint.config.mjs": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "src/lib/server/db.ts": {
-    "mtime": 1783504939.6759293,
-    "ast_hash": "d306a74fc2e70ad2b4b57a6db2ee1c42",
+    "mtime": 1783515264.9318135,
+    "ast_hash": "e7867ca8b3cd4eb0cac2d6d7d9c3541e",
     "semantic_hash": ""
   },
   "src/lib/server/sora.ts": {
@@ -1130,8 +1130,8 @@
     "semantic_hash": ""
   },
   "src/app/api/generations/[id]/route.ts": {
-    "mtime": 1783505053.3592856,
-    "ast_hash": "d8f576ce1f986f913403890653be9a5a",
+    "mtime": 1783515292.899866,
+    "ast_hash": "29f00c8b48977dc2a56bdce9e944e504",
     "semantic_hash": ""
   },
   "src/app/api/generations/dto.ts": {
@@ -1140,8 +1140,8 @@
     "semantic_hash": ""
   },
   "src/app/api/generations/generations.integration.test.ts": {
-    "mtime": 1783510392.9253974,
-    "ast_hash": "0f4621133b1e6d47cf303cfeeaf6d5d9",
+    "mtime": 1783515366.4013348,
+    "ast_hash": "c28866311ed2ac1ed611f91d2fae7dbd",
     "semantic_hash": ""
   },
   "src/app/api/generations/route.ts": {
@@ -1190,8 +1190,8 @@
     "semantic_hash": ""
   },
   "src/app/api/stripe/webhook/route.integration.test.ts": {
-    "mtime": 1783466868.1500697,
-    "ast_hash": "c9a13cca83a23d6cf1d5581c361bbafd",
+    "mtime": 1783515332.3801467,
+    "ast_hash": "b7a9ac0ab90399ba8170836e46e09ca3",
     "semantic_hash": ""
   },
   "src/app/api/stripe/webhook/route.ts": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   "src/lib/server/billing.ts": {
-    "mtime": 1783504967.4080186,
-    "ast_hash": "8ec16cca89308a1bd062d08cd275b05d",
+    "mtime": 1783515310.1054745,
+    "ast_hash": "91a1536994d8c997b39f07e5b8c5943e",
     "semantic_hash": ""
   },
   "src/lib/server/stripe.ts": {
@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "src/app/api/maintenance/maintenance.integration.test.ts": {
-    "mtime": 1783510442.0488548,
-    "ast_hash": "a2eb3b523fecc6826c11ed0250cceaff",
+    "mtime": 1783515397.7614224,
+    "ast_hash": "3ddd50d1b87ffe41ea7f43c8e4a2e189",
     "semantic_hash": ""
   },
   "src/app/api/maintenance/retention/route.ts": {

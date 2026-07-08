@@ -207,6 +207,42 @@ test("any authenticated visit resets the expiration clock", async () => {
   expect(await wallet("returning")).toEqual({ available: 5, reserved: 0 });
 });
 
+test("the sweep's lock serializes against a concurrent activity refresh", async () => {
+  // The sweep locks the users row alongside the wallet (`for update of w, u`),
+  // so an authenticated visit refreshing last_activity_at cannot slip between
+  // the staleness check and the expiration write.
+  await seedCredits("racer", 5);
+  await setLastActivityDaysAgo("racer", 120);
+
+  const sweep = await getPool().connect();
+  const visitor = await getPool().connect();
+  try {
+    await sweep.query("begin");
+    // The sweep's locking read, verbatim from expireStaleCredits.
+    await sweep.query(
+      `select w.user_id, w.available
+       from credit_wallets w
+       join users u on u.id = w.user_id
+       where w.available > 0
+         and u.last_activity_at < now() - make_interval(days => 90)
+       for update of w, u`,
+    );
+
+    // A concurrent visit's activity refresh must block on the locked row.
+    await visitor.query("set statement_timeout = 300");
+    await expect(
+      visitor.query(
+        `update users set last_activity_at = now() where external_id = 'racer'`,
+      ),
+    ).rejects.toMatchObject({ code: "57014" }); // statement timeout: blocked
+  } finally {
+    await sweep.query("rollback");
+    sweep.release();
+    await visitor.query("set statement_timeout = 0").catch(() => {});
+    visitor.release();
+  }
+});
+
 test("expiration never touches credits reserved on a non-terminal generation", async () => {
   await seedCredits("walker", 2);
   const startRes = await startGeneration(startRequest("walker"));

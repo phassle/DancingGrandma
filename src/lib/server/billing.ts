@@ -121,6 +121,33 @@ function invoiceSubscriptionId(invoice: Record<string, unknown>): string | null 
   return str(parent?.subscription) ?? str(invoice.subscription);
 }
 
+/**
+ * Does the invoice bill the configured $9.99/month price? Fulfillment must be
+ * scoped to our plan: a paid invoice for any other subscription on the same
+ * Stripe account (or customer) must never grant credits. Line shapes vary by
+ * Stripe API version, so check basil (`pricing.price_details.price`), classic
+ * (`price.id`), and legacy (`plan.id`).
+ */
+function invoiceHasConfiguredPrice(invoice: Record<string, unknown>): boolean {
+  const configured = process.env.STRIPE_PRICE_ID;
+  if (!configured) {
+    throw new Error("STRIPE_PRICE_ID is not set — cannot scope invoice fulfillment to the plan");
+  }
+  const lines = ((invoice.lines as Record<string, unknown> | undefined)?.data ??
+    []) as Record<string, unknown>[];
+  return lines.some((line) => {
+    const priceDetails = (line.pricing as Record<string, unknown> | undefined)
+      ?.price_details as Record<string, unknown> | undefined;
+    const price = line.price as Record<string, unknown> | undefined;
+    const plan = line.plan as Record<string, unknown> | undefined;
+    return (
+      str(priceDetails?.price) === configured ||
+      str(price?.id) === configured ||
+      str(plan?.id) === configured
+    );
+  });
+}
+
 /** Invoice → our user id, from the subscription metadata set at checkout. */
 function invoiceUserId(invoice: Record<string, unknown>): string | null {
   const parent = (invoice.parent as Record<string, unknown> | undefined)?.subscription_details as
@@ -183,6 +210,7 @@ async function applyInvoicePaid(
   const invoiceId = str(invoice.id);
   const stripeSubscriptionId = invoiceSubscriptionId(invoice);
   if (!invoiceId || !stripeSubscriptionId) return; // not a subscription invoice
+  if (!invoiceHasConfiguredPrice(invoice)) return; // paid, but not our plan — record only
 
   // Find the subscription row; create it if this event arrived before
   // checkout.session.completed (resolving the user from subscription
