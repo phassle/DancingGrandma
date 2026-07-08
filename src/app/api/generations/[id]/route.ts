@@ -5,9 +5,11 @@ import {
   markGenerationFinalizing,
   markGenerationRunning,
   releaseGeneration,
+  softDeleteGeneration,
+  TERMINAL_GENERATION_STATUSES,
   type VideoGeneration,
 } from "@/lib/server/db";
-import { saveVideoFromUrl } from "@/lib/server/blob";
+import { deleteVideoBlob, saveVideoFromUrl } from "@/lib/server/blob";
 import { providerResult, providerStatus } from "@/lib/server/provider";
 import { failureKindOf, refreshedDto } from "../dto";
 import { SHARE_ID_PATTERN } from "@/lib/share-id";
@@ -72,4 +74,42 @@ export async function GET(
     await advance(generation);
   }
   return Response.json({ generation: await refreshedDto(id, user.id) });
+}
+
+/**
+ * Delete a video from the library (issue #59): soft-delete the row (the
+ * ledger trail must survive), revoke any share link, and remove the stored
+ * blob. Only the owner's terminal runs qualify — an in-flight run still
+ * holds its credit reservation and must settle before it can be deleted.
+ */
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+): Promise<Response> {
+  const user = await authenticateRequest(request);
+  if (!user) {
+    return Response.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  if (!SHARE_ID_PATTERN.test(id)) {
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+
+  const generation = await getGenerationForUser(id, user.id);
+  if (!generation) {
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+  if (!TERMINAL_GENERATION_STATUSES.includes(generation.status)) {
+    return Response.json({ error: "generation is still in progress" }, { status: 409 });
+  }
+
+  const deleted = await softDeleteGeneration(id, user.id);
+  if (!deleted) {
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+  if (deleted.blob_path) {
+    await deleteVideoBlob(deleted.blob_path);
+  }
+  return Response.json({ deleted: true });
 }

@@ -60,3 +60,8 @@ export async function readVideoBytes(blobPath: string): Promise<Buffer> {
   // Callers decide how to map storage failures (missing blob vs transient error).
   return getVideosContainer().getBlockBlobClient(blobPath).downloadToBuffer();
 }
+
+/** Remove a stored video, e.g. when its owner deletes it from their library. */
+export async function deleteVideoBlob(blobPath: string): Promise<void> {
+  await getVideosContainer().getBlockBlobClient(blobPath).deleteIfExists();
+}
