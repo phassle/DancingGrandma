@@ -62,6 +62,14 @@ Phase prompts: [reference/simplify-prompt.md](reference/simplify-prompt.md), [re
      the integration tests live — so the reviewer spends time only on what machines
      haven't already checked.
 
+   **Scale the checklist to what exists** (ADR 0002). With `closes` issues (a
+   dynamic-tdd run): the full per-issue format above. Standalone with no linked
+   issues: still end with a checklist, but minimal — the *How to run* block plus one
+   flat action → expected-result list derived from the diff; the coverage footer only
+   if tests changed. Either way, **never emit a checkbox that neither a runnable human
+   step nor named evidence backs** — an unverifiable checkbox trains reviewers to skip
+   the list. Quote UI labels only when the verify step actually observed them.
+
 ## Notes
 
 - **Gated tail:** simplify → verify → Codex review → PR run in sequence and each must pass.

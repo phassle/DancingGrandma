@@ -5,6 +5,11 @@ July 2026). The pipeline worked end to end — plan → 6 TDD slices in worktree
 simplify → verify in Aspire → Codex review → blocker fixes — but every phase surfaced
 something the skill should encode. Ranked by impact.
 
+> **This document is frozen rationale, not a TODO list** (ADR 0001). Each section
+> carries a `Status:` line; unapplied proposals live as tracked issues — the issue
+> tracker, not this file, is the backlog. Do not edit sections to reflect later work;
+> update the linked issue instead.
+
 ## What worked (keep)
 
 - **Deterministic resume.** Two session-limit deaths (3 implementers + planner; later the
@@ -19,6 +24,7 @@ something the skill should encode. Ranked by impact.
 
 ## 1. Parallel slices duplicate infrastructure — plan for shared seams
 
+_Status: tracked as #78_
 **Symptom:** 6 slices shipped two parallel API client modules (one dead on arrival), the
 same 3-line 401 guard 11 times, per-file copies of the integration-test harness, and a
 superseded credit path left beside its replacement.
@@ -35,6 +41,7 @@ superseded credit path left beside its replacement.
 
 ## 2. Verify must prove it is driving *this branch's* app
 
+_Status: tracked as #79_
 **Symptom:** the first verify round drove a three-day-old stale `next start` on :3000
 (pre-branch build → misleading 404s) while Aspire's real web resource couldn't bind.
 Separately, Aspire's `web` hung forever in `Waiting` because the branch added new
@@ -53,6 +60,7 @@ cannot prompt.
 
 ## 3. The verify prompt was another project's prompt
 
+_Status: tracked as #80_
 **Symptom:** `verify-prompt.md` instructs checking "GTFS-RT polling" and tolerating
 "Trafiklab 429 / airplanes.live CORS" noise — copied verbatim from a different repo.
 An agent following it literally would hunt for transit feeds in a dance-video app.
@@ -67,6 +75,7 @@ quirks that are now known.
 
 ## 4. Auth flows need one real round trip — route tests can't see them
 
+_Status: tracked as #81_
 **Symptom:** 168 green route tests, yet sign-in was completely broken: Keycloak rejects
 port-wildcard redirect URIs, and Next 16 pins `request.url` to the server's bind address
 (not the browser-facing host), so the built `redirect_uri` was doubly wrong. Both seams
@@ -82,6 +91,7 @@ port-wildcard redirect URIs, and Next 16 pins `request.url` to the server's bind
 
 ## 5. Money paths deserve an invariant checklist at implement time
 
+_Status: tracked as #82_
 **Symptom:** Codex found blockers that TDD-with-faked-externals happily shipped:
 concurrent polls could double-run finalization and refund a delivered video; a crash
 between reserve and submit stranded the credit forever; the expiry sweep raced activity
@@ -96,6 +106,7 @@ transaction. The Codex review stays — but these classes should not survive to 
 
 ## 6. Codify the interrupted-run cleanup
 
+_Status: tracked as #83_
 **Symptom:** after the session-limit death, three issue branches and two worktrees sat at
 feature-HEAD with uncommitted partial work. The right call (verify zero commits → discard
 → let fresh TDD redo) was improvised.
@@ -107,6 +118,7 @@ re-run the slice. Never hand a half-done uncommitted worktree to a fresh impleme
 
 ## 7. Token exhaustion is a first-class event — handle it, don't just survive it
 
+_Status: tracked as #84_
 **Symptom:** the run hit the session limit twice mid-flight ("You've hit your session
 limit · resets HH:MM"). The pipeline degraded gracefully by accident — dead agents came
 back as failures, `mergedIssues` reported the completed subset — but everything after
@@ -135,6 +147,7 @@ re-invoking with `resumeFromRunId`, and separately resuming a dead fork.
 
 ## 8. The PR must ship a reviewer test schema (implemented)
 
+_Status: applied — PR-PREP.md step 4 (commit 9560042), format shipped in PR #76_
 **Symptom:** a 70+-file PR closing six issues is unreviewable from the diff alone — the
 reviewer has no path from "what was built" to "how do I see it working".
 
@@ -147,6 +160,7 @@ the reviewer only spends time on what machines haven't checked.
 
 ## 9. Smaller frictions
 
+_Status: tracked as #85_
 - **Poller/JSON contracts:** the tail's Codex status polling read `status` at the top
   level; it lives at `job.status`. Pin the field paths in PR-PREP.md.
 - **Cost signalling:** SKILL.md's cost note should set expectations up front:
