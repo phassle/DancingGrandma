@@ -5,6 +5,10 @@
   "Parameters": {
     "sora-endpoint": "https://<your-foundry-account>.openai.azure.com/",
     "sora-api-key": "<key1>",
-    "sora-deployment": "sora-2"
-  }
+    "sora-deployment": "sora-2",
+    "stripe-secret-key": "sk_test_<from-stripe-dashboard>",
+    "stripe-webhook-secret": "whsec_<from-stripe-listen>",
+    "stripe-price-id": "price_<999-per-month-5-credits>"
+  },
+  "//3": "Stripe (test mode): secret key from the Stripe dashboard; price id of the $9.99/month plan; webhook signing secret from `stripe listen --forward-to http://localhost:3000/api/stripe/webhook`."
 }
