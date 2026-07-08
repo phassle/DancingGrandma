@@ -43,6 +43,33 @@ Phase prompts: [reference/simplify-prompt.md](reference/simplify-prompt.md), [re
 
 4. **Create the PR — only when 1–3 all pass.** Open ONE PR via the `create-pr` skill (or `gh pr create`) with base `<base>`. Title from `label`, or the slug derived in step 0 when there's no PRD/label. Include `Closes #<id>` for each `closes` issue and a test-plan summary (which gates ran and their results, including the Codex outcome).
 
+   **The PR body MUST end with a `## Review checklist` section** — a step-by-step test
+   schema over everything the branch built, so a reviewer can verify the work without
+   reverse-engineering the diff. Build it from the merged issues' acceptance criteria
+   plus what the verify step actually exercised:
+
+   - **How to run** first: exact commands to boot the stack locally (launcher, required
+     local params/secrets file, seeded test user, app URL).
+   - One `### <issue title> (#<id>)` subsection per merged issue with numbered `- [ ]`
+     checkbox steps: concrete action → expected observable result ("Start a generation
+     with 1 credit → balance shows 0 available / 1 reserved"). Include the negative and
+     edge steps the tests cover (double-click, replayed webhook, unauthenticated call) —
+     those are exactly what human reviews miss.
+   - Steps the reviewer cannot run locally (real Stripe keys, real provider spend) are
+     kept but marked `⚠ needs <X>`, naming the evidence that covers them instead (the
+     integration test, or the verify step's captured result).
+   - Close with `### Automated coverage`: test count, which externals are faked, where
+     the integration tests live — so the reviewer spends time only on what machines
+     haven't already checked.
+
+   **Scale the checklist to what exists** (ADR 0002). With `closes` issues (a
+   dynamic-tdd run): the full per-issue format above. Standalone with no linked
+   issues: still end with a checklist, but minimal — the *How to run* block plus one
+   flat action → expected-result list derived from the diff; the coverage footer only
+   if tests changed. Either way, **never emit a checkbox that neither a runnable human
+   step nor named evidence backs** — an unverifiable checkbox trains reviewers to skip
+   the list. Quote UI labels only when the verify step actually observed them.
+
 ## Notes
 
 - **Gated tail:** simplify → verify → Codex review → PR run in sequence and each must pass.
