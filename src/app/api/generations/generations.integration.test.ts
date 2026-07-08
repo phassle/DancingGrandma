@@ -27,6 +27,8 @@ vi.mock("@/lib/server/provider", () => providerMocks);
 
 const blobMocks = vi.hoisted(() => ({
   saveVideoFromUrl: vi.fn(),
+  saveSourcePhotoBytes: vi.fn(),
+  deleteBlob: vi.fn(),
 }));
 vi.mock("@/lib/server/blob", () => blobMocks);
 
@@ -54,6 +56,8 @@ beforeEach(async () => {
   providerMocks.providerStatus.mockResolvedValue("running");
   providerMocks.providerResult.mockResolvedValue("https://fal.output/dance.mp4");
   blobMocks.saveVideoFromUrl.mockImplementation(async (id: string) => `${id}.mp4`);
+  blobMocks.saveSourcePhotoBytes.mockImplementation(async (id: string) => `sources/${id}`);
+  blobMocks.deleteBlob.mockResolvedValue(undefined);
   await getPool().query("truncate users cascade");
 });
 
@@ -431,6 +435,104 @@ test("reload resume: listing active returns the latest non-terminal generation f
 test("active listing requires authentication", async () => {
   const res = await getActive(new Request("http://localhost/api/generations?active=1"));
   expect(res.status).toBe(401);
+});
+
+async function sourcePhotoAsset(generationId: string): Promise<{
+  blob_path: string | null;
+  content_type: string | null;
+  byte_size: number | null;
+  sha256: string | null;
+  purged_at: string | null;
+} | undefined> {
+  const { rows } = await getPool().query(
+    `select blob_path, content_type, byte_size, sha256, purged_at
+     from media_assets where generation_id = $1 and kind = 'source_photo'`,
+    [generationId],
+  );
+  return rows[0];
+}
+
+test("start persists the source photo as a purgeable media asset with hash metadata", async () => {
+  signInAll();
+  await seedCredits("shutterbug", 1);
+
+  const res = await startGeneration(startRequest("shutterbug"));
+  expect(res.status).toBe(201);
+  const { generation } = await res.json();
+
+  expect(blobMocks.saveSourcePhotoBytes).toHaveBeenCalledTimes(1);
+  const [photoGenerationId, , contentType] = blobMocks.saveSourcePhotoBytes.mock.calls[0];
+  expect(photoGenerationId).toBe(generation.id);
+  expect(contentType).toBe("image/jpeg");
+
+  const { createHash } = await import("node:crypto");
+  const expectedSha = createHash("sha256").update(Buffer.from([1, 2, 3])).digest("hex");
+  expect(await sourcePhotoAsset(generation.id)).toMatchObject({
+    blob_path: `sources/${generation.id}`,
+    content_type: "image/jpeg",
+    byte_size: 3,
+    sha256: expectedSha,
+    purged_at: null,
+  });
+});
+
+test("completion deletes the source photo bytes but keeps the generated video", async () => {
+  signInAll();
+  await seedCredits("keeper", 1);
+  const { generation } = await (await startGeneration(startRequest("keeper"))).json();
+  providerMocks.providerStatus.mockResolvedValue("completed");
+
+  await getGeneration(...statusRequest(generation.id, "keeper"));
+
+  expect(blobMocks.deleteBlob).toHaveBeenCalledWith(`sources/${generation.id}`);
+  const asset = await sourcePhotoAsset(generation.id);
+  expect(asset).toMatchObject({ blob_path: null, byte_size: 3 });
+  expect(asset!.sha256).not.toBeNull();
+  expect(asset!.purged_at).not.toBeNull();
+
+  // The generated video and its metadata are untouched.
+  const { rows } = await getPool().query(
+    `select status, blob_path, video_url from video_generations where id = $1`,
+    [generation.id],
+  );
+  expect(rows[0]).toEqual({
+    status: "completed",
+    blob_path: `${generation.id}.mp4`,
+    video_url: "https://fal.output/dance.mp4",
+  });
+});
+
+test("provider failure while running purges the source photo too", async () => {
+  signInAll();
+  await seedCredits("unlucky", 1);
+  const { generation } = await (await startGeneration(startRequest("unlucky"))).json();
+  providerMocks.providerStatus.mockRejectedValue(
+    Object.assign(new Error("render exploded"), { kind: "provider" }),
+  );
+
+  await getGeneration(...statusRequest(generation.id, "unlucky"));
+
+  expect(blobMocks.deleteBlob).toHaveBeenCalledWith(`sources/${generation.id}`);
+  const asset = await sourcePhotoAsset(generation.id);
+  expect(asset!.blob_path).toBeNull();
+  expect(asset!.purged_at).not.toBeNull();
+});
+
+test("provider submission failure purges the source photo alongside the release", async () => {
+  signInAll();
+  await seedCredits("bounced", 1);
+  providerMocks.submitToProvider.mockRejectedValue(
+    Object.assign(new Error("Exhausted balance"), { kind: "unavailable" }),
+  );
+
+  const res = await startGeneration(startRequest("bounced"));
+  expect(res.status).toBe(502);
+  const { generation } = await res.json();
+
+  expect(blobMocks.deleteBlob).toHaveBeenCalledWith(`sources/${generation.id}`);
+  const asset = await sourcePhotoAsset(generation.id);
+  expect(asset!.blob_path).toBeNull();
+  expect(asset!.purged_at).not.toBeNull();
 });
 
 test("dev credit seeding writes an admin-adjustment ledger entry", async () => {

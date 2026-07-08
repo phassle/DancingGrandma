@@ -61,7 +61,29 @@ export async function readVideoBytes(blobPath: string): Promise<Buffer> {
   return getVideosContainer().getBlockBlobClient(blobPath).downloadToBuffer();
 }
 
+/**
+ * Persist a user's source photo for the duration of its run (PRD #54,
+ * issue #60). Retention is short by policy: the bytes are deleted as soon
+ * as the generation reaches a terminal state.
+ */
+export async function saveSourcePhotoBytes(
+  generationId: string,
+  bytes: Buffer,
+  contentType: string,
+): Promise<string> {
+  const blobPath = `sources/${generationId}`;
+  await getVideosContainer()
+    .getBlockBlobClient(blobPath)
+    .uploadData(bytes, { blobHTTPHeaders: { blobContentType: contentType } });
+  return blobPath;
+}
+
+/** Delete blob bytes; a blob that is already gone is a success. */
+export async function deleteBlob(blobPath: string): Promise<void> {
+  await getVideosContainer().getBlockBlobClient(blobPath).deleteIfExists();
+}
+
 /** Remove a stored video, e.g. when its owner deletes it from their library. */
 export async function deleteVideoBlob(blobPath: string): Promise<void> {
-  await getVideosContainer().getBlockBlobClient(blobPath).deleteIfExists();
+  await deleteBlob(blobPath);
 }

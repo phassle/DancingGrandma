@@ -10,6 +10,7 @@ import {
   type VideoGeneration,
 } from "@/lib/server/db";
 import { deleteVideoBlob, saveVideoFromUrl } from "@/lib/server/blob";
+import { purgeSourcePhotos } from "@/lib/server/retention";
 import { providerResult, providerStatus } from "@/lib/server/provider";
 import { failureKindOf, refreshedDto } from "../dto";
 import { SHARE_ID_PATTERN } from "@/lib/share-id";
@@ -43,11 +44,16 @@ async function advance(generation: VideoGeneration): Promise<void> {
     const videoUrl = await providerResult(endpoint, requestId);
     phase = "storage";
     const blobPath = await saveVideoFromUrl(id, videoUrl);
-    await captureGeneration(id, videoUrl, blobPath);
+    if (await captureGeneration(id, videoUrl, blobPath)) {
+      // Terminal state reached: the source photo's retention ends here.
+      await purgeSourcePhotos(id);
+    }
   } catch (err) {
     const kind = failureKindOf(err, phase === "storage" ? "storage" : "provider");
     const message = err instanceof Error ? err.message : String(err);
-    await releaseGeneration(id, kind, message);
+    if (await releaseGeneration(id, kind, message)) {
+      await purgeSourcePhotos(id);
+    }
   }
 }
 

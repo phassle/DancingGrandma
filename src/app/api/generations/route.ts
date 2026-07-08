@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import { authenticateRequest } from "@/lib/server/auth";
 import {
+  createSourcePhotoAsset,
   getWallet,
   InsufficientCreditsError,
   latestActiveGeneration,
@@ -8,6 +10,8 @@ import {
   reserveGeneration,
   type ReferenceSourceKind,
 } from "@/lib/server/db";
+import { saveSourcePhotoBytes } from "@/lib/server/blob";
+import { purgeSourcePhotos } from "@/lib/server/retention";
 import { submitToProvider, uploadToProvider } from "@/lib/server/provider";
 import { failureKindOf, generationDto, refreshedDto } from "./dto";
 import { ENGINES } from "@/lib/engines";
@@ -96,8 +100,25 @@ export async function POST(request: Request): Promise<Response> {
     throw err;
   }
 
-  // --- Submit to the provider; failure releases the reservation. ---
+  // --- Persist the source photo, then submit; failure releases the
+  // reservation and purges the photo bytes (retention, issue #60). ---
+  let phase: "storage" | "provider" = "storage";
   try {
+    const photoBytes = Buffer.from(await photo.arrayBuffer());
+    const blobPath = await saveSourcePhotoBytes(
+      generation.id,
+      photoBytes,
+      photo.type || "application/octet-stream",
+    );
+    await createSourcePhotoAsset({
+      userId: user.id,
+      generationId: generation.id,
+      blobPath,
+      contentType: photo.type || "application/octet-stream",
+      byteSize: photoBytes.byteLength,
+      sha256: createHash("sha256").update(photoBytes).digest("hex"),
+    });
+    phase = "provider";
     const imageUrl = await uploadToProvider(photo);
     const videoUrl = hasReferenceUrl
       ? (referenceUrl as string)
@@ -105,9 +126,10 @@ export async function POST(request: Request): Promise<Response> {
     const { requestId } = await submitToProvider(engine, imageUrl, videoUrl);
     generation = (await markGenerationSubmitted(generation.id, requestId)) ?? generation;
   } catch (err) {
-    const kind = failureKindOf(err, "provider");
+    const kind = failureKindOf(err, phase === "storage" ? "storage" : "provider");
     const message = err instanceof Error ? err.message : String(err);
     await releaseGeneration(generation.id, kind, message);
+    await purgeSourcePhotos(generation.id);
     return Response.json(
       { error: message, kind, generation: await refreshedDto(generation.id, user.id) },
       { status: 502 },
