@@ -41,7 +41,9 @@ Fan-out phase prompts live in [reference/](reference/) (`plan-prompt.md`, `imple
    ```
    Wait for the `<task-notification>`; watch live with `/workflows`. It returns `{ mergedIssues, ... }`. Confirm `git worktree list` shows only the main worktree afterwards (prune any stragglers: `git worktree prune` + `git worktree remove`).
 
-   The tail runs **only if `mergedIssues` is non-empty**. Stop and report if it fails — do not open the PR.
+   **If the result has `paused: true`** (token/session-limit exhaustion — see *Token-limit pause & resume* below): do **not** open the PR. Apply the straggler rule, print the resume invocation, and offer to schedule the resume. Any already-merged issues stay merged on the feature branch; the run continues from there on resume.
+
+   The tail runs **only if the run completed (not paused) and `mergedIssues` is non-empty**. Stop and report if it fails — do not open the PR.
 
 5. **Run the PR-prep tail** per [PR-PREP.md](PR-PREP.md) with the workflow result:
    - `branch: feature/<prd-slug>`, `base: develop`, `closes: <mergedIssues>`, `label: PRD #<PRD#>`.
@@ -54,9 +56,32 @@ Fan-out phase prompts live in [reference/](reference/) (`plan-prompt.md`, `imple
 - **Worktree cleanup:** the merge phase removes each issue worktree and deletes its branch right after merging it (the Workflow keeps committed worktrees otherwise). After the run, only the main worktree should remain.
 - **Gated tail:** [PR-PREP.md](PR-PREP.md) runs simplify → verify → Codex review → PR in sequence, each gated; a failed verify (dirty web logs or a failing browser test) or an unresolved Codex blocker stops it before the PR. The tail is also runnable standalone on any feature branch — follow PR-PREP.md directly.
 - **Per-iteration incrementality:** later iterations branch off the feature branch's *current* HEAD, so issues unblocked by earlier merges build on top of them.
-- **Issues are not closed mid-run** — completion happens when the single feature PR merges.
-- **Cost:** one Opus planner + N Opus implementers (full TDD) + one merger per iteration. Scale `maxParallel`/`maxIterations` to the backlog; warn the user for large PRDs.
-- **Resumable:** re-running with the same PRD reuses the feature branch and deterministic issue branches; the planner skips ids already merged.
+- **Issues are not closed mid-run** — completion happens when the single feature PR merges (which the tail closes explicitly on merge-to-`develop`, see PR-PREP.md — GitHub's `Closes #N` auto-close only fires on the default branch).
+- **Cost & session limits:** one Opus planner + N Opus implementers (full TDD) + one merger per iteration; the PRD #54 run averaged **~120k output tokens per slice (~1.3M total including the tail)**. Scale `maxParallel`/`maxIterations` to the backlog. **Large PRDs will hit the session/token limit — this is expected: the run is designed to pause and resume, not to fail** (see *Token-limit pause & resume*). Warn the user up front for large backlogs and prefer fewer slices per wave over dying mid-implementation.
+- **Resumable:** re-running with the same PRD reuses the feature branch and deterministic issue branches; the planner skips ids already merged. Resume a specific run with `Workflow({ scriptPath, resumeFromRunId, args })` — cached agent calls replay instantly.
+
+### Straggler cleanup on resume (interrupted or paused run)
+
+Before resuming, reconcile every `dynamic-tdd/issue-*` worktree/branch left behind (an interrupted run leaves partial work). Per straggler:
+
+- **Commits ahead of the feature branch → keep it.** Leave the worktree and branch in place; the merger picks it up.
+- **Zero commits (only dirty/uncommitted files) → discard and redo.** `git worktree remove --force <path>` then `git branch -D <branch>`, and let a fresh implementer re-run the slice.
+
+**Never hand a half-done, uncommitted worktree to a fresh implementer** — it inherits confusing partial state. Inspect with `git worktree list` + `git -C <path> log --oneline {{BASE}}..HEAD`.
+
+### Token-limit pause & resume
+
+The workflow treats token/session-limit exhaustion as a first-class pause, not a crash: it budgets each wave up front (~120k/slice) and, when the remaining budget can't fund the next wave, stops launching agents and returns `{ paused: true, pauseReason, remainingIssues, mergedIssues, resumeFromRunId: null, resetsAt: null, pausedAt: null }` with the partial result. On a paused (or session-limit-killed) run, the orchestrator:
+
+1. **Reconcile stragglers** per the rule above — keep committed worktrees, discard zero-commit ones.
+2. **Print the exact resume invocation**, filling in the runId from *this* run's tool result:
+   ```
+   Workflow({ scriptPath: ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+              resumeFromRunId: "<runId from the paused run's tool result>",
+              args: { prd: "<PRD#>", featureBranch: "feature/<prd-slug>", base: "develop", maxIterations: 10, maxParallel: 6 } })
+   ```
+3. **Schedule/offer the resume** for just after the reported reset time (parse it from the session-limit error text; use `ScheduleWakeup`/`/schedule`), so it doesn't depend on the user remembering. If the harness can't schedule, printing the resume command + reset time is the required minimum — scheduling is best-effort.
+4. **Forks too:** a PR-prep tail fork (simplify, blocker fixes) killed by the limit is **resumed by messaging the same agent** (`SendMessage` — its context and uncommitted working tree survive), never respawned from scratch (see PR-PREP.md).
 
 ## Unresolved questions
 

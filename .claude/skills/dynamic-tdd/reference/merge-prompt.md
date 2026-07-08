@@ -14,6 +14,32 @@ For each branch, **one at a time, in order**:
 
 After all branches are merged, make a single commit summarizing the merge if one is needed.
 
+# RECONCILE SEMANTICS, NOT JUST CONFLICTS
+
+A clean `git merge` with no textual conflict does **not** mean the slices agree. Parallel
+slices that grepped for a seam that didn't exist yet will each have built their own — the
+files don't collide, so git merges them silently, and the branch ends up with two API
+clients, two 401 guards, or a superseded credit path sitting beside its replacement (all
+observed in the PRD #54 run).
+
+After the branches are merged and tests are green, do a **semantic reconciliation pass**
+over the merged change set:
+
+1. Look for **two implementations of the same concern** — grep for duplicated helpers,
+   guards, clients, config, and test harnesses the slices should have shared (the plan's
+   shared-seam assignment tells you what to expect):
+   ```
+   git diff --stat origin/{{BASE}}...{{FEATURE_BRANCH}}
+   git grep -n "<seam concept>"      # auth guard, fetch client, tx helper, test harness
+   ```
+2. When you find rivals, **keep the seam the plan assigned to its owner slice, migrate
+   callers onto it, and delete the loser.** Re-run `npm run typecheck` and `npm test`.
+3. Commit the reconciliation separately (e.g. `merge: reconcile <concern> onto shared seam`)
+   so the collapse is reviewable.
+
+If you cannot safely reconcile a duplication, leave both but call it out explicitly in your
+report so the tail / reviewer can decide.
+
 # CLEANUP — remove each merged worktree
 
 Each issue branch was built in its own git worktree. As soon as a branch is successfully merged (step 5 above), remove its worktree and delete the now-merged branch:
