@@ -47,23 +47,60 @@ Open http://localhost:3000.
 | `postgres` | container + `db/init` schema | PostgreSQL Flexible Server        |
 | `videos`   | Azurite blob container       | Storage account blob container    |
 | `keycloak` | container + realm import     | Container App                     |
-| Azure video provider | `SORA_*` env from parameters while the Azure path is coming soon | same, from deploy-time parameters |
+| Stripe | `STRIPE_*` env for payment webhooks | same, from deploy-time parameters |
 | Front Door | —                            | `infra/frontdoor.bicep` → web     |
 
-The database schema (`db/init/001-schema.sql`) holds **users**, their
-**video generations**, and a **credits ledger** (balance = sum of transactions,
-so it can't drift). Server-side access lives in `src/lib/server/`
-(`db.ts`, `blob.ts`, `sora.ts`).
+### Database & architecture
+
+The database schema spans three migrations:
+- **`001-schema.sql`**: core tables for **users**, **video generations**, and a **credits ledger** (balance = sum of transactions, preventing drift)
+- **`002-stripe-subscriptions.sql`**: billing records for subscription tiers, invoices, and payment tracking
+- **`003-media-library.sql`**: shared **video library** for curated reference clips and user-uploaded media
+
+Server-side logic lives in `src/lib/server/`:
+- `db.ts` — database queries and transaction helpers
+- `auth.ts` — OIDC session management and user authentication
+- `oidc.ts` — Keycloak OIDC provider integration
+- `billing.ts` — Stripe subscription and invoice handling
+- `stripe.ts` — Stripe API client and webhook processing
+- `provider.ts` — video engine submission and result polling
+- `blob.ts` — video and photo storage (Azurite / Azure Storage)
+- `retention.ts` — purge source photos after generation is finalized
+
+All routes have integration tests in `src/app/api/**/*.integration.test.ts` running against a real Postgres instance.
+
+## Key features
+
+**Authentication**: OIDC via Keycloak + secure session cookies  
+**Billing**: Stripe-powered $9.99/month subscription tier with credit wallet  
+**Generation API**: Create videos from photos + reference motion clips  
+**Library**: Curated reference videos + user media gallery  
+**Sharing**: Generate shareable links for video results  
+**Maintenance**: Credit adjustments, photo retention cleanup, subscription sync
 
 ## Docs
 
-- [Epic #3](https://github.com/phassle/DancingGrandma/issues/3) — full context & tracking; PRDs in [#1](https://github.com/phassle/DancingGrandma/issues/1) (product) and [#2](https://github.com/phassle/DancingGrandma/issues/2) (Phase 1 remaining work)
 - [CONTEXT.md](CONTEXT.md) — canonical product vocabulary
 - [PRODUCT.md](PRODUCT.md) — brand strategy & design principles
 - [DESIGN.md](DESIGN.md) — visual system (color, type, motion)
-- `src/lib/engines.ts` — the video-engine registry (add/flip engines here)
+- `docs/adr/` — architecture decision records
+- `docs/agents/` — agent workflow, issue tracker, triage labels
+- `src/lib/engines.ts` — video-engine registry (Kling 2.6, Wan 2.2 Animate)
 
 ## Stack
 
-Next.js 16 (App Router) · Tailwind CSS v4 · TypeScript. Designed with
-[impeccable](https://impeccable.style).
+**Frontend**: Next.js 16 (App Router) · React · Tailwind CSS v4 · TypeScript  
+**Backend**: Node.js server functions · PostgreSQL · Stripe API  
+**Auth**: Keycloak OIDC  
+**Storage**: Azure Blob Storage (Azurite local)  
+**Video engines**: Kling 2.6 Motion Control, Wan 2.2 Animate (via fal.ai)  
+**Testing**: Vitest · integration tests on real Postgres  
+**Design**: [impeccable](https://impeccable.style)
+
+## Development
+
+Workflow via GitHub Issues (PRDs → feature branches → PRs):
+- Cut feature branches from `develop`, merge back via PR
+- All work tracked in issues; use `/dynamic-tdd` for multi-issue orchestration
+- Skills in `.agents/skills/` mirrored to `.claude/skills/` (sync with `scripts/sync-skills.sh`)
+- Graphify knowledge graph in `graphify-out/` for codebase navigation
