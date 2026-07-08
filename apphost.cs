@@ -62,6 +62,9 @@ var web = builder.AddNextJsApp("web", ".")
     .WithEnvironment("STRIPE_SECRET_KEY", stripeSecretKey)
     .WithEnvironment("STRIPE_WEBHOOK_SECRET", stripeWebhookSecret)
     .WithEnvironment("STRIPE_PRICE_ID", stripePriceId)
+    // Pin the browser-facing port: Keycloak redirect URIs cannot wildcard a
+    // port, so the realm whitelists http://localhost:3000 explicitly.
+    .WithEndpoint("http", e => e.Port = 3000)
     .WithExternalHttpEndpoints();
 #pragma warning restore ASPIREJAVASCRIPT001
 

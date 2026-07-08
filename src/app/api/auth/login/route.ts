@@ -1,4 +1,4 @@
-import { stateCookie } from "@/lib/server/auth";
+import { requestOrigin, stateCookie } from "@/lib/server/auth";
 import { authorizationUrl } from "@/lib/server/oidc";
 
 export const runtime = "nodejs";
@@ -8,15 +8,15 @@ export const runtime = "nodejs";
  * anti-CSRF state, remembered in a short-lived cookie for the callback.
  */
 export async function GET(request: Request): Promise<Response> {
-  const url = new URL(request.url);
+  const origin = requestOrigin(request);
   const state = crypto.randomUUID();
-  const redirectUri = `${url.origin}/api/auth/callback`;
+  const redirectUri = `${origin}/api/auth/callback`;
 
   return new Response(null, {
     status: 307,
     headers: {
       Location: authorizationUrl(redirectUri, state),
-      "Set-Cookie": stateCookie(state, url.protocol === "https:"),
+      "Set-Cookie": stateCookie(state, origin.startsWith("https:")),
     },
   });
 }

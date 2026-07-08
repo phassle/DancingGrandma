@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/server/auth";
+import { requestOrigin, requireUser } from "@/lib/server/auth";
 import { createPortalSession } from "@/lib/server/stripe";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!user.stripe_customer_id) {
     return Response.json({ error: "no_stripe_customer" }, { status: 409 });
   }
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request);
   const session = await createPortalSession(user.stripe_customer_id, `${origin}/`);
   return Response.json({ url: session.url });
 }

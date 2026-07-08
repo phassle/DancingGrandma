@@ -1,4 +1,4 @@
-import { SESSION_COOKIE, clearedCookie } from "@/lib/server/auth";
+import { SESSION_COOKIE, clearedCookie, requestOrigin } from "@/lib/server/auth";
 
 export const runtime = "nodejs";
 
@@ -8,12 +8,12 @@ export const runtime = "nodejs";
  * credits and generation.)
  */
 export async function GET(request: Request): Promise<Response> {
-  const url = new URL(request.url);
+  const origin = requestOrigin(request);
   return new Response(null, {
     status: 303,
     headers: {
-      Location: `${url.origin}/`,
-      "Set-Cookie": clearedCookie(SESSION_COOKIE, url.protocol === "https:"),
+      Location: `${origin}/`,
+      "Set-Cookie": clearedCookie(SESSION_COOKIE, origin.startsWith("https:")),
     },
   });
 }

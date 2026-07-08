@@ -37,7 +37,6 @@
   "35": "Issue tracker: GitHub",
   "36": "Issue tracker: GitHub",
   "37": "Issue tracker: GitHub",
-  "38": "generate.ts",
   "39": "Triage",
   "40": "Triage",
   "41": "Triage",
@@ -430,9 +429,6 @@
   "428": "sync-skills.sh",
   "429": "server-only-stub.ts",
   "430": "route.ts",
-  "431": "paid-generation.ts",
-  "432": "db.ts",
-  "433": "generations.integration.test.ts",
   "434": "route.ts",
   "435": "provider.ts",
   "436": "route.integration.test.ts",
@@ -441,7 +437,6 @@
   "439": "route.ts",
   "440": "route.ts",
   "441": "library.integration.test.ts",
-  "442": "oidc.ts",
   "443": "Library.tsx",
   "444": "dynamic-tdd-54.js"
 }

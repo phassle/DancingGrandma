@@ -37,6 +37,21 @@ export function stateCookie(state: string, secure: boolean): string {
 }
 
 /**
+ * Browser-facing origin for absolute callback/return URLs. Next's request.url
+ * carries the server's own bind address, not the host the browser used (e.g.
+ * behind the Aspire dev proxy or Front Door), so trust the forwarded/host
+ * headers first.
+ */
+export function requestOrigin(request: Request): string {
+  const url = new URL(request.url);
+  const host =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? url.host;
+  const proto =
+    request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+  return `${proto}://${host}`;
+}
+
+/**
  * Authenticate a request from its session cookie. Returns the internal user
  * (created on first sign-in, activity refreshed on every visit) or null.
  */

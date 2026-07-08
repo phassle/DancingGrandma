@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/server/auth";
+import { requestOrigin, requireUser } from "@/lib/server/auth";
 import {
   createPendingSubscription,
   getCurrentSubscription,
@@ -38,7 +38,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const pending = await createPendingSubscription(user.id);
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request);
   const session = await createSubscriptionCheckoutSession({
     customerId,
     userId: user.id,
