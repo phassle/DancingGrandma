@@ -2,9 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import AccountBadge from "./AccountBadge";
+import GenerationGate from "./GenerationGate";
 import GrandmaDancer from "./GrandmaDancer";
+import { clearDraft, loadDraft, saveDraft, type DraftReference } from "@/lib/draft";
 import { DEFAULT_ENGINE, ENGINES, type Engine } from "@/lib/engines";
-import { GenerationError, cleanupPhotoUpload, submitDanceVideo, trackDanceVideo } from "@/lib/generate";
+import { GenerationError } from "@/lib/generate";
+import {
+  AuthRequiredError,
+  CheckoutRequiredError,
+  createServerGeneration,
+  fetchAccount,
+  redirectTo,
+  startCheckout,
+  trackServerGeneration,
+} from "@/lib/server-generation";
 import { isShareId } from "@/lib/share-id";
 
 type Step = "photo" | "dance" | "generating" | "done" | "closed";
@@ -60,7 +71,8 @@ const PENDING_RUN_TTL_MS = 24 * 60 * 60 * 1000;
 const RESULT_FILE_NAME = "dancing-grandma.mp4";
 
 type PendingRun = {
-  requestId: string;
+  /** The durable server-side generation job (issue #57) this tab is tracking. */
+  generationId: string;
   engineId: string;
   danceName: string;
   startedAt: number;
@@ -74,14 +86,14 @@ function parsePendingRun(raw: string | null): PendingRun | null {
   try {
     const parsed = JSON.parse(raw) as Partial<PendingRun>;
     if (
-      typeof parsed.requestId !== "string" ||
+      typeof parsed.generationId !== "string" ||
       typeof parsed.engineId !== "string" ||
       typeof parsed.startedAt !== "number"
     ) {
       return null;
     }
     return {
-      requestId: parsed.requestId,
+      generationId: parsed.generationId,
       engineId: parsed.engineId,
       danceName: typeof parsed.danceName === "string" ? parsed.danceName : "Custom dance",
       startedAt: parsed.startedAt,
@@ -297,6 +309,9 @@ export default function Studio() {
   const [resultIsGoldenClip, setResultIsGoldenClip] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  // The generation gate — the account/credit/payment boundary (issue #58).
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateBusy, setGateBusy] = useState(false);
 
   // Curated dances whose reference clip actually exists under public/dances/.
   const [liveClipIds, setLiveClipIds] = useState<Set<string>>(new Set());
@@ -341,6 +356,54 @@ export default function Studio() {
     setCustomVideoPreviewUrl(null);
   }, []);
 
+  /** Reset run-progress state and enter the generating step. */
+  const beginRun = useCallback((danceName: string) => {
+    setStageIndex(0);
+    setGenError(null);
+    setGenStatus("Recreating your draft on the server…");
+    setElapsedSeconds(0);
+    setRenderPhase("preparing");
+    setLastRunUpdateAt(Date.now());
+    setQueuePosition(null);
+    setResultUrl(null);
+    setResultIsGoldenClip(false);
+    setGenerationStartedAt(Date.now());
+    setResultDanceName(danceName);
+    setStep("generating");
+  }, []);
+
+  /** The prepared reference choice as a persistable draft reference. */
+  const draftReference = (): DraftReference | null =>
+    customVideo
+      ? {
+          kind: "clip",
+          file: customVideo,
+          source: customClipSource === "imported" ? "imported" : "uploaded",
+        }
+      : customUrl
+        ? { kind: "url", url: customUrl }
+        : dance
+          ? { kind: "curated", danceId: dance.id }
+          : null;
+
+  /** Stash the browser-only draft so it survives a full-page redirect. */
+  const persistDraft = async () => {
+    const reference = draftReference();
+    if (!photoFile || !reference) throw new Error("the draft is not ready to save");
+    await saveDraft({ photo: photoFile, reference, engineId: engine.id });
+  };
+
+  /** Signed in but the wallet can't cover the run: draft → Stripe Checkout. */
+  const leaveForCheckout = async () => {
+    try {
+      await persistDraft();
+      redirectTo(await startCheckout());
+    } catch (err) {
+      logStudioError("checkout", err);
+      setGenError("Couldn't open checkout. Your draft is safe in this tab — try again.");
+    }
+  };
+
   // Move focus to the step heading on step changes (not on initial page load)
   // so keyboard/screen-reader users follow along
   const isFirstRender = useRef(true);
@@ -359,7 +422,7 @@ export default function Studio() {
       return;
     }
     const storedEngine = ENGINES.find((e) => e.id === stored.engineId);
-    if (!storedEngine?.endpoint) {
+    if (!storedEngine) {
       localStorage.removeItem(PENDING_RUN_KEY);
       return;
     }
@@ -375,6 +438,95 @@ export default function Studio() {
       setStep("generating");
     }, 0);
     return () => window.clearTimeout(resumeTimer);
+  }, []);
+
+  // Restore a pre-account draft stashed before the sign-in redirect (issue
+  // #58) and pick the gate flow back up in one continuous motion: signed in
+  // with credits → straight into generation; signed in with an empty wallet →
+  // straight into Stripe Checkout; signed out (backed out at Keycloak) → just
+  // the intact draft, no nagging.
+  useEffect(() => {
+    // A live run always wins over a stale draft.
+    if (parsePendingRun(localStorage.getItem(PENDING_RUN_KEY))) return;
+    let cancelled = false;
+    (async () => {
+      const draft = await loadDraft().catch(() => null);
+      if (!draft || cancelled) return;
+
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      const url = URL.createObjectURL(draft.photo);
+      objectUrlRef.current = url;
+      setPhotoUrl(url);
+      setPhotoFile(draft.photo);
+      setPhotoName(draft.photo.name);
+      // Consent was given before the gate interrupted the flow.
+      setConsentGiven(true);
+
+      const restoredEngine = ENGINES.find((e) => e.id === draft.engineId && e.endpoint);
+      if (restoredEngine) setEngine(restoredEngine);
+
+      let referenceReady = false;
+      let danceName = "Custom dance";
+      if (draft.reference.kind === "clip") {
+        clearClipPreview();
+        const previewUrl = URL.createObjectURL(draft.reference.file);
+        clipObjectUrlRef.current = previewUrl;
+        setCustomVideoPreviewUrl(previewUrl);
+        setCustomVideo(draft.reference.file);
+        setCustomClipSource(draft.reference.source);
+        danceName = draft.reference.file.name;
+        referenceReady = true;
+      } else if (draft.reference.kind === "url") {
+        setCustomUrl(draft.reference.url);
+        setCustomVideoPreviewUrl(draft.reference.url);
+        setCustomClipSource("direct-url");
+        setUrlDraft(draft.reference.url);
+        referenceReady = true;
+      } else {
+        const danceId = draft.reference.danceId;
+        const restoredDance = DANCES.find((d) => d.id === danceId) ?? null;
+        setDance(restoredDance);
+        if (restoredDance?.referenceClip) {
+          danceName = restoredDance.name;
+          referenceReady = await fetch(restoredDance.referenceClip, { method: "HEAD" })
+            .then((res) => res.ok)
+            .catch(() => false);
+          if (referenceReady && !cancelled) {
+            setLiveClipIds((prev) => new Set(prev).add(restoredDance.id));
+          }
+        }
+      }
+      if (cancelled) return;
+      setStep("dance");
+
+      const account = await fetchAccount();
+      if (cancelled) return;
+      if (account.status === "anonymous") {
+        // The gate simply re-opens on the next start attempt.
+        await clearDraft();
+        return;
+      }
+      if (!referenceReady || !restoredEngine) {
+        await clearDraft();
+        return;
+      }
+      if (account.credits < 1) {
+        try {
+          redirectTo(await startCheckout());
+        } catch (err) {
+          await clearDraft();
+          logStudioError("draft-resume-checkout", err);
+          setGenError("Couldn't open checkout. Your draft is still here — try again.");
+        }
+        return;
+      }
+      await clearDraft();
+      beginRun(danceName);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot mount restore
   }, []);
 
   useEffect(() => {
@@ -427,14 +579,29 @@ export default function Studio() {
             ? (ENGINES.find((e) => e.id === pendingRun.engineId) ?? engine)
             : engine;
         activeEngineForRun = activeEngine;
-        const requestId =
-          pendingRun?.requestId ??
+        const generationId =
+          pendingRun?.generationId ??
           (await (async () => {
-            const referenceVideo =
+            // Recreate the browser draft as a server-side generation tied to
+            // the signed-in user — inputs become private media only now.
+            const reference =
               customVideo ?? customUrl ?? (await referenceClipFile(dance!.referenceClip!));
-            const id = await submitDanceVideo(photoFile!, referenceVideo, activeEngine);
-            const run = {
-              requestId: id,
+            const sourceKind =
+              customVideo !== null
+                ? customClipSource === "imported"
+                  ? "imported_url"
+                  : "upload"
+                : customUrl !== null
+                  ? "direct_url"
+                  : "curated";
+            const { id } = await createServerGeneration({
+              photo: photoFile!,
+              reference,
+              sourceKind,
+              engineId: activeEngine.id,
+            });
+            const run: PendingRun = {
+              generationId: id,
               engineId: activeEngine.id,
               danceName: dance?.name ?? customVideo?.name ?? "Custom dance",
               startedAt: generationStartedAt ?? Date.now(),
@@ -444,12 +611,12 @@ export default function Studio() {
               setPendingRun(run);
               setResultDanceName(run.danceName);
               setRenderPhase("queued");
-              setGenStatus("Render accepted. Waiting for provider queue…");
+              setGenStatus("Draft recreated on the server. Waiting in the render queue…");
               setLastRunUpdateAt(Date.now());
             }
             return id;
           })());
-        const url = await trackDanceVideo(requestId, activeEngine, (msg) => {
+        const url = await trackServerGeneration(generationId, (msg) => {
           if (!cancelled) {
             setGenStatus(msg);
             setRenderPhase(phaseFromMessage(msg));
@@ -465,8 +632,6 @@ export default function Studio() {
           setStep("done");
           setGenerationStartedAt(null);
           setLastRunUpdateAt(null);
-          // Honour the "used once, deleted" promise — photo is no longer needed.
-          if (photoFile) void cleanupPhotoUpload(photoFile);
         }
       } catch (err) {
         if (!cancelled) {
@@ -474,6 +639,22 @@ export default function Studio() {
           setPendingRun(null);
           setGenerationStartedAt(null);
           setLastRunUpdateAt(null);
+
+          if (err instanceof AuthRequiredError) {
+            // The session expired mid-flow — back to the intact draft; the
+            // gate re-opens so the user can sign in again.
+            setStep("dance");
+            setGateOpen(true);
+            return;
+          }
+
+          if (err instanceof CheckoutRequiredError) {
+            // Credits vanished between the check and the reserve (another
+            // tab?) — stash the draft and continue through checkout.
+            setStep("dance");
+            await leaveForCheckout();
+            return;
+          }
 
           if (err instanceof GenerationError && err.kind === "moderation") {
             // Photo rejected by moderation — clear it so the user picks a new one.
@@ -491,15 +672,12 @@ export default function Studio() {
             return;
           }
 
-          // Photo was uploaded to fal — clean up even on failure.
-          if (photoFile) void cleanupPhotoUpload(photoFile);
-
           logStudioError("generation", err, {
             engineId: activeEngineForRun.id,
             engineName: activeEngineForRun.name,
             provider: activeEngineForRun.provider,
             endpoint: activeEngineForRun.endpoint,
-            requestId: pendingRun?.requestId,
+            generationId: pendingRun?.generationId,
             renderPhase,
             elapsedSeconds,
           });
@@ -712,7 +890,47 @@ export default function Studio() {
     setIsDownloading(false);
     setIsSharing(false);
     localStorage.removeItem(PENDING_RUN_KEY);
+    setGateOpen(false);
+    setGateBusy(false);
     setStep("photo");
+  };
+
+  /**
+   * "Start generation" — the only place the gate ever appears (issue #58).
+   * Simulated demo runs stay free and anonymous; a real paid run needs an
+   * account and a credit, so route through gate/checkout as needed.
+   */
+  const requestStart = async () => {
+    const danceName = dance?.name ?? customVideo?.name ?? "Custom dance";
+    if (!isRealRun) {
+      beginRun(danceName);
+      return;
+    }
+    setGenError(null);
+    const account = await fetchAccount();
+    if (account.status === "anonymous") {
+      setGateOpen(true);
+      return;
+    }
+    if (account.credits < 1) {
+      await leaveForCheckout();
+      return;
+    }
+    beginRun(danceName);
+  };
+
+  /** Gate accepted: stash the draft browser-side, then off to Keycloak. */
+  const continueFromGate = async () => {
+    setGateBusy(true);
+    try {
+      await persistDraft();
+      redirectTo("/api/auth/login");
+    } catch (err) {
+      logStudioError("gate-save-draft", err);
+      setGateBusy(false);
+      setGateOpen(false);
+      setGenError("Couldn't stash your draft in this browser. Nothing was uploaded — try again.");
+    }
   };
 
   const downloadResult = async () => {
@@ -1124,6 +1342,19 @@ export default function Studio() {
                 </p>
               </fieldset>
 
+              {photoName && (dance || customVideo || customUrl) && (
+                <p className="mt-6 rounded-xl bg-bg-deep/40 px-4 py-3 text-sm text-muted">
+                  <span className="font-bold text-ink">Ready to generate:</span> {photoName}{" "}
+                  dancing{" "}
+                  {dance
+                    ? `“${dance.name}”`
+                    : customVideo
+                      ? `“${customVideo.name}”`
+                      : "your linked clip"}{" "}
+                  on {engine.name}.
+                </p>
+              )}
+
               {(danceError || genError) && (
                 <p role="alert" className="mt-4 rounded-xl bg-go/15 px-4 py-3 text-sm font-medium text-ink">
                   ⚠️ {danceError ?? genError}
@@ -1141,20 +1372,7 @@ export default function Studio() {
                 <button
                   type="button"
                   disabled={!dance && !customVideo && !customUrl}
-                  onClick={() => {
-                    setStageIndex(0);
-                    setGenError(null);
-                    setGenStatus("Submitting photo and reference video…");
-                    setElapsedSeconds(0);
-                    setRenderPhase("preparing");
-                    setLastRunUpdateAt(Date.now());
-                    setQueuePosition(null);
-                    setResultUrl(null);
-                    setResultIsGoldenClip(false);
-                    setGenerationStartedAt(Date.now());
-                    setResultDanceName(dance?.name ?? customVideo?.name ?? "Custom dance");
-                    setStep("generating");
-                  }}
+                  onClick={requestStart}
                   className="w-full rounded-full bg-go px-9 py-3.5 font-display text-xl text-ink shadow-[var(--shadow-pop)] transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                 >
                   Make her dance 💃
@@ -1353,6 +1571,14 @@ export default function Studio() {
           )}
         </div>
       </div>
+
+      {/* The generation gate — floats over the dimmed studio; the draft stays visible behind it */}
+      <GenerationGate
+        open={gateOpen}
+        busy={gateBusy}
+        onContinue={continueFromGate}
+        onDismiss={() => setGateOpen(false)}
+      />
 
       {/* Toast */}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-6">

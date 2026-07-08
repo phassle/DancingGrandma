@@ -2,41 +2,63 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import Studio from "./Studio";
+import { GenerationError } from "@/lib/generate";
 import {
-  GenerationError,
-  cleanupPhotoUpload,
-  generateDanceVideo,
-  submitDanceVideo,
-  trackDanceVideo,
-} from "@/lib/generate";
+  AuthRequiredError,
+  createServerGeneration,
+  fetchAccount,
+  redirectTo,
+  startCheckout,
+  trackServerGeneration,
+} from "@/lib/server-generation";
+import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
 
-// The wizard is driven through the DOM with the generation seam stubbed —
-// GenerationError stays real so failure kinds mean what they mean in prod.
-vi.mock("@/lib/generate", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/generate")>();
+// The wizard is driven through the DOM with the paid-generation seam stubbed —
+// GenerationError and the gate error classes stay real so failure kinds mean
+// what they mean in prod.
+vi.mock("@/lib/server-generation", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/server-generation")>();
   return {
     ...actual,
-    generateDanceVideo: vi.fn(),
-    submitDanceVideo: vi.fn(),
-    trackDanceVideo: vi.fn(),
-    cleanupPhotoUpload: vi.fn().mockResolvedValue(undefined),
+    fetchAccount: vi.fn(),
+    startCheckout: vi.fn(),
+    createServerGeneration: vi.fn(),
+    trackServerGeneration: vi.fn(),
+    redirectTo: vi.fn(),
   };
 });
 
-const generate = vi.mocked(generateDanceVideo);
-const submit = vi.mocked(submitDanceVideo);
-const track = vi.mocked(trackDanceVideo);
-const cleanup = vi.mocked(cleanupPhotoUpload);
+// Draft persistence is IndexedDB-backed (covered by draft.test.ts); here it
+// only matters that the wizard saves/restores at the right moments.
+vi.mock("@/lib/draft", () => ({
+  saveDraft: vi.fn(),
+  loadDraft: vi.fn(),
+  clearDraft: vi.fn(),
+}));
+
+const account = vi.mocked(fetchAccount);
+const checkout = vi.mocked(startCheckout);
+const create = vi.mocked(createServerGeneration);
+const track = vi.mocked(trackServerGeneration);
+const redirect = vi.mocked(redirectTo);
+const save = vi.mocked(saveDraft);
+const load = vi.mocked(loadDraft);
+const clear = vi.mocked(clearDraft);
+
+const GATE_COPY =
+  "Create an account to save your video. Generation uses 1 credit. The monthly plan is $9.99 and includes 5 credits.";
 
 beforeEach(() => {
-  generate.mockReset();
-  submit.mockReset();
-  track.mockReset();
-  cleanup.mockReset();
-  cleanup.mockResolvedValue(undefined);
+  vi.clearAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {});
-  submit.mockResolvedValue("req-1");
+  // Default: a signed-in subscriber with credits — the happy paid path.
+  account.mockResolvedValue({ status: "signed-in", credits: 5 });
+  checkout.mockResolvedValue("https://checkout.stripe.com/c/session");
+  create.mockResolvedValue({ id: "gen-1" });
   track.mockResolvedValue("https://fal.media/out.mp4");
+  save.mockResolvedValue(undefined);
+  load.mockResolvedValue(null);
+  clear.mockResolvedValue(undefined);
   localStorage.clear();
   // jsdom has no object URLs; the wizard only needs a stable string.
   URL.createObjectURL = vi.fn((value: Blob | MediaSource) =>
@@ -78,16 +100,22 @@ async function startRealRun(user: UserEvent) {
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 }
 
-test("a successful run lands on the done step with the rendered video", async () => {
+test("a successful run recreates the draft server-side and lands on the done step", async () => {
   const user = userEvent.setup();
-  track.mockResolvedValue("https://fal.media/out.mp4");
+  track.mockResolvedValue("/api/video/gen-1");
 
   await startRealRun(user);
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
-  expect(submit.mock.calls[0][2]).toMatchObject({ id: "kling-motion-control" });
+  expect(create).toHaveBeenCalledTimes(1);
+  const input = create.mock.calls[0][0];
+  expect((input.photo as File).name).toBe("grandma.png");
+  expect((input.reference as File).name).toBe("dance.mp4");
+  expect(input.sourceKind).toBe("upload");
+  expect(input.engineId).toBe("kling-motion-control");
+  expect(track).toHaveBeenCalledWith("gen-1", expect.any(Function));
   expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
-    "https://fal.media/out.mp4",
+    "/api/video/gen-1",
   );
 });
 
@@ -169,6 +197,31 @@ test("Kling is the preselected recommended engine", async () => {
   expect(screen.getByText("our pick")).toBeDefined();
 });
 
+test("a valid draft shows a ready-to-generate summary", async () => {
+  const user = userEvent.setup();
+
+  render(<Studio />);
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+
+  // No summary until a reference is chosen.
+  expect(screen.queryByText(/ready to generate/i)).toBeNull();
+
+  await user.upload(
+    screen.getByLabelText("Upload your own reference dance video"),
+    new File(["v"], "dance.mp4", { type: "video/mp4" }),
+  );
+
+  const summary = screen.getByText(/ready to generate/i).closest("p");
+  expect(summary?.textContent).toContain("grandma.png");
+  expect(summary?.textContent).toContain("dance.mp4");
+  expect(summary?.textContent).toContain("Kling");
+});
+
 test("a curated dance with a bundled clip renders for real", async () => {
   const user = userEvent.setup();
   serveClip("/dances/griddy.mp4");
@@ -191,9 +244,10 @@ test("a curated dance with a bundled clip renders for real", async () => {
   // A real render is the real thing — no demo-mode disclaimer.
   expect(screen.queryByText(/demo mode/i)).toBeNull();
 
-  const clip = submit.mock.calls[0][1];
-  expect(clip).toBeInstanceOf(File);
-  expect((clip as File).name).toBe("griddy.mp4");
+  const input = create.mock.calls[0][0];
+  expect(input.reference).toBeInstanceOf(File);
+  expect((input.reference as File).name).toBe("griddy.mp4");
+  expect(input.sourceKind).toBe("curated");
 });
 
 test("dance cards mark only the dances whose reference clip exists as real renders", async () => {
@@ -245,8 +299,10 @@ test("a pasted video link can run through Kling with the URL handed through", as
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
-  expect(submit.mock.calls[0][1]).toBe("https://example.com/griddy.mp4");
-  expect(submit.mock.calls[0][2]).toMatchObject({ id: "kling-motion-control" });
+  const input = create.mock.calls[0][0];
+  expect(input.reference).toBe("https://example.com/griddy.mp4");
+  expect(input.sourceKind).toBe("direct_url");
+  expect(input.engineId).toBe("kling-motion-control");
 });
 
 test("a YouTube page link imports a clip that can run through Kling", async () => {
@@ -306,9 +362,11 @@ test("a YouTube page link imports a clip that can run through Kling", async () =
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
-  expect(submit.mock.calls[0][1]).toBeInstanceOf(File);
-  expect((submit.mock.calls[0][1] as File).name).toBe("griddy-tutorial.mp4");
-  expect(submit.mock.calls[0][2]).toMatchObject({ id: "kling-motion-control" });
+  const input = create.mock.calls[0][0];
+  expect(input.reference).toBeInstanceOf(File);
+  expect((input.reference as File).name).toBe("griddy-tutorial.mp4");
+  expect(input.sourceKind).toBe("imported_url");
+  expect(input.engineId).toBe("kling-motion-control");
 });
 
 test("a failed import shows a helpful message, not a doomed run", async () => {
@@ -417,6 +475,206 @@ test("dropping a video file on the tile loads it as the reference clip", async (
   expect(await screen.findByText(/“dropped.webm” loaded/)).toBeDefined();
 });
 
+// --- The generation gate (issue #58) ---
+
+test("an anonymous start opens the gate with the exact deal copy and uploads nothing", async () => {
+  const user = userEvent.setup();
+  account.mockResolvedValue({ status: "anonymous" });
+
+  await startRealRun(user);
+
+  const gate = await screen.findByRole("dialog");
+  expect(gate.textContent).toContain(GATE_COPY);
+  // The prepared draft stays visible behind the modal.
+  expect(screen.getByText(/“dance.mp4” loaded/)).toBeDefined();
+  expect(screen.getByRole("heading", { name: /pick the choreography/i })).toBeDefined();
+  // Nothing personal reached any server: no recreation, no draft stash yet.
+  expect(create).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
+  expect(
+    vi.mocked(fetch).mock.calls.some(([input]) => {
+      const url = (typeof input === "string" ? input : (input as Request).url).toString();
+      return url.includes("/api/generations") || url.includes("/api/moderate");
+    }),
+  ).toBe(false);
+});
+
+test("backing out of the gate returns to the intact draft", async () => {
+  const user = userEvent.setup();
+  account.mockResolvedValue({ status: "anonymous" });
+
+  await startRealRun(user);
+  await screen.findByRole("dialog");
+
+  await user.click(screen.getByRole("button", { name: /not now — keep my draft/i }));
+
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(screen.getByText(/“dance.mp4” loaded/)).toBeDefined();
+  expect(
+    (screen.getByRole("button", { name: "Make her dance 💃" }) as HTMLButtonElement).disabled,
+  ).toBe(false);
+  expect(create).not.toHaveBeenCalled();
+});
+
+test("continuing from the gate stashes the draft browser-side and heads to sign-in", async () => {
+  const user = userEvent.setup();
+  account.mockResolvedValue({ status: "anonymous" });
+
+  await startRealRun(user);
+  await screen.findByRole("dialog");
+
+  await user.click(screen.getByRole("button", { name: /create account or sign in/i }));
+
+  await waitFor(() => expect(redirect).toHaveBeenCalledWith("/api/auth/login"));
+  expect(save).toHaveBeenCalledTimes(1);
+  const draft = save.mock.calls[0][0];
+  expect(draft.photo.name).toBe("grandma.png");
+  expect(draft.engineId).toBe("kling-motion-control");
+  expect(draft.reference).toMatchObject({ kind: "clip", source: "uploaded" });
+  // Still no upload — the draft went to IndexedDB, not the network.
+  expect(create).not.toHaveBeenCalled();
+});
+
+test("a signed-in user with an empty wallet is routed to checkout with the draft stashed", async () => {
+  const user = userEvent.setup();
+  account.mockResolvedValue({ status: "signed-in", credits: 0 });
+
+  await startRealRun(user);
+
+  await waitFor(() =>
+    expect(redirect).toHaveBeenCalledWith("https://checkout.stripe.com/c/session"),
+  );
+  expect(save).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(create).not.toHaveBeenCalled();
+});
+
+test("a checkout that cannot start leaves the draft on screen with an honest error", async () => {
+  const user = userEvent.setup();
+  account.mockResolvedValue({ status: "signed-in", credits: 0 });
+  checkout.mockRejectedValue(new Error("already_subscribed"));
+
+  await startRealRun(user);
+
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toMatch(/couldn't open checkout/i);
+  expect(screen.getByText(/“dance.mp4” loaded/)).toBeDefined();
+  expect(redirect).not.toHaveBeenCalled();
+});
+
+test("an expired session at start reopens the gate instead of failing the run", async () => {
+  const user = userEvent.setup();
+  create.mockRejectedValue(new AuthRequiredError());
+
+  await startRealRun(user);
+
+  expect(await screen.findByRole("dialog")).toBeDefined();
+  expect(screen.getByText(/“dance.mp4” loaded/)).toBeDefined();
+});
+
+test("a restored draft after sign-in with credits starts generation automatically", async () => {
+  load.mockResolvedValue({
+    photo: new File(["p"], "grandma.png", { type: "image/png" }),
+    reference: {
+      kind: "clip",
+      file: new File(["v"], "dance.mp4", { type: "video/mp4" }),
+      source: "uploaded",
+    },
+    engineId: "kling-motion-control",
+    savedAt: Date.now(),
+  });
+  let finish!: (url: string) => void;
+  track.mockImplementation(
+    () =>
+      new Promise<string>((resolve) => {
+        finish = resolve;
+      }),
+  );
+
+  render(<Studio />);
+
+  // One continuous flow: the draft is recreated server-side and the run starts.
+  expect(await screen.findByRole("heading", { name: /hold my knitting/i })).toBeDefined();
+  await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
+  const input = create.mock.calls[0][0];
+  expect((input.photo as File).name).toBe("grandma.png");
+  expect((input.reference as File).name).toBe("dance.mp4");
+  expect(input.sourceKind).toBe("upload");
+  expect(clear).toHaveBeenCalled();
+
+  await act(async () => {
+    finish("/api/video/gen-1");
+  });
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+});
+
+test("a restored draft with an empty wallet goes straight to checkout and survives the detour", async () => {
+  load.mockResolvedValue({
+    photo: new File(["p"], "grandma.png", { type: "image/png" }),
+    reference: {
+      kind: "clip",
+      file: new File(["v"], "dance.mp4", { type: "video/mp4" }),
+      source: "uploaded",
+    },
+    engineId: "kling-motion-control",
+    savedAt: Date.now(),
+  });
+  account.mockResolvedValue({ status: "signed-in", credits: 0 });
+
+  render(<Studio />);
+
+  await waitFor(() =>
+    expect(redirect).toHaveBeenCalledWith("https://checkout.stripe.com/c/session"),
+  );
+  // The stored draft must survive the Stripe roundtrip.
+  expect(clear).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled();
+});
+
+test("a restored draft for a signed-out visitor lands back on the intact dance step", async () => {
+  load.mockResolvedValue({
+    photo: new File(["p"], "grandma.png", { type: "image/png" }),
+    reference: {
+      kind: "clip",
+      file: new File(["v"], "dance.mp4", { type: "video/mp4" }),
+      source: "uploaded",
+    },
+    engineId: "kling-motion-control",
+    savedAt: Date.now(),
+  });
+  account.mockResolvedValue({ status: "anonymous" });
+
+  render(<Studio />);
+
+  expect(
+    await screen.findByRole("heading", { name: /pick the choreography/i }),
+  ).toBeDefined();
+  expect(screen.getByText(/“dance.mp4” loaded/)).toBeDefined();
+  await waitFor(() => expect(clear).toHaveBeenCalled());
+  expect(redirect).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled();
+});
+
+test("a restored curated draft re-checks the bundled clip before auto-starting", async () => {
+  serveClip("/dances/griddy.mp4");
+  load.mockResolvedValue({
+    photo: new File(["p"], "grandma.png", { type: "image/png" }),
+    reference: { kind: "curated", danceId: "griddy" },
+    engineId: "kling-motion-control",
+    savedAt: Date.now(),
+  });
+  track.mockResolvedValue("/api/video/gen-1");
+
+  render(<Studio />);
+
+  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
+  const input = create.mock.calls[0][0];
+  expect((input.reference as File).name).toBe("griddy.mp4");
+  expect(input.sourceKind).toBe("curated");
+});
+
+// --- Run lifecycle over the durable server workflow ---
+
 test("a provider error shows a friendly message and retry re-runs with the same files", async () => {
   const user = userEvent.setup();
   track.mockRejectedValueOnce(new GenerationError("provider", "Internal server error"));
@@ -442,9 +700,9 @@ test("a provider error shows a friendly message and retry re-runs with the same 
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
-  const [firstCall, retryCall] = submit.mock.calls;
-  expect(retryCall[0]).toBe(firstCall[0]);
-  expect(retryCall[1]).toBe(firstCall[1]);
+  const [firstCall, retryCall] = create.mock.calls;
+  expect(retryCall[0].photo).toBe(firstCall[0].photo);
+  expect(retryCall[0].reference).toBe(firstCall[0].reference);
 });
 
 test("a timeout says the render took too long and keeps the retry path open", async () => {
@@ -463,7 +721,7 @@ test("a timeout says the render took too long and keeps the retry path open", as
 
 test("an oversized provider image error tells the user to pick the photo again", async () => {
   const user = userEvent.setup();
-  track.mockRejectedValue(
+  create.mockRejectedValue(
     new GenerationError(
       "provider",
       "body.image_url: Image dimensions are too large. Maximum dimensions are 3850x3850 pixels.",
@@ -502,7 +760,7 @@ test("an unavailable provider shows a clearly labeled golden clip fallback", asy
   expect(screen.queryByRole("alert")).toBeNull();
 });
 
-test("a real run stores the pending request id until the run reaches a terminal state", async () => {
+test("a real run stores the pending generation id until the run reaches a terminal state", async () => {
   const user = userEvent.setup();
   let finish!: (url: string) => void;
   track.mockImplementation(
@@ -515,14 +773,14 @@ test("a real run stores the pending request id until the run reaches a terminal 
 
   await waitFor(() => {
     expect(JSON.parse(localStorage.getItem("dg:pending-run") ?? "null")).toMatchObject({
-      requestId: "req-1",
+      generationId: "gen-1",
       engineId: "kling-motion-control",
       startedAt: expect.any(Number),
     });
   });
 
   await act(async () => {
-    finish("https://fal.media/done.mp4");
+    finish("/api/video/gen-1");
   });
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
@@ -533,24 +791,22 @@ test("a fresh mount resumes a pending run younger than 24 hours", async () => {
   localStorage.setItem(
     "dg:pending-run",
     JSON.stringify({
-      requestId: "req-resume",
+      generationId: "gen-resume",
       engineId: "wan-animate-fal",
       danceName: "The Griddy",
       startedAt: Date.now() - 60_000,
     }),
   );
-  track.mockResolvedValue("https://fal.media/resumed.mp4");
+  track.mockResolvedValue("/api/video/gen-resume");
 
   render(<Studio />);
 
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
-  expect(track).toHaveBeenCalledWith(
-    "req-resume",
-    expect.objectContaining({ id: "wan-animate-fal" }),
-    expect.any(Function),
-  );
+  expect(track).toHaveBeenCalledWith("gen-resume", expect.any(Function));
+  // The tab resumes the server job — no new generation is created.
+  expect(create).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Your generated video").getAttribute("src")).toBe(
-    "https://fal.media/resumed.mp4",
+    "/api/video/gen-resume",
   );
   expect(localStorage.getItem("dg:pending-run")).toBeNull();
 });
@@ -559,7 +815,7 @@ test("an expired pending run is discarded on mount", () => {
   localStorage.setItem(
     "dg:pending-run",
     JSON.stringify({
-      requestId: "req-old",
+      generationId: "gen-old",
       engineId: "wan-animate-fal",
       danceName: "The Griddy",
       startedAt: Date.now() - 25 * 60 * 60 * 1000,
@@ -577,7 +833,7 @@ test("a resumed run clears pending storage when it fails", async () => {
   localStorage.setItem(
     "dg:pending-run",
     JSON.stringify({
-      requestId: "req-resume",
+      generationId: "gen-resume",
       engineId: "wan-animate-fal",
       danceName: "The Griddy",
       startedAt: Date.now() - 60_000,
@@ -595,7 +851,7 @@ test("a resumed run clears pending storage when it fails", async () => {
 test("queue position updates and elapsed time are visible during a real run", async () => {
   const user = userEvent.setup();
   track.mockImplementation(
-    async (_requestId, _engine, onUpdate) =>
+    async (_generationId, onUpdate) =>
       new Promise<string>(() => {
         onUpdate("#3 in line for the dance floor");
       }),
@@ -636,7 +892,7 @@ test("beforeunload is active only while a real run is generating", async () => {
   expect(leaving.defaultPrevented).toBe(true);
 
   await act(async () => {
-    finish("https://fal.media/done.mp4");
+    finish("/api/video/gen-1");
   });
   expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
 
@@ -645,8 +901,9 @@ test("beforeunload is active only while a real run is generating", async () => {
   expect(afterDone.defaultPrevented).toBe(false);
 });
 
-test("simulated runs do not store pending runs or trigger the unload guard", async () => {
+test("simulated runs skip the gate and never store pending runs or block unload", async () => {
   const user = userEvent.setup();
+  account.mockResolvedValue({ status: "anonymous" });
 
   render(<Studio />);
   await user.upload(
@@ -658,11 +915,13 @@ test("simulated runs do not store pending runs or trigger the unload guard", asy
   await user.click(screen.getByRole("radio", { name: /the griddy/i }));
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 
+  // A demo run is free: no gate, no server job, no unload guard.
+  expect(screen.queryByRole("dialog")).toBeNull();
   expect(localStorage.getItem("dg:pending-run")).toBeNull();
   const leaving = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(leaving);
   expect(leaving.defaultPrevented).toBe(false);
-  expect(submit).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled();
 });
 
 test("consent checkbox must be checked before proceeding to the dance step", async () => {
@@ -692,7 +951,7 @@ test("consent checkbox must be checked before proceeding to the dance step", asy
 
 test("moderation rejection returns to the photo step with an affectionate message", async () => {
   const user = userEvent.setup();
-  submit.mockRejectedValue(
+  create.mockRejectedValue(
     new GenerationError("moderation", "This photo can't be used for dancing. Please choose another."),
   );
 
@@ -707,30 +966,4 @@ test("moderation rejection returns to the photo step with an affectionate messag
   expect(
     (screen.getByRole("button", { name: "Pick her dance →" }) as HTMLButtonElement).disabled,
   ).toBe(true);
-});
-
-test("source photo is cleaned up after a successful run", async () => {
-  const user = userEvent.setup();
-  track.mockResolvedValue("https://fal.media/out.mp4");
-
-  await startRealRun(user);
-  expect(await screen.findByRole("heading", { name: /she ate/i })).toBeDefined();
-
-  await waitFor(() => expect(cleanup).toHaveBeenCalled());
-  const photo = cleanup.mock.calls[0][0];
-  expect(photo).toBeInstanceOf(File);
-  expect((photo as File).name).toBe("grandma.png");
-});
-
-test("source photo is cleaned up after a failed run", async () => {
-  const user = userEvent.setup();
-  track.mockRejectedValue(new GenerationError("provider", "Internal server error"));
-
-  await startRealRun(user);
-  await screen.findByRole("alert");
-
-  await waitFor(() => expect(cleanup).toHaveBeenCalled());
-  const photo = cleanup.mock.calls[0][0];
-  expect(photo).toBeInstanceOf(File);
-  expect((photo as File).name).toBe("grandma.png");
 });

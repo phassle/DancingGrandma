@@ -240,7 +240,7 @@ async function uploadPhotoOnce(file: File): Promise<string> {
  * Call the server-side moderation endpoint. Throws a GenerationError with
  * kind "moderation" if the photo is rejected.
  */
-async function moderatePhoto(photo: File): Promise<void> {
+export async function moderatePhoto(photo: File): Promise<void> {
   const form = new FormData();
   form.set("photo", photo);
   let res: Response;

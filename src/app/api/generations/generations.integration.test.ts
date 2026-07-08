@@ -198,6 +198,72 @@ test("start with 1 credit: job created, credit reserved, provider submitted, req
   ]);
 });
 
+test("a recreated browser draft uploads photo and reference clip as private media (issue #58)", async () => {
+  // The generation gate keeps inputs browser-only pre-auth; after sign-in the
+  // draft is recreated here — photo and user clip become private media only now.
+  signInAll();
+  await seedCredits("gate-user", 5);
+  providerMocks.uploadToProvider
+    .mockResolvedValueOnce("https://fal.storage/photo.jpg")
+    .mockResolvedValueOnce("https://fal.storage/clip.mp4");
+
+  const form = new FormData();
+  form.set("photo", new File([new Uint8Array([1])], "grandma.jpg", { type: "image/jpeg" }));
+  form.set(
+    "referenceVideo",
+    new File([new Uint8Array([2])], "dance.mp4", { type: "video/mp4" }),
+  );
+  form.set("referenceSourceKind", "upload");
+  form.set("engineId", "wan-animate-fal");
+  const res = await startGeneration(
+    new Request("http://localhost/api/generations", {
+      method: "POST",
+      headers: cookieFor("gate-user"),
+      body: form,
+    }),
+  );
+
+  expect(res.status).toBe(201);
+  const uploadedNames = providerMocks.uploadToProvider.mock.calls.map(
+    ([file]) => (file as File).name,
+  );
+  expect(uploadedNames).toEqual(["grandma.jpg", "dance.mp4"]);
+  const [, imageUrl, videoUrl] = providerMocks.submitToProvider.mock.calls[0];
+  expect(imageUrl).toBe("https://fal.storage/photo.jpg");
+  expect(videoUrl).toBe("https://fal.storage/clip.mp4");
+
+  const { rows } = await getPool().query(
+    "select reference_source_kind, status from video_generations",
+  );
+  expect(rows).toEqual([{ reference_source_kind: "upload", status: "submitted" }]);
+  expect(await wallet("gate-user")).toEqual({ available: 4, reserved: 1 });
+});
+
+test("a recreated curated draft keeps its curated source kind", async () => {
+  signInAll();
+  await seedCredits("curated-user", 1);
+
+  const form = new FormData();
+  form.set("photo", new File([new Uint8Array([1])], "grandma.jpg", { type: "image/jpeg" }));
+  form.set(
+    "referenceVideo",
+    new File([new Uint8Array([3])], "griddy.mp4", { type: "video/mp4" }),
+  );
+  form.set("referenceSourceKind", "curated");
+  form.set("engineId", "wan-animate-fal");
+  const res = await startGeneration(
+    new Request("http://localhost/api/generations", {
+      method: "POST",
+      headers: cookieFor("curated-user"),
+      body: form,
+    }),
+  );
+
+  expect(res.status).toBe(201);
+  const body = await res.json();
+  expect(body.generation).toMatchObject({ referenceSourceKind: "curated", status: "submitted" });
+});
+
 test("double-click / two-tab start with 1 credit reserves exactly once", async () => {
   signInAll();
   await seedCredits("racer", 1);
