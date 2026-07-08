@@ -46,12 +46,22 @@ const blobMocks = vi.hoisted(() => {
     deleteVideoBlob: vi.fn(async (path: string) => {
       store.delete(path);
     }),
+    saveSourcePhotoBytes: vi.fn(async (generationId: string, bytes: Buffer) => {
+      const path = `sources/${generationId}`;
+      store.set(path, bytes);
+      return path;
+    }),
+    deleteBlob: vi.fn(async (path: string) => {
+      store.delete(path);
+    }),
   };
 });
 vi.mock("@/lib/server/blob", () => ({
   saveVideoFromUrl: blobMocks.saveVideoFromUrl,
   readVideoBytes: blobMocks.readVideoBytes,
   deleteVideoBlob: blobMocks.deleteVideoBlob,
+  saveSourcePhotoBytes: blobMocks.saveSourcePhotoBytes,
+  deleteBlob: blobMocks.deleteBlob,
 }));
 
 import { GET as getLibrary } from "./route";
@@ -255,7 +265,8 @@ test("media asset record is written for the delivered video", async () => {
 
   const { rows } = await getPool().query(
     `select kind, storage_provider, blob_path, content_type, privacy, retention, deleted_at
-     from media_assets where generation_id = $1`,
+     from media_assets where generation_id = $1
+     order by kind`,
     [id],
   );
   expect(rows).toEqual([
@@ -266,6 +277,17 @@ test("media asset record is written for the delivered video", async () => {
       content_type: "video/mp4",
       privacy: "private",
       retention: "keep_until_user_delete",
+      deleted_at: null,
+    },
+    // The source photo's asset record survives, but its bytes were purged
+    // the moment the run reached a terminal state (issue #60).
+    {
+      kind: "source_photo",
+      storage_provider: "azure_blob",
+      blob_path: null,
+      content_type: "image/jpeg",
+      privacy: "private",
+      retention: "delete_on_terminal",
       deleted_at: null,
     },
   ]);
