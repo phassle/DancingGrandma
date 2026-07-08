@@ -1,11 +1,11 @@
-# Graph Report - wf_5152ce62-acf-9  (2026-07-08)
+# Graph Report - wf_5152ce62-acf-10  (2026-07-08)
 
 ## Corpus Check
-- 245 files · ~156,690 words
+- 248 files · ~156,398 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2002 nodes · 2056 edges · 440 communities (119 shown, 321 thin omitted)
+- 1997 nodes · 2073 edges · 441 communities (119 shown, 322 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
@@ -433,18 +433,19 @@
 - [[_COMMUNITY_route.integration.test.ts|route.integration.test.ts]]
 - [[_COMMUNITY_billing.ts|billing.ts]]
 - [[_COMMUNITY_CheckoutSuccess.tsx|CheckoutSuccess.tsx]]
+- [[_COMMUNITY_library.integration.test.ts|library.integration.test.ts]]
 - [[_COMMUNITY_authenticateRequest|authenticateRequest]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `getPool()` - 35 edges
-2. `Studio()` - 26 edges
-3. `authenticateRequest()` - 19 edges
-4. `POST()` - 16 edges
+1. `getPool()` - 40 edges
+2. `authenticateRequest()` - 26 edges
+3. `Studio()` - 20 edges
+4. `POST()` - 18 edges
 5. `compilerOptions` - 16 edges
 6. `POST()` - 13 edges
 7. `User accounts, credits, and paid generation research` - 13 edges
 8. `advance()` - 10 edges
-9. `POST()` - 9 edges
+9. `startTestPostgres()` - 10 edges
 10. `POST()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -454,10 +455,10 @@
   src/app/api/generations/generations.integration.test.ts → src/lib/server/db.ts
 - `ledgerEntries()` --calls--> `getPool()`  [EXTRACTED]
   src/app/api/generations/generations.integration.test.ts → src/lib/server/db.ts
-- `deliver()` --calls--> `POST()`  [EXTRACTED]
-  src/app/api/stripe/webhook/route.integration.test.ts → src/app/api/stripe/webhook/route.ts
-- `Studio()` --indirect_call--> `run()`  [INFERRED]
-  src/components/Studio.tsx → src/lib/import-clip.ts
+- `createPendingCheckout()` --calls--> `getPool()`  [EXTRACTED]
+  src/app/api/stripe/webhook/route.integration.test.ts → src/lib/server/db.ts
+- `snapshot()` --calls--> `getPool()`  [EXTRACTED]
+  src/app/api/stripe/webhook/route.integration.test.ts → src/lib/server/db.ts
 
 ## Import Cycles
 - None detected.
@@ -465,15 +466,15 @@
 ## Hyperedges (group relationships)
 - **Landing page conversion flow: headline -> value prop -> CTA -> ticker reinforcement** — docs_hero_screenshot_headline_stacked_tricolor, docs_hero_screenshot_value_prop_copy, docs_hero_screenshot_cta_make_grandma_dance, docs_hero_screenshot_marquee_ticker [INFERRED 0.85]
 
-## Communities (440 total, 321 thin omitted)
+## Communities (441 total, 322 thin omitted)
 
 ### Community 1 - "Studio Wizard UI"
-Cohesion: 0.10
-Nodes (30): GenerationGate(), GenerationGateProps, clipFiles, CustomClipSource, Dance, DANCES, errorForLog(), fetchResultBlob() (+22 more)
+Cohesion: 0.12
+Nodes (25): clipFiles, CustomClipSource, Dance, DANCES, errorForLog(), fetchResultBlob(), formatElapsed(), formatUpdateAge() (+17 more)
 
 ### Community 3 - "Package Dependencies"
 Cohesion: 0.05
-Nodes (40): dependencies, @azure/identity, @azure/storage-blob, @fal-ai/client, @fal-ai/server-proxy, jose, next, pg (+32 more)
+Nodes (39): dependencies, @azure/identity, @azure/storage-blob, @fal-ai/client, @fal-ai/server-proxy, jose, next, pg (+31 more)
 
 ### Community 4 - "Issues & PRD Workflow"
 Cohesion: 0.29
@@ -496,8 +497,8 @@ Cohesion: 0.24
 Nodes (11): Primary CTA: Make Grandma Dance, Dark Green / Pink / Yellow Brand Palette, From Fridge Magnet to For-You Page Section Heading, Stacked Tricolor Headline (Your Grandma / Their Dance / One Video), Hero Screenshot (Landing Page), Hero Section, Secondary Link: How Does It Work, Marquee Ticker Strip (Music Included / Make Grandma Dance ...) (+3 more)
 
 ### Community 16 - "Import Clip API"
-Cohesion: 0.43
-Nodes (5): logImportError(), POST(), importClip(), ImportedClip, IMPORTS_DIR
+Cohesion: 0.39
+Nodes (6): logImportError(), POST(), importClip(), ImportedClip, IMPORTS_DIR, run()
 
 ### Community 17 - "Azure RG Guard Script"
 Cohesion: 0.53
@@ -548,8 +549,8 @@ Cohesion: 0.06
 Nodes (30): Before exploring, read these, Domain Docs, File structure, Flag ADR conflicts, Use the glossary's vocabulary, Conventions, Issue tracker: GitHub, Pull requests as a triage surface (+22 more)
 
 ### Community 38 - "generate.ts"
-Cohesion: 0.06
-Nodes (35): EngineProvider, acceptedRuns, adapterFor(), canvasToBlob(), classifyFalError(), classifyProviderResponse(), cleanupPhotoUpload(), decodeDrawableImage() (+27 more)
+Cohesion: 0.07
+Nodes (31): Engine, EngineProvider, EngineStatus, acceptedRuns, canvasToBlob(), classifyFalError(), classifyProviderResponse(), decodeDrawableImage() (+23 more)
 
 ### Community 39 - "Triage"
 Cohesion: 0.06
@@ -576,8 +577,8 @@ Cohesion: 0.07
 Nodes (28): 1. State the question, 2. Pick the language, 3. Isolate the logic in a portable module, 4. Build the smallest TUI that exposes the state, 5. Make it runnable in one command, 6. Hand it over, 7. Capture the answer, Anti-patterns (+20 more)
 
 ### Community 45 - "route.ts"
-Cohesion: 0.11
-Nodes (22): blobMocks, execFileAsync, aiWatermarkPng(), crc32(), CRC_TABLE, download(), errorResponse(), execFileAsync (+14 more)
+Cohesion: 0.09
+Nodes (29): blobMocks, execFileAsync, aiWatermarkPng(), crc32(), CRC_TABLE, download(), errorResponse(), execFileAsync (+21 more)
 
 ### Community 46 - "SKILL.md"
 Cohesion: 0.07
@@ -635,10 +636,6 @@ Nodes (18): Call-graph collapse, Candidate card, Cross-section (good for layered
 Cohesion: 0.22
 Nodes (15): blobDataUrl(), classifyReplicateStatus(), delay(), entryName(), ErrorKind, errorResponse(), fetchAsDataUrl(), formString() (+7 more)
 
-### Community 60 - "Studio.test.tsx"
-Cohesion: 0.18
-Nodes (8): account, checkout, clear, create, load, redirect, save, track
-
 ### Community 61 - "Diagnosing Bugs"
 Cohesion: 0.14
 Nodes (13): Completion criterion — a tight loop that goes red, Diagnosing Bugs, Minimise, Non-deterministic bugs, Phase 1 — Build a feedback loop, Phase 2 — Reproduce + minimise, Phase 3 — Hypothesise, Phase 4 — Instrument (+5 more)
@@ -664,8 +661,8 @@ Cohesion: 0.15
 Nodes (10): Designing for Mockability, When to Mock, Anti-patterns, Rules of the loop, Seams — where tests go, Test-Driven Development, What a good test is, Bad Tests (+2 more)
 
 ### Community 67 - "db.ts"
-Cohesion: 0.19
-Nodes (17): GET(), GET(), GET(), clearedCookie(), readCookie(), sessionCookie(), stateCookie(), upsertUser() (+9 more)
+Cohesion: 0.16
+Nodes (18): GET(), oidcMocks, GET(), GET(), clearedCookie(), readCookie(), sessionCookie(), stateCookie() (+10 more)
 
 ### Community 68 - "Process"
 Cohesion: 0.17
@@ -680,8 +677,8 @@ Cohesion: 0.17
 Nodes (11): 1. Gather context, 2. Explore the codebase (optional), 3. Draft vertical slices, 4. Quiz the user, 5. Publish the issues to the issue tracker, Acceptance criteria, Blocked by, Parent (+3 more)
 
 ### Community 71 - "generate.test.ts"
-Cohesion: 0.10
-Nodes (20): GenerationError, GenerationFailureKind, GenerationUpdate, moderatePhoto(), ReferenceSourceKind, Account, AuthRequiredError, CheckoutRequiredError (+12 more)
+Cohesion: 0.13
+Nodes (13): cleanup, generate, submit, track, adapterFor(), cleanupPhotoUpload(), generateDanceVideo(), hasWiredGenerationAdapter() (+5 more)
 
 ### Community 72 - "Ask Matt"
 Cohesion: 0.20
@@ -820,49 +817,53 @@ Cohesion: 0.50
 Nodes (3): ISSUES, OUTPUT, TASK
 
 ### Community 430 - "route.ts"
-Cohesion: 0.20
-Nodes (21): failureKindOf(), generationDto, refreshedDto(), advance(), GET(), POLLABLE, badRequest(), GET() (+13 more)
+Cohesion: 0.16
+Nodes (8): libraryVideoDto, GET(), metadata, fetchMock, video, ViewState, listLibraryGenerations(), VideoGeneration
 
 ### Community 431 - "paid-generation.ts"
 Cohesion: 0.22
 Nodes (12): bodyOf(), fetchActivePaidGeneration(), fetchGeneration(), PaidGeneration, PaidGenerationError, PaidGenerationStatus, startPaidGeneration(), TERMINAL (+4 more)
 
 ### Community 432 - "db.ts"
-Cohesion: 0.14
-Nodes (17): createPendingCheckout(), deliver(), snapshot(), stripeMocks, ACTIVE_GENERATION_STATUSES, addCredits(), completeGeneration(), createGeneration() (+9 more)
+Cohesion: 0.15
+Nodes (22): POST(), ACTIVE_GENERATION_STATUSES, addCredits(), completeGeneration(), createGeneration(), failGeneration(), GenerationStatus, GenerationVisibility (+14 more)
 
 ### Community 433 - "generations.integration.test.ts"
 Cohesion: 0.21
 Nodes (11): POST(), blobMocks, cookieFor(), ledgerEntries(), oidcMocks, providerMocks, seedCredits(), startRequest() (+3 more)
 
 ### Community 434 - "route.ts"
-Cohesion: 0.20
-Nodes (13): clearDraft(), DraftReference, fromStoredFile(), loadDraft(), openDb(), PreAccountDraft, saveDraft(), StoredDraft (+5 more)
+Cohesion: 0.36
+Nodes (9): advance(), DELETE(), GET(), POLLABLE, captureGeneration(), markGenerationFinalizing(), markGenerationRunning(), releaseGeneration() (+1 more)
 
 ### Community 435 - "provider.ts"
-Cohesion: 0.36
-Nodes (11): classifyFalError(), FalApiErrorLike, falInputFor(), getFalClient(), providerError(), ProviderFailureKind, ProviderJobStatus, providerResult() (+3 more)
+Cohesion: 0.18
+Nodes (21): failureKindOf(), generationDto, refreshedDto(), badRequest(), GET(), isFileLike(), POST(), REFERENCE_SOURCE_KINDS (+13 more)
 
 ### Community 436 - "route.integration.test.ts"
-Cohesion: 0.15
-Nodes (12): oidcMocks, oidcMocks, stripeMocks, oidcMocks, stripeMocks, oidcMocks, userIdOf(), oidcMocks (+4 more)
+Cohesion: 0.14
+Nodes (12): oidcMocks, stripeMocks, oidcMocks, stripeMocks, oidcMocks, createPendingCheckout(), snapshot(), stripeMocks (+4 more)
 
 ### Community 437 - "billing.ts"
-Cohesion: 0.14
-Nodes (24): stripe, POST(), POST(), POST(), applyCheckoutCompleted(), applyInvoicePaid(), applyStatusFromStripe(), createPendingSubscription() (+16 more)
+Cohesion: 0.13
+Nodes (26): stripe, POST(), POST(), deliver(), POST(), applyCheckoutCompleted(), applyInvoicePaid(), applyStatusFromStripe() (+18 more)
 
 ### Community 438 - "CheckoutSuccess.tsx"
 Cohesion: 0.20
 Nodes (5): metadata, CheckoutSuccess(), SubscriptionState, fetchMock, ViewState
 
-### Community 439 - "authenticateRequest"
-Cohesion: 0.57
-Nodes (5): GET(), GET(), authenticateRequest(), getCurrentSubscription(), getWallet()
+### Community 439 - "library.integration.test.ts"
+Cohesion: 0.32
+Nodes (11): blobMocks, completedGeneration(), cookieFor(), deleteRequest(), idParams(), libraryRequest(), oidcMocks, providerMocks (+3 more)
+
+### Community 440 - "authenticateRequest"
+Cohesion: 0.33
+Nodes (6): GET(), oidcMocks, userIdOf(), GET(), authenticateRequest(), getWallet()
 
 ## Knowledge Gaps
-- **1238 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1233 more)
+- **1235 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1230 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **321 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **322 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -872,11 +873,11 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `stripe` connect `billing.ts` to `Package Dependencies`?**
   _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **What connects `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA` to the rest of the system?**
-  _1278 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1275 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Studio Wizard UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.0957983193277311 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11904761904761904 - nodes in this community are weakly interconnected._
 - **Should `Package Dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.04878048780487805 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Design System & Sora Infra` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
 - **Should `Aspire AppHost Config` be split into smaller, more focused modules?**

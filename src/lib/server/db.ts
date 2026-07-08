@@ -83,6 +83,8 @@ export const ACTIVE_GENERATION_STATUSES: readonly GenerationStatus[] = [
 
 export type ReferenceSourceKind = "curated" | "upload" | "direct_url" | "imported_url";
 
+export type GenerationVisibility = "private" | "shared";
+
 export type VideoGeneration = {
   id: string;
   user_id: string;
@@ -101,7 +103,20 @@ export type VideoGeneration = {
   error: string | null;
   created_at: string;
   completed_at: string | null;
+  /** Private by default; 'shared' opts the video into its share-by-link page. */
+  visibility: GenerationVisibility;
+  /** Unguessable slug behind /v/<slug>; set only while visibility = 'shared'. */
+  share_slug: string | null;
+  /** Soft delete — the row and its ledger trail survive, the blob does not. */
+  deleted_at: string | null;
 };
+
+/** Terminal states — the reservation is settled, so the run can be deleted. */
+export const TERMINAL_GENERATION_STATUSES: readonly GenerationStatus[] = [
+  "completed",
+  "failed",
+  "cancelled",
+];
 
 /** Start-generation refused because the wallet has no available credit. */
 export class InsufficientCreditsError extends Error {
@@ -321,6 +336,13 @@ export async function captureGeneration(
        values ($1, 'generation_capture', 0, $2, $3)`,
       [userId, -price, id],
     );
+    // The delivered video becomes a private account asset (issue #59): one
+    // media-asset record per stored object, kept until the user deletes it.
+    await client.query(
+      `insert into media_assets (user_id, generation_id, kind, blob_path, content_type, retention)
+       values ($1, $2, 'generated_video', $3, 'video/mp4', 'keep_until_user_delete')`,
+      [userId, id, blobPath],
+    );
     return true;
   });
 }
@@ -366,10 +388,91 @@ export async function getGenerationForUser(
   userId: string,
 ): Promise<VideoGeneration | undefined> {
   const { rows } = await getPool().query<VideoGeneration>(
-    `select * from video_generations where id = $1 and user_id = $2`,
+    `select * from video_generations where id = $1 and user_id = $2 and deleted_at is null`,
     [id, userId],
   );
   return rows[0];
+}
+
+/** Look a generation up by id regardless of owner — callers enforce access. */
+export async function getGenerationById(id: string): Promise<VideoGeneration | undefined> {
+  const { rows } = await getPool().query<VideoGeneration>(
+    `select * from video_generations where id = $1`,
+    [id],
+  );
+  return rows[0];
+}
+
+/** The user's private library: delivered videos they have not deleted. */
+export async function listLibraryGenerations(userId: string): Promise<VideoGeneration[]> {
+  const { rows } = await getPool().query<VideoGeneration>(
+    `select * from video_generations
+     where user_id = $1 and status = 'completed' and deleted_at is null
+     order by created_at desc`,
+    [userId],
+  );
+  return rows;
+}
+
+/** Resolve a share slug to its generation — only while sharing is on. */
+export async function getSharedGeneration(slug: string): Promise<VideoGeneration | undefined> {
+  const { rows } = await getPool().query<VideoGeneration>(
+    `select * from video_generations
+     where share_slug = $1 and visibility = 'shared' and deleted_at is null`,
+    [slug],
+  );
+  return rows[0];
+}
+
+/**
+ * Toggle share-by-link (issue #59). Enabling mints the fresh slug passed in,
+ * so a video re-shared after a toggle-off gets a new link and old links stay
+ * dead. Only the owner's delivered, undeleted video can be shared. Returns
+ * the updated row, or undefined when no such video exists for this user.
+ */
+export async function setGenerationSharing(
+  id: string,
+  userId: string,
+  slug: string | null,
+): Promise<VideoGeneration | undefined> {
+  const { rows } = await getPool().query<VideoGeneration>(
+    `update video_generations
+     set visibility = case when $3::text is null then 'private' else 'shared' end,
+         share_slug = $3
+     where id = $1 and user_id = $2 and deleted_at is null and status = 'completed'
+     returning *`,
+    [id, userId, slug],
+  );
+  return rows[0];
+}
+
+/**
+ * Soft-delete a delivered/terminal generation (issue #59): the row and its
+ * ledger trail survive for audit, sharing is revoked, and the media-asset
+ * records are marked deleted. Returns the blob path to remove from storage
+ * (null when the run never produced one), or undefined when the video is not
+ * the caller's, already deleted, or still holds an active reservation.
+ */
+export async function softDeleteGeneration(
+  id: string,
+  userId: string,
+): Promise<{ blob_path: string | null } | undefined> {
+  return withTransaction(async (client) => {
+    const { rows } = await client.query<{ blob_path: string | null }>(
+      `update video_generations
+       set deleted_at = now(), visibility = 'private', share_slug = null
+       where id = $1 and user_id = $2 and deleted_at is null and status = any($3)
+       returning blob_path`,
+      [id, userId, [...TERMINAL_GENERATION_STATUSES]],
+    );
+    if (rows.length === 0) return undefined;
+    await client.query(
+      `update media_assets set deleted_at = now()
+       where generation_id = $1 and deleted_at is null`,
+      [id],
+    );
+    return rows[0];
+  });
 }
 
 /** The user's latest non-terminal paid run, for resume-after-reload. */
