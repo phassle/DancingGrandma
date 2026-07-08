@@ -5,3 +5,8 @@ export const SHARE_ID_PATTERN =
 export function isShareId(value: string): boolean {
   return SHARE_ID_PATTERN.test(value);
 }
+
+/** The app-relative share page URL for a share slug. */
+export function shareUrlOf(slug: string): string {
+  return `/v/${slug}`;
+}

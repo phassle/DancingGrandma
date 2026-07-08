@@ -2,6 +2,13 @@
 
 ## Agent skills
 
+### Skills sync
+
+Skills live canonically in `.agents/skills/` (agent-agnostic) and are mirrored to
+`.claude/skills/`. After adding or editing a skill in either directory, run
+`scripts/sync-skills.sh` — it adopts `.claude`-only skills into `.agents/skills/`,
+mirrors canonical → `.claude/skills/`, and fails if the trees still differ.
+
 ### Issue tracker
 
 Issues and PRDs live as GitHub issues in `phassle/DancingGrandma` (via the `gh` CLI). External PRs are also a triage surface. See `docs/agents/issue-tracker.md`.
@@ -21,6 +28,9 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 - New work happens on `feature/<short-name>` branches cut from `develop`, merged back
   into `develop` (PRs welcome). Releases: merge `develop` → `main`.
 - Hotfixes: `hotfix/<name>` from `main`, merged to both `main` and `develop`.
+- Agent worktrees (`.claude/worktrees/`, `EnterWorktree`, `isolation: worktree`) must be
+  cut from `develop`, never `main`. Keep the primary checkout on `develop` so new
+  worktrees start there by default.
 
 ## graphify
 

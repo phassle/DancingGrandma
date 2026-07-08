@@ -31,3 +31,51 @@ _Avoid_: AI video when describing the domain contract
 **Generic Image-To-Video**:
 A broader video-generation capability that animates a still image from a prompt without necessarily consuming a reference motion video. It is not a wired DancingGrandma engine unless it also performs character animation or character replacement.
 _Avoid_: using this as the core product name
+
+**Credit**:
+The paid usage unit a user spends to receive a completed generated dance video.
+_Avoid_: token, point, provider cost
+
+**Credit Wallet**:
+The user's spendable and reserved credit position.
+_Avoid_: balance column, payment account
+
+**Credit Ledger**:
+The append-only record of every credit event — grants, reservations, captures, releases, expirations, and adjustments. Corrections are new compensating entries; history is never edited.
+_Avoid_: transaction table, balance history, mutable log
+
+**Credit Purchase**:
+A paid top-up that grants credits to a user's credit wallet after payment is confirmed.
+_Avoid_: subscription, invoice, recharge
+
+**Subscription**:
+A recurring DancingGrandma membership that grants credits every billing period while active.
+_Avoid_: one-time credit purchase, Stripe account
+
+**Credit Reservation**:
+A temporary hold on credits for a generation that has started but has not yet delivered a final video.
+_Avoid_: charge, spend, payment
+
+**Credit Expiration**:
+The removal of available (unreserved) credits after the user has been inactive for the product-defined inactivity window. A reserved credit on an in-flight generation job is never expired; it resolves by capture or release.
+_Avoid_: refund, provider timeout, expiring reserved credits
+
+**Account Activity**:
+An authenticated user presence in DancingGrandma that keeps the user's paid credits from expiring.
+_Avoid_: anonymous draft activity, payment provider activity
+
+**Pre-Account Draft**:
+The in-browser working state where a visitor has selected a person photo and reference motion source before creating an account.
+_Avoid_: anonymous account, stored upload
+
+**Generation Gate**:
+The account, credit, and payment boundary shown when a visitor tries to start a paid generation.
+_Avoid_: dark pattern, surprise paywall
+
+**Generation Job**:
+A durable record of one attempt to turn a person photo and reference motion video into a generated dance video.
+_Avoid_: request, render if no durable state exists
+
+**Stored Generated Video**:
+The generated dance video after it has been copied into DancingGrandma-controlled storage.
+_Avoid_: provider URL, temporary result

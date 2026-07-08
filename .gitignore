@@ -57,8 +57,12 @@ appsettings.Development.json
 # graphify machine-local state (the graph outputs themselves are committed)
 graphify-out/cache/
 graphify-out/cost.json
-graphify-out/.graphify_python
-graphify-out/.graphify_root
+graphify-out/.graphify_*
+!graphify-out/.graphify_labels.json
+graphify-out/20*/
+
+# agent worktrees are machine-local checkouts, never repo content
+.claude/worktrees/
 
 # Trending-dance reference clips ship with the repo so every card renders for
 # real on a fresh clone. See public/dances/README.md for the roster and the

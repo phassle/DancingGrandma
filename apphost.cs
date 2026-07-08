@@ -24,10 +24,22 @@ var soraEndpoint = builder.AddParameter("sora-endpoint");
 var soraApiKey = builder.AddParameter("sora-api-key", secret: true);
 var soraDeployment = builder.AddParameter("sora-deployment", value: "sora-2");
 
+// --- Stripe: the $9.99/month subscription (PRD #54) -----------------------
+// Test-mode values live in appsettings.Development.json (gitignored) — see
+// the .example file. Fulfillment is webhook-only; use `stripe listen
+// --forward-to <web>/api/stripe/webhook` locally for the signing secret.
+var stripeSecretKey = builder.AddParameter("stripe-secret-key", secret: true);
+var stripeWebhookSecret = builder.AddParameter("stripe-webhook-secret", secret: true);
+var stripePriceId = builder.AddParameter("stripe-price-id");
+
 // --- Postgres: users, video generations, credits ledger -------------------
 var postgres = builder.AddAzurePostgresFlexibleServer("postgres")
     .WithPasswordAuthentication()
-    .RunAsContainer(c => c.WithInitFiles("./db/init"));
+    .RunAsContainer(c => c
+        // Make grandmadb the container's default database so the init
+        // scripts run against it (initdb happens before AddDatabase kicks in).
+        .WithEnvironment("POSTGRES_DB", "grandmadb")
+        .WithInitFiles("./db/init"));
 var db = postgres.AddDatabase("grandmadb");
 
 // --- Blob storage for generated videos (Azurite locally) ------------------
@@ -47,6 +59,12 @@ var web = builder.AddNextJsApp("web", ".")
     .WithEnvironment("SORA_ENDPOINT", soraEndpoint)
     .WithEnvironment("SORA_API_KEY", soraApiKey)
     .WithEnvironment("SORA_DEPLOYMENT", soraDeployment)
+    .WithEnvironment("STRIPE_SECRET_KEY", stripeSecretKey)
+    .WithEnvironment("STRIPE_WEBHOOK_SECRET", stripeWebhookSecret)
+    .WithEnvironment("STRIPE_PRICE_ID", stripePriceId)
+    // Pin the browser-facing port: Keycloak redirect URIs cannot wildcard a
+    // port, so the realm whitelists http://localhost:3000 explicitly.
+    .WithEndpoint("http", e => e.Port = 3000)
     .WithExternalHttpEndpoints();
 #pragma warning restore ASPIREJAVASCRIPT001
 

@@ -5,6 +5,7 @@
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
   "sslRequired": "external",
+  "accessTokenLifespan": 3600,
   "clients": [
     {
       "clientId": "web",
@@ -16,7 +17,8 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
-        "http://localhost:*/*"
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
       ],
       "webOrigins": [
         "+"
