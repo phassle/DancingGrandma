@@ -28,6 +28,10 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 - New work happens on `feature/<short-name>` branches cut from `develop`, merged back
   into `develop` (PRs welcome). Releases: merge `develop` → `main`.
 - Hotfixes: `hotfix/<name>` from `main`, merged to both `main` and `develop`.
+- **Closing issues:** a PR merged into `develop` does **not** auto-close issues — GitHub
+  only honours `Closes #N` on merges into the default branch (`main`). So when a PR lands
+  in `develop`, close the issues it resolves **explicitly** (`gh issue close`), don't rely
+  on the keyword. (Automating this is tracked in #88.)
 - Agent worktrees (`.claude/worktrees/`, `EnterWorktree`, `isolation: worktree`) must be
   cut from `develop`, never `main`. Keep the primary checkout on `develop` so new
   worktrees start there by default.
