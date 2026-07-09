@@ -57,7 +57,8 @@ tests fake.
 ## Payment / Stripe webhooks (required when the diff touches billing)
 
 Fulfillment is **webhook-only** — credits are granted solely by Stripe's
-`checkout.session.completed` / `invoice.paid` webhooks hitting `/api/stripe/webhook`.
+`checkout.session.completed` / `invoice.paid` / `invoice.payment_succeeded` webhooks hitting
+`/api/stripe/webhook`.
 Stripe can't reach `localhost`, so a paid checkout **silently no-ops** unless a forwarder is
 running. Before verifying any billing/payment change, start the listener in its own terminal:
 

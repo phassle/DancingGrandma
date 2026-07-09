@@ -42,8 +42,8 @@ Open http://localhost:3000.
 ### Testing payments locally (Stripe webhooks)
 
 Fulfillment is **webhook-only** — credits are granted *solely* by Stripe's
-`checkout.session.completed` / `invoice.paid` webhooks hitting
-`/api/stripe/webhook` (see `apphost.cs`). Stripe cannot reach `localhost` on its
+`checkout.session.completed` / `invoice.paid` / `invoice.payment_succeeded`
+webhooks hitting `/api/stripe/webhook` (see `apphost.cs`). Stripe cannot reach `localhost` on its
 own, so **without a forwarder a paid checkout silently no-ops**: the payment
 succeeds at Stripe but the app never grants credits and the subscription poll
 spins forever.
