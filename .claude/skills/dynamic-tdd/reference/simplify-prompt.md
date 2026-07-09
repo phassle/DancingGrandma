@@ -33,3 +33,5 @@ If you made changes, commit them on `{{BRANCH}}`:
 ```
 
 …summarizing what you consolidated (`{{LABEL}}` defaults to `RALPH` or the feature name when none is given). If nothing genuinely needed simplifying, make **no** commit and say so. Do not push. Report what you changed (or that you changed nothing and why).
+
+**Do not stage `.claude/workflows/`.** The saved dynamic workflow file lands untracked in the repo during a run — it is a run artifact, not part of the change set. `git add` only the files you actually simplified (or `git restore --staged .claude/workflows/` before committing) so it never rides along in the simplify commit.
