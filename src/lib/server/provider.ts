@@ -34,12 +34,36 @@ export function providerError(kind: ProviderFailureKind, message: string): Error
 }
 
 type FalApiErrorLike = { status?: unknown; body?: { detail?: unknown }; timeoutType?: unknown };
+type FalValidationItem = { loc?: unknown; msg?: unknown };
 
-function classifyFalError(err: unknown): Error & { kind: ProviderFailureKind } {
+/**
+ * Render fal's error `body.detail` into a human message. fal returns a plain
+ * string for some errors (e.g. "User is locked") but a FastAPI-style ARRAY of
+ * `{loc, msg}` validation items for a 422 from `queue.result()`. The old code
+ * only handled the string form and dropped the array, so validation failures
+ * reached the user as a bare "Unprocessable Entity" with no reason (issue #95).
+ */
+export function falDetailToMessage(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        const { loc, msg } = (item ?? {}) as FalValidationItem;
+        const field = Array.isArray(loc) ? loc.filter((p) => p !== "body").join(".") : "";
+        const text = typeof msg === "string" ? msg : "";
+        return field && text ? `${field}: ${text}` : text || field;
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return "";
+}
+
+export function classifyFalError(err: unknown): Error & { kind: ProviderFailureKind } {
   if (err instanceof Error && "kind" in err) return err as Error & { kind: ProviderFailureKind };
   const message = err instanceof Error ? err.message : String(err);
   const { status, body, timeoutType } = (err ?? {}) as FalApiErrorLike;
-  const detail = typeof body?.detail === "string" ? body.detail : "";
+  const detail = falDetailToMessage(body?.detail);
   if (status === 403 && detail.includes("User is locked")) {
     return providerError("unavailable", detail);
   }
