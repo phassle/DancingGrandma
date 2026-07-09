@@ -39,6 +39,32 @@ npm run dev
 
 Open http://localhost:3000.
 
+### Testing payments locally (Stripe webhooks)
+
+Fulfillment is **webhook-only** — credits are granted *solely* by Stripe's
+`checkout.session.completed` / `invoice.paid` / `invoice.payment_succeeded`
+webhooks hitting `/api/stripe/webhook` (see `apphost.cs`). Stripe cannot reach `localhost` on its
+own, so **without a forwarder a paid checkout silently no-ops**: the payment
+succeeds at Stripe but the app never grants credits and the subscription poll
+spins forever.
+
+Run the Stripe CLI listener alongside `aspire run`, in its own terminal, whenever
+you test paying:
+
+```bash
+stripe login                                                   # once per machine
+stripe listen --forward-to localhost:3000/api/stripe/webhook   # leave running
+```
+
+The listener prints `webhook signing secret is whsec_…` on startup — it **must
+match** the `stripe-webhook-secret` parameter in `appsettings.Development.json`,
+or the app rejects events with `400 invalid signature`. Then pay with test card
+`4242 4242 4242 4242` (any future expiry / CVC); you'll see
+`POST /api/stripe/webhook 200` in the `web` logs and credits appear.
+
+> To seed credits without a real payment (e.g. for a generation smoke test), the
+> dev-only `POST /api/dev/credits {"amount":N}` route skips Stripe entirely.
+
 ### What the apphost wires up
 
 | Resource   | Local                        | Azure (`aspire publish`)          |

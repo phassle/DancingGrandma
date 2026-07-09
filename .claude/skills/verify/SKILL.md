@@ -54,10 +54,29 @@ click `#kc-login`. A green route-test suite does **not** substitute for this rou
 sign-in seams (token verification, browser-facing redirect origin) are exactly what route
 tests fake.
 
+## Payment / Stripe webhooks (required when the diff touches billing)
+
+Fulfillment is **webhook-only** — credits are granted solely by Stripe's
+`checkout.session.completed` / `invoice.paid` / `invoice.payment_succeeded` webhooks hitting
+`/api/stripe/webhook`.
+Stripe can't reach `localhost`, so a paid checkout **silently no-ops** unless a forwarder is
+running. Before verifying any billing/payment change, start the listener in its own terminal:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook   # `stripe login` once per machine
+```
+
+Its printed `whsec_…` signing secret **must match** the `stripe-webhook-secret` parameter in
+`appsettings.Development.json`, or events are rejected with `400 invalid signature`. Then pay
+with test card `4242 4242 4242 4242` (any future expiry/CVC) and confirm `POST /api/stripe/webhook
+200` in the `web` logs, the subscription flipping to `active`, and the wallet gaining credits.
+Verified 2026-07-09: sign-in → checkout → test-card pay → `/billing/success` → wallet `available: 5`.
+
 ## Wizard labels / dev seams
 
 - Dev-only credit seed: `POST /api/dev/credits {"amount": N}` (404 under production); 1 credit
-  is reserved per generation.
+  is reserved per generation. Skips Stripe entirely — use it for a generation smoke test when you
+  don't need to exercise the real payment path.
 - Curated reference dances live in `public/dances/*.mp4` (all 15s).
 - Only **fal-provider** engines run server-side (e.g. `wan-animate-fal`); Replicate is
   registry-selectable but rejected server-side.
