@@ -1,5 +1,6 @@
 import GrandmaDancer from "@/components/GrandmaDancer";
 import Studio from "@/components/Studio";
+import { resolveEngines } from "@/lib/engines";
 
 const MARQUEE_WORDS = ["make grandma dance", "one photo in", "one legend out", "music included"];
 
@@ -122,7 +123,7 @@ export default function Home() {
 
       <Marquee />
 
-      <Studio />
+      <Studio engines={resolveEngines(process.env)} />
 
       {/* How it works — a real 3-step sequence */}
       <section id="how" aria-labelledby="how-title" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-28">

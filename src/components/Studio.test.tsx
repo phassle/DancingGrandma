@@ -12,6 +12,7 @@ import {
   trackServerGeneration,
 } from "@/lib/server-generation";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
+import { resolveEngines } from "@/lib/engines";
 
 // The wizard is driven through the DOM with the paid-generation seam stubbed —
 // GenerationError and the gate error classes stay real so failure kinds mean
@@ -99,6 +100,37 @@ async function startRealRun(user: UserEvent) {
   );
   await user.click(screen.getByRole("button", { name: "Make her dance 💃" }));
 }
+
+/** Advance from the photo step to the engine picker on the dance step. */
+async function gotoEnginePicker(user: UserEvent) {
+  await user.upload(
+    screen.getByLabelText("Upload a photo of the star"),
+    new File(["p"], "grandma.png", { type: "image/png" }),
+  );
+  await user.click(screen.getByLabelText("I have permission to use this photo"));
+  await user.click(screen.getByRole("button", { name: "Pick her dance →" }));
+}
+
+test("the picker enables the Azure engine only when the server resolved it as configured", async () => {
+  const user = userEvent.setup();
+
+  const configured = render(
+    <Studio engines={resolveEngines({ AZURE_WAN_ENDPOINT: "https://wan.internal/animate" })} />,
+  );
+  await gotoEnginePicker(user);
+  const enabled = screen.getByRole("radio", {
+    name: /Wan 2\.2 Animate · Azure/,
+  }) as HTMLInputElement;
+  expect(enabled.disabled).toBe(false);
+  configured.unmount();
+
+  render(<Studio engines={resolveEngines({})} />);
+  await gotoEnginePicker(user);
+  const disabled = screen.getByRole("radio", {
+    name: /Wan 2\.2 Animate · Azure/,
+  }) as HTMLInputElement;
+  expect(disabled.disabled).toBe(true);
+});
 
 test("a successful run recreates the draft server-side and lands on the done step", async () => {
   const user = userEvent.setup();

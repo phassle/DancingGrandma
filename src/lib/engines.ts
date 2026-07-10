@@ -25,6 +25,13 @@ export type Engine = {
   goldenClip?: string;
   /** Provider-specific model path, deployment name, or endpoint id. */
   endpoint?: string;
+  /**
+   * Name of a server-side env var whose presence makes this engine selectable.
+   * When set, {@link resolveEngines} flips the engine between `available`
+   * (configured) and `coming-soon` (not configured). Keeps the endpoint/key
+   * server-side while letting the picker gate selection honestly.
+   */
+  requiresEnv?: string;
 };
 
 export const ENGINES: Engine[] = [
@@ -88,6 +95,24 @@ export const ENGINES: Engine[] = [
     goldenClip: "/dances/disco.mp4",
   },
   {
+    id: "wan-animate-azure",
+    name: "Wan 2.2 Animate · Azure",
+    vendor: "Self-hosted on Azure · Container Apps GPU",
+    provider: "azure",
+    // Default off; resolveEngines() flips this to "available" when the
+    // AZURE_WAN_ENDPOINT is configured server-side (issue #17).
+    status: "coming-soon",
+    tagline: "Same Wan Animate motion transfer, running on your own Azure GPU.",
+    pricing: "Azure GPU time (scale-to-zero)",
+    carriesAudio: true,
+    maxDuration: "Follows the reference clip",
+    docsUrl: "https://learn.microsoft.com/azure/container-apps/gpu-serverless-overview",
+    howWired: "Azure Container Apps serverless GPU · self-hosted Wan Animate",
+    goldenClip: "/dances/woah.mp4",
+    endpoint: "wan-2.2-animate",
+    requiresEnv: "AZURE_WAN_ENDPOINT",
+  },
+  {
     id: "wan-animate-selfhosted",
     name: "Wan 2.2 Animate 14B · self-hosted",
     vendor: "Your GPUs · ComfyUI / Diffusers",
@@ -129,3 +154,18 @@ export const ENGINES: Engine[] = [
 ];
 
 export const DEFAULT_ENGINE = ENGINES[0];
+
+/**
+ * Resolve the registry against the server-side environment: an engine that
+ * declares `requiresEnv` is selectable (`available`) only when that env var is
+ * set, otherwise it stays `coming-soon`. Called in a server component so the
+ * endpoint/key never reach the browser (issue #17); every other engine is
+ * returned unchanged.
+ */
+export function resolveEngines(env: Record<string, string | undefined>): Engine[] {
+  return ENGINES.map((engine) => {
+    if (!engine.requiresEnv) return engine;
+    const configured = Boolean(env[engine.requiresEnv]);
+    return { ...engine, status: configured ? "available" : "coming-soon" };
+  });
+}

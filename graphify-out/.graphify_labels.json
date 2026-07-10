@@ -432,6 +432,7 @@
   "430": "route.ts",
   "431": "route.ts",
   "432": "engines.ts",
+  "433": "dynamic-tdd — improvements learned from the PRD #54 run",
   "434": "route.ts",
   "435": "provider.ts",
   "436": "route.integration.test.ts",
@@ -440,6 +441,10 @@
   "439": "route.ts",
   "440": "route.ts",
   "441": "library.integration.test.ts",
+  "442": "Run a real end-to-end generation locally",
   "443": "Library.tsx",
-  "444": "dynamic-tdd-54.js"
+  "444": "dynamic-tdd-54.js",
+  "445": "Verify recipe — DancingGrandma",
+  "446": "ADR 0001: Retrospectives freeze as rationale; actions live in the issue tracker",
+  "447": "ADR 0002: Every prepared PR ends with a reviewer test checklist, scaled to what exists"
 }

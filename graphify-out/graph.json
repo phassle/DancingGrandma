@@ -109,7 +109,7 @@
       "label": "IMPL_SCHEMA",
       "file_type": "code",
       "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L37",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_impl_schema",
       "community": 421,
@@ -119,7 +119,7 @@
       "label": "done",
       "file_type": "code",
       "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L49",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_done",
       "community": 421,
@@ -129,11 +129,31 @@
       "label": "mergedIssues",
       "file_type": "code",
       "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L50",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_mergedissues",
       "community": 421,
       "norm_label": "mergedissues"
+    },
+    {
+      "label": "pause()",
+      "file_type": "code",
+      "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L65",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_pause",
+      "community": 421,
+      "norm_label": "pause()"
+    },
+    {
+      "label": "isTokenExhaustion()",
+      "file_type": "code",
+      "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L78",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_istokenexhaustion",
+      "community": 421,
+      "norm_label": "istokenexhaustion()"
     },
     {
       "label": "az-rg-guard.py",
@@ -285,7 +305,7 @@
       "label": "IMPL_SCHEMA",
       "file_type": "code",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L37",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_impl_schema",
       "community": 422,
@@ -295,7 +315,7 @@
       "label": "done",
       "file_type": "code",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L49",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_done",
       "community": 422,
@@ -305,71 +325,31 @@
       "label": "mergedIssues",
       "file_type": "code",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L50",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_mergedissues",
       "community": 422,
       "norm_label": "mergedissues"
     },
     {
-      "label": "dynamic-tdd-54.js",
+      "label": "pause()",
       "file_type": "code",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L1",
+      "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L65",
       "_origin": "ast",
-      "id": "claude_workflows_dynamic_tdd_54",
-      "community": 444,
-      "norm_label": "dynamic-tdd-54.js"
+      "id": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_pause",
+      "community": 422,
+      "norm_label": "pause()"
     },
     {
-      "label": "meta",
+      "label": "isTokenExhaustion()",
       "file_type": "code",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L1",
+      "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L78",
       "_origin": "ast",
-      "id": "claude_workflows_dynamic_tdd_54_meta",
-      "community": 444,
-      "norm_label": "meta"
-    },
-    {
-      "label": "PLAN_SCHEMA",
-      "file_type": "code",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L18",
-      "_origin": "ast",
-      "id": "claude_workflows_dynamic_tdd_54_plan_schema",
-      "community": 444,
-      "norm_label": "plan_schema"
-    },
-    {
-      "label": "IMPL_SCHEMA",
-      "file_type": "code",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L37",
-      "_origin": "ast",
-      "id": "claude_workflows_dynamic_tdd_54_impl_schema",
-      "community": 444,
-      "norm_label": "impl_schema"
-    },
-    {
-      "label": "done",
-      "file_type": "code",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L49",
-      "_origin": "ast",
-      "id": "claude_workflows_dynamic_tdd_54_done",
-      "community": 444,
-      "norm_label": "done"
-    },
-    {
-      "label": "mergedIssues",
-      "file_type": "code",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L50",
-      "_origin": "ast",
-      "id": "claude_workflows_dynamic_tdd_54_mergedissues",
-      "community": 444,
-      "norm_label": "mergedissues"
+      "id": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_istokenexhaustion",
+      "community": 422,
+      "norm_label": "istokenexhaustion()"
     },
     {
       "label": "hitl-loop.template.sh",
@@ -914,7 +894,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "package_dependencies_stripe",
-      "community": 434,
+      "community": 3,
       "norm_label": "stripe"
     },
     {
@@ -1450,7 +1430,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_billing_subscription_route",
-      "community": 434,
+      "community": 437,
       "norm_label": "route.ts"
     },
     {
@@ -1460,7 +1440,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_api_billing_subscription_route_get",
-      "community": 434,
+      "community": 437,
       "norm_label": "get()"
     },
     {
@@ -1780,7 +1760,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_generations_route",
-      "community": 431,
+      "community": 430,
       "norm_label": "route.ts"
     },
     {
@@ -1790,7 +1770,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_app_api_generations_route_reference_source_kinds",
-      "community": 431,
+      "community": 430,
       "norm_label": "reference_source_kinds"
     },
     {
@@ -1800,7 +1780,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_app_api_generations_route_isfilelike",
-      "community": 431,
+      "community": 430,
       "norm_label": "isfilelike()"
     },
     {
@@ -1810,7 +1790,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_app_api_generations_route_badrequest",
-      "community": 431,
+      "community": 430,
       "norm_label": "badrequest()"
     },
     {
@@ -1820,7 +1800,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_api_generations_route_post",
-      "community": 431,
+      "community": 430,
       "norm_label": "post()"
     },
     {
@@ -1830,7 +1810,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "src_app_api_generations_route_get",
-      "community": 431,
+      "community": 430,
       "norm_label": "get()"
     },
     {
@@ -2200,7 +2180,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_app_api_maintenance_maintenance_integration_test_startrequest",
-      "community": 441,
+      "community": 437,
       "norm_label": "startrequest()"
     },
     {
@@ -2351,6 +2331,146 @@
       "_origin": "ast",
       "id": "src_app_api_photo_cleanup_route_post",
       "community": 96,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.test.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_test",
+      "community": 431,
+      "norm_label": "route.test.ts"
+    },
+    {
+      "label": "providerRequest()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.test.ts",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_test_providerrequest",
+      "community": 431,
+      "norm_label": "providerrequest()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route",
+      "community": 431,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "ErrorKind",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_errorkind",
+      "community": 431,
+      "norm_label": "errorkind"
+    },
+    {
+      "label": "AzureWanResult",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_azurewanresult",
+      "community": 431,
+      "norm_label": "azurewanresult"
+    },
+    {
+      "label": "errorResponse()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_errorresponse",
+      "community": 431,
+      "norm_label": "errorresponse()"
+    },
+    {
+      "label": "formString()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_formstring",
+      "community": 431,
+      "norm_label": "formstring()"
+    },
+    {
+      "label": "isBlobLike()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_isbloblike",
+      "community": 431,
+      "norm_label": "isbloblike()"
+    },
+    {
+      "label": "entryName()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_entryname",
+      "community": 431,
+      "norm_label": "entryname()"
+    },
+    {
+      "label": "blobDataUrl()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L46",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_blobdataurl",
+      "community": 431,
+      "norm_label": "blobdataurl()"
+    },
+    {
+      "label": "fetchAsDataUrl()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L51",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_fetchasdataurl",
+      "community": 431,
+      "norm_label": "fetchasdataurl()"
+    },
+    {
+      "label": "classifyAzureStatus()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L66",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_classifyazurestatus",
+      "community": 431,
+      "norm_label": "classifyazurestatus()"
+    },
+    {
+      "label": "azureJson()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L76",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_azurejson",
+      "community": 431,
+      "norm_label": "azurejson()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L80",
+      "_origin": "ast",
+      "id": "src_app_api_providers_azure_route_post",
+      "community": 431,
       "norm_label": "post()"
     },
     {
@@ -3000,7 +3120,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_library_page",
-      "community": 443,
+      "community": 67,
       "norm_label": "page.tsx"
     },
     {
@@ -3010,7 +3130,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_app_library_page_metadata",
-      "community": 443,
+      "community": 67,
       "norm_label": "metadata"
     },
     {
@@ -3020,7 +3140,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_app_library_page_librarypage",
-      "community": 443,
+      "community": 67,
       "norm_label": "librarypage()"
     },
     {
@@ -3037,7 +3157,7 @@
       "label": "MARQUEE_WORDS",
       "file_type": "code",
       "source_file": "src/app/page.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "src_app_page_marquee_words",
       "community": 84,
@@ -3047,7 +3167,7 @@
       "label": "Marquee()",
       "file_type": "code",
       "source_file": "src/app/page.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "src_app_page_marquee",
       "community": 84,
@@ -3057,7 +3177,7 @@
       "label": "STEPS",
       "file_type": "code",
       "source_file": "src/app/page.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_app_page_steps",
       "community": 84,
@@ -3067,7 +3187,7 @@
       "label": "FAQS",
       "file_type": "code",
       "source_file": "src/app/page.tsx",
-      "source_location": "L39",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "src_app_page_faqs",
       "community": 84,
@@ -3077,7 +3197,7 @@
       "label": "Home()",
       "file_type": "code",
       "source_file": "src/app/page.tsx",
-      "source_location": "L58",
+      "source_location": "L59",
       "_origin": "ast",
       "id": "src_app_page_home",
       "community": 84,
@@ -3340,7 +3460,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_library_test",
-      "community": 443,
+      "community": 67,
       "norm_label": "library.test.tsx"
     },
     {
@@ -3350,7 +3470,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_library_test_jsonresponse",
-      "community": 443,
+      "community": 67,
       "norm_label": "jsonresponse()"
     },
     {
@@ -3360,7 +3480,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_library_test_video",
-      "community": 443,
+      "community": 67,
       "norm_label": "video"
     },
     {
@@ -3370,7 +3490,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_library_test_fetchmock",
-      "community": 443,
+      "community": 67,
       "norm_label": "fetchmock"
     },
     {
@@ -3380,7 +3500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_library",
-      "community": 443,
+      "community": 67,
       "norm_label": "library.tsx"
     },
     {
@@ -3390,7 +3510,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_library_viewstate",
-      "community": 443,
+      "community": 67,
       "norm_label": "viewstate"
     },
     {
@@ -3400,7 +3520,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_library_library",
-      "community": 443,
+      "community": 67,
       "norm_label": "library()"
     },
     {
@@ -3417,7 +3537,7 @@
       "label": "account",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L39",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_studio_test_account",
       "community": 71,
@@ -3427,7 +3547,7 @@
       "label": "checkout",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L40",
+      "source_location": "L41",
       "_origin": "ast",
       "id": "src_components_studio_test_checkout",
       "community": 71,
@@ -3437,7 +3557,7 @@
       "label": "create",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L41",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "src_components_studio_test_create",
       "community": 71,
@@ -3447,7 +3567,7 @@
       "label": "track",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L42",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "src_components_studio_test_track",
       "community": 71,
@@ -3457,7 +3577,7 @@
       "label": "redirect",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L43",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "src_components_studio_test_redirect",
       "community": 71,
@@ -3467,7 +3587,7 @@
       "label": "save",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L44",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "src_components_studio_test_save",
       "community": 71,
@@ -3477,7 +3597,7 @@
       "label": "load",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L45",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "src_components_studio_test_load",
       "community": 71,
@@ -3487,7 +3607,7 @@
       "label": "clear",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L46",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "src_components_studio_test_clear",
       "community": 71,
@@ -3497,7 +3617,7 @@
       "label": "serveClip()",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L78",
+      "source_location": "L79",
       "_origin": "ast",
       "id": "src_components_studio_test_serveclip",
       "community": 71,
@@ -3507,11 +3627,21 @@
       "label": "startRealRun()",
       "file_type": "code",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L88",
+      "source_location": "L89",
       "_origin": "ast",
       "id": "src_components_studio_test_startrealrun",
       "community": 71,
       "norm_label": "startrealrun()"
+    },
+    {
+      "label": "gotoEnginePicker()",
+      "file_type": "code",
+      "source_file": "src/components/Studio.test.tsx",
+      "source_location": "L105",
+      "_origin": "ast",
+      "id": "src_components_studio_test_gotoenginepicker",
+      "community": 71,
+      "norm_label": "gotoenginepicker()"
     },
     {
       "label": "Studio.tsx",
@@ -3750,7 +3880,7 @@
       "source_location": "L250",
       "_origin": "ast",
       "id": "src_components_studio_persistentshareurl",
-      "community": 1,
+      "community": 60,
       "norm_label": "persistentshareurl()"
     },
     {
@@ -3934,13 +4064,23 @@
       "norm_label": "cleardraft()"
     },
     {
+      "label": "engines.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/engines.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_engines_test",
+      "community": 84,
+      "norm_label": "engines.test.ts"
+    },
+    {
       "label": "engines.ts",
       "file_type": "code",
       "source_file": "src/lib/engines.ts",
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_engines",
-      "community": 432,
+      "community": 84,
       "norm_label": "engines.ts"
     },
     {
@@ -3950,7 +4090,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_engines_enginestatus",
-      "community": 432,
+      "community": 84,
       "norm_label": "enginestatus"
     },
     {
@@ -3960,7 +4100,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_lib_engines_engineprovider",
-      "community": 432,
+      "community": 84,
       "norm_label": "engineprovider"
     },
     {
@@ -3970,18 +4110,28 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_engines_engine",
-      "community": 432,
+      "community": 84,
       "norm_label": "engine"
     },
     {
       "label": "ENGINES",
       "file_type": "code",
       "source_file": "src/lib/engines.ts",
-      "source_location": "L30",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "src_lib_engines_engines",
-      "community": 431,
+      "community": 430,
       "norm_label": "engines"
+    },
+    {
+      "label": "resolveEngines()",
+      "file_type": "code",
+      "source_file": "src/lib/engines.ts",
+      "source_location": "L165",
+      "_origin": "ast",
+      "id": "src_lib_engines_resolveengines",
+      "community": 84,
+      "norm_label": "resolveengines()"
     },
     {
       "label": "generate.test.ts",
@@ -4100,7 +4250,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_import_clip_run",
-      "community": 439,
+      "community": 16,
       "norm_label": "run()"
     },
     {
@@ -4230,7 +4380,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_server_generation_authrequirederror",
-      "community": 71,
+      "community": 436,
       "norm_label": "authrequirederror"
     },
     {
@@ -4240,7 +4390,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_server_generation_authrequirederror_constructor",
-      "community": 71,
+      "community": 436,
       "norm_label": ".constructor()"
     },
     {
@@ -4430,7 +4580,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_lib_server_auth_requireuser",
-      "community": 67,
+      "community": 430,
       "norm_label": "requireuser()"
     },
     {
@@ -4490,7 +4640,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_lib_server_billing_getcurrentsubscription",
-      "community": 434,
+      "community": 437,
       "norm_label": "getcurrentsubscription()"
     },
     {
@@ -4730,7 +4880,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_lib_server_db_generationstatus",
-      "community": 436,
+      "community": 60,
       "norm_label": "generationstatus"
     },
     {
@@ -4770,7 +4920,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_lib_server_db_videogeneration",
-      "community": 430,
+      "community": 67,
       "norm_label": "videogeneration"
     },
     {
@@ -4880,7 +5030,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "src_lib_server_db_reservegeneration",
-      "community": 431,
+      "community": 430,
       "norm_label": "reservegeneration()"
     },
     {
@@ -4890,7 +5040,7 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "src_lib_server_db_markgenerationsubmitted",
-      "community": 431,
+      "community": 430,
       "norm_label": "markgenerationsubmitted()"
     },
     {
@@ -4950,7 +5100,7 @@
       "source_location": "L395",
       "_origin": "ast",
       "id": "src_lib_server_db_getgenerationforuser",
-      "community": 430,
+      "community": 67,
       "norm_label": "getgenerationforuser()"
     },
     {
@@ -5010,7 +5160,7 @@
       "source_location": "L488",
       "_origin": "ast",
       "id": "src_lib_server_db_latestactivegeneration",
-      "community": 431,
+      "community": 430,
       "norm_label": "latestactivegeneration()"
     },
     {
@@ -5060,7 +5210,7 @@
       "source_location": "L607",
       "_origin": "ast",
       "id": "src_lib_server_db_createsourcephotoasset",
-      "community": 431,
+      "community": 430,
       "norm_label": "createsourcephotoasset()"
     },
     {
@@ -6604,6 +6754,126 @@
       "norm_label": "offer adrs sparingly"
     },
     {
+      "label": "IMPROVEMENTS.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements",
+      "community": 432,
+      "norm_label": "improvements.md"
+    },
+    {
+      "label": "dynamic-tdd \u2014 improvements learned from the PRD #54 run",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "community": 432,
+      "norm_label": "dynamic-tdd \u2014 improvements learned from the prd #54 run"
+    },
+    {
+      "label": "What worked (keep)",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_what_worked_keep",
+      "community": 432,
+      "norm_label": "what worked (keep)"
+    },
+    {
+      "label": "1. Parallel slices duplicate infrastructure \u2014 plan for shared seams",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_1_parallel_slices_duplicate_infrastructure_plan_for_shared_seams",
+      "community": 432,
+      "norm_label": "1. parallel slices duplicate infrastructure \u2014 plan for shared seams"
+    },
+    {
+      "label": "2. Verify must prove it is driving *this branch's* app",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_2_verify_must_prove_it_is_driving_this_branch_s_app",
+      "community": 432,
+      "norm_label": "2. verify must prove it is driving *this branch's* app"
+    },
+    {
+      "label": "3. The verify prompt was another project's prompt",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L61",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_3_the_verify_prompt_was_another_project_s_prompt",
+      "community": 432,
+      "norm_label": "3. the verify prompt was another project's prompt"
+    },
+    {
+      "label": "4. Auth flows need one real round trip \u2014 route tests can't see them",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L76",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_4_auth_flows_need_one_real_round_trip_route_tests_can_t_see_them",
+      "community": 432,
+      "norm_label": "4. auth flows need one real round trip \u2014 route tests can't see them"
+    },
+    {
+      "label": "5. Money paths deserve an invariant checklist at implement time",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L92",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_5_money_paths_deserve_an_invariant_checklist_at_implement_time",
+      "community": 432,
+      "norm_label": "5. money paths deserve an invariant checklist at implement time"
+    },
+    {
+      "label": "6. Codify the interrupted-run cleanup",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L107",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_6_codify_the_interrupted_run_cleanup",
+      "community": 432,
+      "norm_label": "6. codify the interrupted-run cleanup"
+    },
+    {
+      "label": "7. Token exhaustion is a first-class event \u2014 handle it, don't just survive it",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L119",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_7_token_exhaustion_is_a_first_class_event_handle_it_don_t_just_survive_it",
+      "community": 432,
+      "norm_label": "7. token exhaustion is a first-class event \u2014 handle it, don't just survive it"
+    },
+    {
+      "label": "8. The PR must ship a reviewer test schema (implemented)",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L148",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_8_the_pr_must_ship_a_reviewer_test_schema_implemented",
+      "community": 432,
+      "norm_label": "8. the pr must ship a reviewer test schema (implemented)"
+    },
+    {
+      "label": "9. Smaller frictions",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L161",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_improvements_9_smaller_frictions",
+      "community": 432,
+      "norm_label": "9. smaller frictions"
+    },
+    {
       "label": "PR-PREP.md",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/PR-PREP.md",
@@ -6657,7 +6927,7 @@
       "label": "Notes",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L46",
+      "source_location": "L99",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_pr_prep_notes",
       "community": 205,
@@ -6667,7 +6937,7 @@
       "label": "Unresolved questions",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L53",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_pr_prep_unresolved_questions",
       "community": 205,
@@ -6707,17 +6977,37 @@
       "label": "Notes",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L51",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_skill_notes",
       "community": 205,
       "norm_label": "notes"
     },
     {
+      "label": "Straggler cleanup on resume (interrupted or paused run)",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L65",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_skill_straggler_cleanup_on_resume_interrupted_or_paused_run",
+      "community": 205,
+      "norm_label": "straggler cleanup on resume (interrupted or paused run)"
+    },
+    {
+      "label": "Token-limit pause & resume",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L74",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_skill_token_limit_pause_resume",
+      "community": 205,
+      "norm_label": "token-limit pause & resume"
+    },
+    {
       "label": "Unresolved questions",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L61",
+      "source_location": "L88",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_skill_unresolved_questions",
       "community": 205,
@@ -6754,10 +7044,20 @@
       "norm_label": "context"
     },
     {
-      "label": "EXPLORATION",
+      "label": "REUSE \u2014 extend shared seams, don't fork them",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
       "source_location": "L29",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_implement_prompt_reuse_extend_shared_seams_don_t_fork_them",
+      "community": 418,
+      "norm_label": "reuse \u2014 extend shared seams, don't fork them"
+    },
+    {
+      "label": "EXPLORATION",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_exploration",
       "community": 418,
@@ -6767,17 +7067,37 @@
       "label": "EXECUTION",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L35",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_execution",
       "community": 418,
       "norm_label": "execution"
     },
     {
+      "label": "Proxy-sensitive absolute URLs",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L64",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_implement_prompt_proxy_sensitive_absolute_urls",
+      "community": 418,
+      "norm_label": "proxy-sensitive absolute urls"
+    },
+    {
+      "label": "Money-path invariant checklist",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L79",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_implement_prompt_money_path_invariant_checklist",
+      "community": 418,
+      "norm_label": "money-path invariant checklist"
+    },
+    {
       "label": "FEEDBACK LOOPS",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L44",
+      "source_location": "L98",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_feedback_loops",
       "community": 418,
@@ -6787,7 +7107,7 @@
       "label": "COMMIT",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L54",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_commit",
       "community": 418,
@@ -6797,7 +7117,7 @@
       "label": "THE ISSUE",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L66",
+      "source_location": "L120",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_the_issue",
       "community": 418,
@@ -6807,7 +7127,7 @@
       "label": "OUTPUT",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L72",
+      "source_location": "L126",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_output",
       "community": 418,
@@ -6817,7 +7137,7 @@
       "label": "FINAL RULES",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L76",
+      "source_location": "L130",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_implement_prompt_final_rules",
       "community": 418,
@@ -6844,10 +7164,20 @@
       "norm_label": "task"
     },
     {
-      "label": "CLEANUP \u2014 remove each merged worktree",
+      "label": "RECONCILE SEMANTICS, NOT JUST CONFLICTS",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
       "source_location": "L17",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_merge_prompt_reconcile_semantics_not_just_conflicts",
+      "community": 424,
+      "norm_label": "reconcile semantics, not just conflicts"
+    },
+    {
+      "label": "CLEANUP \u2014 remove each merged worktree",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_merge_prompt_cleanup_remove_each_merged_worktree",
       "community": 424,
@@ -6857,7 +7187,7 @@
       "label": "DO NOT CLOSE ISSUES",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L37",
+      "source_location": "L63",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_merge_prompt_do_not_close_issues",
       "community": 424,
@@ -6867,7 +7197,7 @@
       "label": "CONSTRAINTS",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L45",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_merge_prompt_constraints",
       "community": 424,
@@ -6904,10 +7234,20 @@
       "norm_label": "task"
     },
     {
-      "label": "OUTPUT",
+      "label": "SHARED SEAMS \u2014 assign them to the first slice, tell the rest to reuse",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/plan-prompt.md",
       "source_location": "L42",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_plan_prompt_shared_seams_assign_them_to_the_first_slice_tell_the_rest_to_reuse",
+      "community": 426,
+      "norm_label": "shared seams \u2014 assign them to the first slice, tell the rest to reuse"
+    },
+    {
+      "label": "OUTPUT",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/plan-prompt.md",
+      "source_location": "L65",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_plan_prompt_output",
       "community": 426,
@@ -6984,10 +7324,50 @@
       "norm_label": "task"
     },
     {
+      "label": "PREFLIGHT \u2014 prove you are about to drive *this branch's* app",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_verify_prompt_preflight_prove_you_are_about_to_drive_this_branch_s_app",
+      "community": 205,
+      "norm_label": "preflight \u2014 prove you are about to drive *this branch's* app"
+    },
+    {
+      "label": "VERIFY AT RUNTIME",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_verify_prompt_verify_at_runtime",
+      "community": 205,
+      "norm_label": "verify at runtime"
+    },
+    {
+      "label": "AUTH GATE \u2014 a real IdP round trip is required for auth-touching diffs",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L66",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_verify_prompt_auth_gate_a_real_idp_round_trip_is_required_for_auth_touching_diffs",
+      "community": 205,
+      "norm_label": "auth gate \u2014 a real idp round trip is required for auth-touching diffs"
+    },
+    {
+      "label": "PERSIST THE RUN RECIPE",
+      "file_type": "document",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L81",
+      "_origin": "ast",
+      "id": "agents_skills_dynamic_tdd_reference_verify_prompt_persist_the_run_recipe",
+      "community": 205,
+      "norm_label": "persist the run recipe"
+    },
+    {
       "label": "OUTPUT",
       "file_type": "document",
       "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
-      "source_location": "L15",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "agents_skills_dynamic_tdd_reference_verify_prompt_output",
       "community": 205,
@@ -7562,6 +7942,86 @@
       "id": "agents_skills_research_skill",
       "community": 373,
       "norm_label": "skill.md"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill",
+      "community": 442,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Run a real end-to-end generation locally",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "community": 442,
+      "norm_label": "run a real end-to-end generation locally"
+    },
+    {
+      "label": "1. Bring up the real stack",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_1_bring_up_the_real_stack",
+      "community": 442,
+      "norm_label": "1. bring up the real stack"
+    },
+    {
+      "label": "2. Secrets & prerequisites",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_2_secrets_prerequisites",
+      "community": 442,
+      "norm_label": "2. secrets & prerequisites"
+    },
+    {
+      "label": "3. Sign in (real Keycloak)",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_3_sign_in_real_keycloak",
+      "community": 442,
+      "norm_label": "3. sign in (real keycloak)"
+    },
+    {
+      "label": "4. Seed credits (dev only)",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L45",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_4_seed_credits_dev_only",
+      "community": 442,
+      "norm_label": "4. seed credits (dev only)"
+    },
+    {
+      "label": "5. Generate, poll, fetch",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_5_generate_poll_fetch",
+      "community": 442,
+      "norm_label": "5. generate, poll, fetch"
+    },
+    {
+      "label": "6. Verify \u2014 don't trust HTTP 200",
+      "file_type": "document",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L63",
+      "_origin": "ast",
+      "id": "agents_skills_run_local_e2e_skill_6_verify_don_t_trust_http_200",
+      "community": 442,
+      "norm_label": "6. verify \u2014 don't trust http 200"
     },
     {
       "label": "SKILL.md",
@@ -8916,6 +9376,86 @@
     {
       "label": "SKILL.md",
       "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill",
+      "community": 443,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Verify recipe \u2014 DancingGrandma",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "community": 443,
+      "norm_label": "verify recipe \u2014 dancinggrandma"
+    },
+    {
+      "label": "Launch (Aspire, not bare `npm run dev`)",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_launch_aspire_not_bare_npm_run_dev",
+      "community": 443,
+      "norm_label": "launch (aspire, not bare `npm run dev`)"
+    },
+    {
+      "label": "Port discovery \u2014 never assume 3000",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_port_discovery_never_assume_3000",
+      "community": 443,
+      "norm_label": "port discovery \u2014 never assume 3000"
+    },
+    {
+      "label": "{{BOOT_SIGNAL}}",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L30",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_boot_signal",
+      "community": 443,
+      "norm_label": "{{boot_signal}}"
+    },
+    {
+      "label": "{{KNOWN_ENV_NOISE}} (tolerated, not regressions)",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_known_env_noise_tolerated_not_regressions",
+      "community": 443,
+      "norm_label": "{{known_env_noise}} (tolerated, not regressions)"
+    },
+    {
+      "label": "Auth round trip (required when the diff touches auth)",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L48",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_auth_round_trip_required_when_the_diff_touches_auth",
+      "community": 443,
+      "norm_label": "auth round trip (required when the diff touches auth)"
+    },
+    {
+      "label": "Wizard labels / dev seams",
+      "file_type": "document",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L57",
+      "_origin": "ast",
+      "id": "agents_skills_verify_skill_wizard_labels_dev_seams",
+      "community": 443,
+      "norm_label": "wizard labels / dev seams"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
       "source_file": ".agents/skills/wayfinder/SKILL.md",
       "source_location": "L1",
       "_origin": "ast",
@@ -10204,6 +10744,126 @@
       "norm_label": "offer adrs sparingly"
     },
     {
+      "label": "IMPROVEMENTS.md",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements",
+      "community": 433,
+      "norm_label": "improvements.md"
+    },
+    {
+      "label": "dynamic-tdd \u2014 improvements learned from the PRD #54 run",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "community": 433,
+      "norm_label": "dynamic-tdd \u2014 improvements learned from the prd #54 run"
+    },
+    {
+      "label": "What worked (keep)",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_what_worked_keep",
+      "community": 433,
+      "norm_label": "what worked (keep)"
+    },
+    {
+      "label": "1. Parallel slices duplicate infrastructure \u2014 plan for shared seams",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_1_parallel_slices_duplicate_infrastructure_plan_for_shared_seams",
+      "community": 433,
+      "norm_label": "1. parallel slices duplicate infrastructure \u2014 plan for shared seams"
+    },
+    {
+      "label": "2. Verify must prove it is driving *this branch's* app",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_2_verify_must_prove_it_is_driving_this_branch_s_app",
+      "community": 433,
+      "norm_label": "2. verify must prove it is driving *this branch's* app"
+    },
+    {
+      "label": "3. The verify prompt was another project's prompt",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L61",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_3_the_verify_prompt_was_another_project_s_prompt",
+      "community": 433,
+      "norm_label": "3. the verify prompt was another project's prompt"
+    },
+    {
+      "label": "4. Auth flows need one real round trip \u2014 route tests can't see them",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L76",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_4_auth_flows_need_one_real_round_trip_route_tests_can_t_see_them",
+      "community": 433,
+      "norm_label": "4. auth flows need one real round trip \u2014 route tests can't see them"
+    },
+    {
+      "label": "5. Money paths deserve an invariant checklist at implement time",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L92",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_5_money_paths_deserve_an_invariant_checklist_at_implement_time",
+      "community": 433,
+      "norm_label": "5. money paths deserve an invariant checklist at implement time"
+    },
+    {
+      "label": "6. Codify the interrupted-run cleanup",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L107",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_6_codify_the_interrupted_run_cleanup",
+      "community": 433,
+      "norm_label": "6. codify the interrupted-run cleanup"
+    },
+    {
+      "label": "7. Token exhaustion is a first-class event \u2014 handle it, don't just survive it",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L119",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_7_token_exhaustion_is_a_first_class_event_handle_it_don_t_just_survive_it",
+      "community": 433,
+      "norm_label": "7. token exhaustion is a first-class event \u2014 handle it, don't just survive it"
+    },
+    {
+      "label": "8. The PR must ship a reviewer test schema (implemented)",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L148",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_8_the_pr_must_ship_a_reviewer_test_schema_implemented",
+      "community": 433,
+      "norm_label": "8. the pr must ship a reviewer test schema (implemented)"
+    },
+    {
+      "label": "9. Smaller frictions",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L161",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_improvements_9_smaller_frictions",
+      "community": 433,
+      "norm_label": "9. smaller frictions"
+    },
+    {
       "label": "PR-PREP.md",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/PR-PREP.md",
@@ -10257,7 +10917,7 @@
       "label": "Notes",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L46",
+      "source_location": "L99",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_pr_prep_notes",
       "community": 417,
@@ -10267,7 +10927,7 @@
       "label": "Unresolved questions",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L53",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_pr_prep_unresolved_questions",
       "community": 417,
@@ -10307,17 +10967,37 @@
       "label": "Notes",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L51",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_skill_notes",
       "community": 417,
       "norm_label": "notes"
     },
     {
+      "label": "Straggler cleanup on resume (interrupted or paused run)",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L65",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_skill_straggler_cleanup_on_resume_interrupted_or_paused_run",
+      "community": 417,
+      "norm_label": "straggler cleanup on resume (interrupted or paused run)"
+    },
+    {
+      "label": "Token-limit pause & resume",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L74",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_skill_token_limit_pause_resume",
+      "community": 417,
+      "norm_label": "token-limit pause & resume"
+    },
+    {
       "label": "Unresolved questions",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L61",
+      "source_location": "L88",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_skill_unresolved_questions",
       "community": 417,
@@ -10354,10 +11034,20 @@
       "norm_label": "context"
     },
     {
-      "label": "EXPLORATION",
+      "label": "REUSE \u2014 extend shared seams, don't fork them",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
       "source_location": "L29",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_implement_prompt_reuse_extend_shared_seams_don_t_fork_them",
+      "community": 420,
+      "norm_label": "reuse \u2014 extend shared seams, don't fork them"
+    },
+    {
+      "label": "EXPLORATION",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_exploration",
       "community": 420,
@@ -10367,17 +11057,37 @@
       "label": "EXECUTION",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L35",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_execution",
       "community": 420,
       "norm_label": "execution"
     },
     {
+      "label": "Proxy-sensitive absolute URLs",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L64",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_implement_prompt_proxy_sensitive_absolute_urls",
+      "community": 420,
+      "norm_label": "proxy-sensitive absolute urls"
+    },
+    {
+      "label": "Money-path invariant checklist",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L79",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_implement_prompt_money_path_invariant_checklist",
+      "community": 420,
+      "norm_label": "money-path invariant checklist"
+    },
+    {
       "label": "FEEDBACK LOOPS",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L44",
+      "source_location": "L98",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_feedback_loops",
       "community": 420,
@@ -10387,7 +11097,7 @@
       "label": "COMMIT",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L54",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_commit",
       "community": 420,
@@ -10397,7 +11107,7 @@
       "label": "THE ISSUE",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L66",
+      "source_location": "L120",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_the_issue",
       "community": 420,
@@ -10407,7 +11117,7 @@
       "label": "OUTPUT",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L72",
+      "source_location": "L126",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_output",
       "community": 420,
@@ -10417,7 +11127,7 @@
       "label": "FINAL RULES",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L76",
+      "source_location": "L130",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_implement_prompt_final_rules",
       "community": 420,
@@ -10444,10 +11154,20 @@
       "norm_label": "task"
     },
     {
-      "label": "CLEANUP \u2014 remove each merged worktree",
+      "label": "RECONCILE SEMANTICS, NOT JUST CONFLICTS",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
       "source_location": "L17",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_merge_prompt_reconcile_semantics_not_just_conflicts",
+      "community": 425,
+      "norm_label": "reconcile semantics, not just conflicts"
+    },
+    {
+      "label": "CLEANUP \u2014 remove each merged worktree",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_merge_prompt_cleanup_remove_each_merged_worktree",
       "community": 425,
@@ -10457,7 +11177,7 @@
       "label": "DO NOT CLOSE ISSUES",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L37",
+      "source_location": "L63",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_merge_prompt_do_not_close_issues",
       "community": 425,
@@ -10467,7 +11187,7 @@
       "label": "CONSTRAINTS",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L45",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_merge_prompt_constraints",
       "community": 425,
@@ -10504,10 +11224,20 @@
       "norm_label": "task"
     },
     {
-      "label": "OUTPUT",
+      "label": "SHARED SEAMS \u2014 assign them to the first slice, tell the rest to reuse",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/plan-prompt.md",
       "source_location": "L42",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_plan_prompt_shared_seams_assign_them_to_the_first_slice_tell_the_rest_to_reuse",
+      "community": 427,
+      "norm_label": "shared seams \u2014 assign them to the first slice, tell the rest to reuse"
+    },
+    {
+      "label": "OUTPUT",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/plan-prompt.md",
+      "source_location": "L65",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_plan_prompt_output",
       "community": 427,
@@ -10584,10 +11314,50 @@
       "norm_label": "task"
     },
     {
+      "label": "PREFLIGHT \u2014 prove you are about to drive *this branch's* app",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_verify_prompt_preflight_prove_you_are_about_to_drive_this_branch_s_app",
+      "community": 417,
+      "norm_label": "preflight \u2014 prove you are about to drive *this branch's* app"
+    },
+    {
+      "label": "VERIFY AT RUNTIME",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_verify_prompt_verify_at_runtime",
+      "community": 417,
+      "norm_label": "verify at runtime"
+    },
+    {
+      "label": "AUTH GATE \u2014 a real IdP round trip is required for auth-touching diffs",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L66",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_verify_prompt_auth_gate_a_real_idp_round_trip_is_required_for_auth_touching_diffs",
+      "community": 417,
+      "norm_label": "auth gate \u2014 a real idp round trip is required for auth-touching diffs"
+    },
+    {
+      "label": "PERSIST THE RUN RECIPE",
+      "file_type": "document",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L81",
+      "_origin": "ast",
+      "id": "claude_skills_dynamic_tdd_reference_verify_prompt_persist_the_run_recipe",
+      "community": 417,
+      "norm_label": "persist the run recipe"
+    },
+    {
       "label": "OUTPUT",
       "file_type": "document",
       "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
-      "source_location": "L15",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "claude_skills_dynamic_tdd_reference_verify_prompt_output",
       "community": 417,
@@ -11162,6 +11932,86 @@
       "id": "claude_skills_research_skill",
       "community": 382,
       "norm_label": "skill.md"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill",
+      "community": 444,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Run a real end-to-end generation locally",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "community": 444,
+      "norm_label": "run a real end-to-end generation locally"
+    },
+    {
+      "label": "1. Bring up the real stack",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_1_bring_up_the_real_stack",
+      "community": 444,
+      "norm_label": "1. bring up the real stack"
+    },
+    {
+      "label": "2. Secrets & prerequisites",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_2_secrets_prerequisites",
+      "community": 444,
+      "norm_label": "2. secrets & prerequisites"
+    },
+    {
+      "label": "3. Sign in (real Keycloak)",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_3_sign_in_real_keycloak",
+      "community": 444,
+      "norm_label": "3. sign in (real keycloak)"
+    },
+    {
+      "label": "4. Seed credits (dev only)",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L45",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_4_seed_credits_dev_only",
+      "community": 444,
+      "norm_label": "4. seed credits (dev only)"
+    },
+    {
+      "label": "5. Generate, poll, fetch",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_5_generate_poll_fetch",
+      "community": 444,
+      "norm_label": "5. generate, poll, fetch"
+    },
+    {
+      "label": "6. Verify \u2014 don't trust HTTP 200",
+      "file_type": "document",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L63",
+      "_origin": "ast",
+      "id": "claude_skills_run_local_e2e_skill_6_verify_don_t_trust_http_200",
+      "community": 444,
+      "norm_label": "6. verify \u2014 don't trust http 200"
     },
     {
       "label": "SKILL.md",
@@ -12512,6 +13362,86 @@
       "id": "claude_skills_triage_skill_resuming_a_previous_session",
       "community": 40,
       "norm_label": "resuming a previous session"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill",
+      "community": 445,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Verify recipe \u2014 DancingGrandma",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "community": 445,
+      "norm_label": "verify recipe \u2014 dancinggrandma"
+    },
+    {
+      "label": "Launch (Aspire, not bare `npm run dev`)",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_launch_aspire_not_bare_npm_run_dev",
+      "community": 445,
+      "norm_label": "launch (aspire, not bare `npm run dev`)"
+    },
+    {
+      "label": "Port discovery \u2014 never assume 3000",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_port_discovery_never_assume_3000",
+      "community": 445,
+      "norm_label": "port discovery \u2014 never assume 3000"
+    },
+    {
+      "label": "{{BOOT_SIGNAL}}",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L30",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_boot_signal",
+      "community": 445,
+      "norm_label": "{{boot_signal}}"
+    },
+    {
+      "label": "{{KNOWN_ENV_NOISE}} (tolerated, not regressions)",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_known_env_noise_tolerated_not_regressions",
+      "community": 445,
+      "norm_label": "{{known_env_noise}} (tolerated, not regressions)"
+    },
+    {
+      "label": "Auth round trip (required when the diff touches auth)",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L48",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_auth_round_trip_required_when_the_diff_touches_auth",
+      "community": 445,
+      "norm_label": "auth round trip (required when the diff touches auth)"
+    },
+    {
+      "label": "Wizard labels / dev seams",
+      "file_type": "document",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L57",
+      "_origin": "ast",
+      "id": "claude_skills_verify_skill_wizard_labels_dev_seams",
+      "community": 445,
+      "norm_label": "wizard labels / dev seams"
     },
     {
       "label": "SKILL.md",
@@ -16254,10 +17184,20 @@
       "norm_label": "issue before implementation \u2014 always"
     },
     {
+      "label": "Verify for real, and keep the tracker honest",
+      "file_type": "document",
+      "source_file": "AGENTS.md",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "agents_verify_for_real_and_keep_the_tracker_honest",
+      "community": 95,
+      "norm_label": "verify for real, and keep the tracker honest"
+    },
+    {
       "label": "This is NOT the Next.js you know",
       "file_type": "document",
       "source_file": "AGENTS.md",
-      "source_location": "L9",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "agents_this_is_not_the_next_js_you_know",
       "community": 95,
@@ -16337,7 +17277,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "CLAUDE.md",
-      "source_location": "L35",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "claude_graphify",
       "community": 85,
@@ -16594,10 +17534,30 @@
       "norm_label": "what the apphost wires up"
     },
     {
+      "label": "Database & architecture",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L53",
+      "_origin": "ast",
+      "id": "readme_database_architecture",
+      "community": 10,
+      "norm_label": "database & architecture"
+    },
+    {
+      "label": "Key features",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L72",
+      "_origin": "ast",
+      "id": "readme_key_features",
+      "community": 10,
+      "norm_label": "key features"
+    },
+    {
       "label": "Docs",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L58",
+      "source_location": "L81",
       "_origin": "ast",
       "id": "readme_docs",
       "community": 10,
@@ -16607,11 +17567,121 @@
       "label": "Stack",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L66",
+      "source_location": "L90",
       "_origin": "ast",
       "id": "readme_stack",
       "community": 10,
       "norm_label": "stack"
+    },
+    {
+      "label": "Development",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L100",
+      "_origin": "ast",
+      "id": "readme_development",
+      "community": 10,
+      "norm_label": "development"
+    },
+    {
+      "label": "0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "file_type": "document",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker",
+      "community": 446,
+      "norm_label": "0001-retrospectives-freeze-actions-live-in-tracker.md"
+    },
+    {
+      "label": "ADR 0001: Retrospectives freeze as rationale; actions live in the issue tracker",
+      "file_type": "document",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_adr_0001_retrospectives_freeze_as_rationale_actions_live_in_the_issue_tracker",
+      "community": 446,
+      "norm_label": "adr 0001: retrospectives freeze as rationale; actions live in the issue tracker"
+    },
+    {
+      "label": "Context",
+      "file_type": "document",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_context",
+      "community": 446,
+      "norm_label": "context"
+    },
+    {
+      "label": "Decision",
+      "file_type": "document",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_decision",
+      "community": 446,
+      "norm_label": "decision"
+    },
+    {
+      "label": "Consequences",
+      "file_type": "document",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L27",
+      "_origin": "ast",
+      "id": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_consequences",
+      "community": 446,
+      "norm_label": "consequences"
+    },
+    {
+      "label": "0002-pr-review-checklist.md",
+      "file_type": "document",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_adr_0002_pr_review_checklist",
+      "community": 447,
+      "norm_label": "0002-pr-review-checklist.md"
+    },
+    {
+      "label": "ADR 0002: Every prepared PR ends with a reviewer test checklist, scaled to what exists",
+      "file_type": "document",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_adr_0002_pr_review_checklist_adr_0002_every_prepared_pr_ends_with_a_reviewer_test_checklist_scaled_to_what_exists",
+      "community": 447,
+      "norm_label": "adr 0002: every prepared pr ends with a reviewer test checklist, scaled to what exists"
+    },
+    {
+      "label": "Context",
+      "file_type": "document",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "docs_adr_0002_pr_review_checklist_context",
+      "community": 447,
+      "norm_label": "context"
+    },
+    {
+      "label": "Decision",
+      "file_type": "document",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "docs_adr_0002_pr_review_checklist_decision",
+      "community": 447,
+      "norm_label": "decision"
+    },
+    {
+      "label": "Consequences",
+      "file_type": "document",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L35",
+      "_origin": "ast",
+      "id": "docs_adr_0002_pr_review_checklist_consequences",
+      "community": 447,
+      "norm_label": "consequences"
     },
     {
       "label": "domain.md",
@@ -21562,7 +22632,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L49",
+      "source_location": "L52",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_done",
@@ -21572,7 +22642,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L37",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_impl_schema",
@@ -21582,7 +22652,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L50",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
+      "target": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_istokenexhaustion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_mergedissues",
@@ -21596,6 +22676,16 @@
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_meta",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
+      "target": "agents_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_pause",
       "confidence_score": 1.0
     },
     {
@@ -21747,7 +22837,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L49",
+      "source_location": "L52",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_done",
@@ -21757,7 +22847,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L37",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_impl_schema",
@@ -21767,7 +22857,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
-      "source_location": "L50",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
+      "target": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_istokenexhaustion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_mergedissues",
@@ -21787,60 +22887,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
+      "target": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_pause",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/scripts/dynamic-tdd.workflow.mjs",
       "source_location": "L18",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow",
       "target": "claude_skills_dynamic_tdd_scripts_dynamic_tdd_workflow_plan_schema",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L49",
-      "weight": 1.0,
-      "source": "claude_workflows_dynamic_tdd_54",
-      "target": "claude_workflows_dynamic_tdd_54_done",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L37",
-      "weight": 1.0,
-      "source": "claude_workflows_dynamic_tdd_54",
-      "target": "claude_workflows_dynamic_tdd_54_impl_schema",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L50",
-      "weight": 1.0,
-      "source": "claude_workflows_dynamic_tdd_54",
-      "target": "claude_workflows_dynamic_tdd_54_mergedissues",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "claude_workflows_dynamic_tdd_54",
-      "target": "claude_workflows_dynamic_tdd_54_meta",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/workflows/dynamic-tdd-54.js",
-      "source_location": "L18",
-      "weight": 1.0,
-      "source": "claude_workflows_dynamic_tdd_54",
-      "target": "claude_workflows_dynamic_tdd_54_plan_schema",
       "confidence_score": 1.0
     },
     {
@@ -27377,6 +28437,247 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_test",
+      "target": "src_app_api_providers_azure_route",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_test",
+      "target": "src_app_api_providers_azure_route_post",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.test.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_test",
+      "target": "src_app_api_providers_azure_route_test_providerrequest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_azurejson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_azurewanresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_blobdataurl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_classifyazurestatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_entryname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_errorkind",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_errorresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_fetchasdataurl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_formstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_isbloblike",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route",
+      "target": "src_app_api_providers_azure_route_post",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_classifyazurestatus",
+      "target": "src_app_api_providers_azure_route_errorresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_errorresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L96",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_formstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_isbloblike",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_entryname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_blobdataurl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_fetchasdataurl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_classifyazurestatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/providers/azure/route.ts",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "src_app_api_providers_azure_route_post",
+      "target": "src_app_api_providers_azure_route_azurejson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/app/api/providers/replicate/route.test.ts",
       "source_location": "L2",
       "weight": 1.0,
@@ -28708,7 +30009,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/page.tsx",
-      "source_location": "L39",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "src_app_page",
       "target": "src_app_page_faqs",
@@ -28718,7 +30019,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/page.tsx",
-      "source_location": "L58",
+      "source_location": "L59",
       "weight": 1.0,
       "source": "src_app_page",
       "target": "src_app_page_home",
@@ -28728,7 +30029,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/page.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "src_app_page",
       "target": "src_app_page_marquee",
@@ -28738,7 +30039,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/page.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "src_app_page",
       "target": "src_app_page_marquee_words",
@@ -28748,7 +30049,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/page.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "src_app_page",
       "target": "src_app_page_steps",
@@ -28775,6 +30076,39 @@
       "source": "src_app_page",
       "target": "src_components_studio",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_app_page",
+      "target": "src_lib_engines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_app_page",
+      "target": "src_lib_engines_resolveengines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/app/page.tsx",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "src_app_page_home",
+      "target": "src_lib_engines_resolveengines"
     },
     {
       "relation": "imports_from",
@@ -29209,7 +30543,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L39",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_account",
@@ -29219,7 +30553,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L40",
+      "source_location": "L41",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_checkout",
@@ -29229,7 +30563,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L46",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_clear",
@@ -29239,7 +30573,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L41",
+      "source_location": "L42",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_create",
@@ -29249,7 +30583,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L45",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "src_components_studio_test",
+      "target": "src_components_studio_test_gotoenginepicker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Studio.test.tsx",
+      "source_location": "L46",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_load",
@@ -29259,7 +30603,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L43",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_redirect",
@@ -29269,7 +30613,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L44",
+      "source_location": "L45",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_save",
@@ -29279,7 +30623,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L78",
+      "source_location": "L79",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_serveclip",
@@ -29289,7 +30633,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L88",
+      "source_location": "L89",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_startrealrun",
@@ -29299,7 +30643,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Studio.test.tsx",
-      "source_location": "L42",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_components_studio_test_track",
@@ -29347,6 +30691,28 @@
       "weight": 1.0,
       "source": "src_components_studio_test",
       "target": "src_lib_draft_savedraft",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Studio.test.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "src_components_studio_test",
+      "target": "src_lib_engines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Studio.test.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "src_components_studio_test",
+      "target": "src_lib_engines_resolveengines",
       "confidence_score": 1.0
     },
     {
@@ -30521,6 +31887,39 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/engines.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_engines_test",
+      "target": "src_lib_engines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/engines.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_engines_test",
+      "target": "src_lib_engines_engines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/engines.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_engines_test",
+      "target": "src_lib_engines_resolveengines",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/engines.ts",
@@ -30544,7 +31943,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/engines.ts",
-      "source_location": "L30",
+      "source_location": "L37",
       "weight": 1.0,
       "source": "src_lib_engines",
       "target": "src_lib_engines_engines",
@@ -30558,6 +31957,16 @@
       "weight": 1.0,
       "source": "src_lib_engines",
       "target": "src_lib_engines_enginestatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/engines.ts",
+      "source_location": "L165",
+      "weight": 1.0,
+      "source": "src_lib_engines",
+      "target": "src_lib_engines_resolveengines",
       "confidence_score": 1.0
     },
     {
@@ -34406,6 +35815,116 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements",
+      "target": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_1_parallel_slices_duplicate_infrastructure_plan_for_shared_seams",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_2_verify_must_prove_it_is_driving_this_branch_s_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_3_the_verify_prompt_was_another_project_s_prompt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_4_auth_flows_need_one_real_round_trip_route_tests_can_t_see_them",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_5_money_paths_deserve_an_invariant_checklist_at_implement_time",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_6_codify_the_interrupted_run_cleanup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L119",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_7_token_exhaustion_is_a_first_class_event_handle_it_don_t_just_survive_it",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L148",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_8_the_pr_must_ship_a_reviewer_test_schema_implemented",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L161",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_9_smaller_frictions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "agents_skills_dynamic_tdd_improvements_what_worked_keep",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/PR-PREP.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -34457,7 +35976,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L46",
+      "source_location": "L99",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_pr_prep_pr_prep_tail",
       "target": "agents_skills_dynamic_tdd_pr_prep_notes",
@@ -34477,7 +35996,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L53",
+      "source_location": "L108",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_pr_prep_pr_prep_tail",
       "target": "agents_skills_dynamic_tdd_pr_prep_unresolved_questions",
@@ -34507,7 +36026,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L51",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_skill_dynamic_tdd",
       "target": "agents_skills_dynamic_tdd_skill_notes",
@@ -34527,7 +36046,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L61",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_skill_dynamic_tdd",
       "target": "agents_skills_dynamic_tdd_skill_unresolved_questions",
@@ -34536,8 +36055,28 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_skill_notes",
+      "target": "agents_skills_dynamic_tdd_skill_straggler_cleanup_on_resume_interrupted_or_paused_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_skill_notes",
+      "target": "agents_skills_dynamic_tdd_skill_token_limit_pause_resume",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L54",
+      "source_location": "L108",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_commit",
@@ -34557,7 +36096,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L35",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_execution",
@@ -34567,7 +36106,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L29",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_exploration",
@@ -34577,7 +36116,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L44",
+      "source_location": "L98",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_feedback_loops",
@@ -34587,7 +36126,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L76",
+      "source_location": "L130",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_final_rules",
@@ -34597,10 +36136,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L72",
+      "source_location": "L126",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_implement_prompt_reuse_extend_shared_seams_don_t_fork_them",
       "confidence_score": 1.0
     },
     {
@@ -34617,7 +36166,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L66",
+      "source_location": "L120",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_implement_prompt",
       "target": "agents_skills_dynamic_tdd_reference_implement_prompt_the_issue",
@@ -34626,8 +36175,28 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L79",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_implement_prompt_execution",
+      "target": "agents_skills_dynamic_tdd_reference_implement_prompt_money_path_invariant_checklist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_implement_prompt_execution",
+      "target": "agents_skills_dynamic_tdd_reference_implement_prompt_proxy_sensitive_absolute_urls",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L17",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_merge_prompt",
       "target": "agents_skills_dynamic_tdd_reference_merge_prompt_cleanup_remove_each_merged_worktree",
@@ -34637,7 +36206,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L45",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_merge_prompt",
       "target": "agents_skills_dynamic_tdd_reference_merge_prompt_constraints",
@@ -34647,10 +36216,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L37",
+      "source_location": "L63",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_merge_prompt",
       "target": "agents_skills_dynamic_tdd_reference_merge_prompt_do_not_close_issues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/merge-prompt.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_merge_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_merge_prompt_reconcile_semantics_not_just_conflicts",
       "confidence_score": 1.0
     },
     {
@@ -34677,10 +36256,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/plan-prompt.md",
-      "source_location": "L42",
+      "source_location": "L65",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_plan_prompt",
       "target": "agents_skills_dynamic_tdd_reference_plan_prompt_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/plan-prompt.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_plan_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_plan_prompt_shared_seams_assign_them_to_the_first_slice_tell_the_rest_to_reuse",
       "confidence_score": 1.0
     },
     {
@@ -34737,10 +36326,40 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
-      "source_location": "L15",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_verify_prompt_auth_gate_a_real_idp_round_trip_is_required_for_auth_touching_diffs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L91",
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_verify_prompt",
       "target": "agents_skills_dynamic_tdd_reference_verify_prompt_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_verify_prompt_persist_the_run_recipe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_verify_prompt_preflight_prove_you_are_about_to_drive_this_branch_s_app",
       "confidence_score": 1.0
     },
     {
@@ -34751,6 +36370,16 @@
       "weight": 1.0,
       "source": "agents_skills_dynamic_tdd_reference_verify_prompt",
       "target": "agents_skills_dynamic_tdd_reference_verify_prompt_task",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "agents_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "agents_skills_dynamic_tdd_reference_verify_prompt_verify_at_runtime",
       "confidence_score": 1.0
     },
     {
@@ -35251,6 +36880,76 @@
       "weight": 1.0,
       "source": "agents_skills_prototype_ui_process",
       "target": "agents_skills_prototype_ui_6_capture_the_answer_and_clean_up",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill",
+      "target": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "agents_skills_run_local_e2e_skill_1_bring_up_the_real_stack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "agents_skills_run_local_e2e_skill_2_secrets_prerequisites",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "agents_skills_run_local_e2e_skill_3_sign_in_real_keycloak",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "agents_skills_run_local_e2e_skill_4_seed_credits_dev_only",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "agents_skills_run_local_e2e_skill_5_generate_poll_fetch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/run-local-e2e/SKILL.md",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "agents_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "agents_skills_run_local_e2e_skill_6_verify_don_t_trust_http_200",
       "confidence_score": 1.0
     },
     {
@@ -36536,6 +38235,76 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill",
+      "target": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "agents_skills_verify_skill_auth_round_trip_required_when_the_diff_touches_auth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "agents_skills_verify_skill_boot_signal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "agents_skills_verify_skill_known_env_noise_tolerated_not_regressions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "agents_skills_verify_skill_launch_aspire_not_bare_npm_run_dev",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "agents_skills_verify_skill_port_discovery_never_assume_3000",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/verify/SKILL.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "agents_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "agents_skills_verify_skill_wizard_labels_dev_seams",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".agents/skills/wayfinder/SKILL.md",
       "source_location": "L65",
       "weight": 1.0,
@@ -37766,6 +39535,116 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements",
+      "target": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_1_parallel_slices_duplicate_infrastructure_plan_for_shared_seams",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_2_verify_must_prove_it_is_driving_this_branch_s_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_3_the_verify_prompt_was_another_project_s_prompt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_4_auth_flows_need_one_real_round_trip_route_tests_can_t_see_them",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_5_money_paths_deserve_an_invariant_checklist_at_implement_time",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_6_codify_the_interrupted_run_cleanup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L119",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_7_token_exhaustion_is_a_first_class_event_handle_it_don_t_just_survive_it",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L148",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_8_the_pr_must_ship_a_reviewer_test_schema_implemented",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L161",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_9_smaller_frictions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/IMPROVEMENTS.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_improvements_dynamic_tdd_improvements_learned_from_the_prd_54_run",
+      "target": "claude_skills_dynamic_tdd_improvements_what_worked_keep",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/PR-PREP.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -37817,7 +39696,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L46",
+      "source_location": "L99",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_pr_prep_pr_prep_tail",
       "target": "claude_skills_dynamic_tdd_pr_prep_notes",
@@ -37837,7 +39716,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/PR-PREP.md",
-      "source_location": "L53",
+      "source_location": "L108",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_pr_prep_pr_prep_tail",
       "target": "claude_skills_dynamic_tdd_pr_prep_unresolved_questions",
@@ -37867,7 +39746,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L51",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_skill_dynamic_tdd",
       "target": "claude_skills_dynamic_tdd_skill_notes",
@@ -37887,7 +39766,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
-      "source_location": "L61",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_skill_dynamic_tdd",
       "target": "claude_skills_dynamic_tdd_skill_unresolved_questions",
@@ -37896,8 +39775,28 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_skill_notes",
+      "target": "claude_skills_dynamic_tdd_skill_straggler_cleanup_on_resume_interrupted_or_paused_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/SKILL.md",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_skill_notes",
+      "target": "claude_skills_dynamic_tdd_skill_token_limit_pause_resume",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L54",
+      "source_location": "L108",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_commit",
@@ -37917,7 +39816,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L35",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_execution",
@@ -37927,7 +39826,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L29",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_exploration",
@@ -37937,7 +39836,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L44",
+      "source_location": "L98",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_feedback_loops",
@@ -37947,7 +39846,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L76",
+      "source_location": "L130",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_final_rules",
@@ -37957,10 +39856,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L72",
+      "source_location": "L126",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_implement_prompt_reuse_extend_shared_seams_don_t_fork_them",
       "confidence_score": 1.0
     },
     {
@@ -37977,7 +39886,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
-      "source_location": "L66",
+      "source_location": "L120",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_implement_prompt",
       "target": "claude_skills_dynamic_tdd_reference_implement_prompt_the_issue",
@@ -37986,8 +39895,28 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L79",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_implement_prompt_execution",
+      "target": "claude_skills_dynamic_tdd_reference_implement_prompt_money_path_invariant_checklist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/implement-prompt.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_implement_prompt_execution",
+      "target": "claude_skills_dynamic_tdd_reference_implement_prompt_proxy_sensitive_absolute_urls",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L17",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_merge_prompt",
       "target": "claude_skills_dynamic_tdd_reference_merge_prompt_cleanup_remove_each_merged_worktree",
@@ -37997,7 +39926,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L45",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_merge_prompt",
       "target": "claude_skills_dynamic_tdd_reference_merge_prompt_constraints",
@@ -38007,10 +39936,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
-      "source_location": "L37",
+      "source_location": "L63",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_merge_prompt",
       "target": "claude_skills_dynamic_tdd_reference_merge_prompt_do_not_close_issues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/merge-prompt.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_merge_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_merge_prompt_reconcile_semantics_not_just_conflicts",
       "confidence_score": 1.0
     },
     {
@@ -38037,10 +39976,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/plan-prompt.md",
-      "source_location": "L42",
+      "source_location": "L65",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_plan_prompt",
       "target": "claude_skills_dynamic_tdd_reference_plan_prompt_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/plan-prompt.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_plan_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_plan_prompt_shared_seams_assign_them_to_the_first_slice_tell_the_rest_to_reuse",
       "confidence_score": 1.0
     },
     {
@@ -38097,10 +40046,40 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
-      "source_location": "L15",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_verify_prompt_auth_gate_a_real_idp_round_trip_is_required_for_auth_touching_diffs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L91",
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_verify_prompt",
       "target": "claude_skills_dynamic_tdd_reference_verify_prompt_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_verify_prompt_persist_the_run_recipe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_verify_prompt_preflight_prove_you_are_about_to_drive_this_branch_s_app",
       "confidence_score": 1.0
     },
     {
@@ -38111,6 +40090,16 @@
       "weight": 1.0,
       "source": "claude_skills_dynamic_tdd_reference_verify_prompt",
       "target": "claude_skills_dynamic_tdd_reference_verify_prompt_task",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/dynamic-tdd/reference/verify-prompt.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "claude_skills_dynamic_tdd_reference_verify_prompt",
+      "target": "claude_skills_dynamic_tdd_reference_verify_prompt_verify_at_runtime",
       "confidence_score": 1.0
     },
     {
@@ -38611,6 +40600,76 @@
       "weight": 1.0,
       "source": "claude_skills_prototype_ui_process",
       "target": "claude_skills_prototype_ui_6_capture_the_answer_and_clean_up",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill",
+      "target": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "claude_skills_run_local_e2e_skill_1_bring_up_the_real_stack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "claude_skills_run_local_e2e_skill_2_secrets_prerequisites",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "claude_skills_run_local_e2e_skill_3_sign_in_real_keycloak",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "claude_skills_run_local_e2e_skill_4_seed_credits_dev_only",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "claude_skills_run_local_e2e_skill_5_generate_poll_fetch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/run-local-e2e/SKILL.md",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "claude_skills_run_local_e2e_skill_run_a_real_end_to_end_generation_locally",
+      "target": "claude_skills_run_local_e2e_skill_6_verify_don_t_trust_http_200",
       "confidence_score": 1.0
     },
     {
@@ -39891,6 +41950,76 @@
       "weight": 1.0,
       "source": "claude_skills_triage_skill_triage",
       "target": "claude_skills_triage_skill_triage_a_specific_issue_or_pr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill",
+      "target": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "claude_skills_verify_skill_auth_round_trip_required_when_the_diff_touches_auth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "claude_skills_verify_skill_boot_signal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "claude_skills_verify_skill_known_env_noise_tolerated_not_regressions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "claude_skills_verify_skill_launch_aspire_not_bare_npm_run_dev",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "claude_skills_verify_skill_port_discovery_never_assume_3000",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/skills/verify/SKILL.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "claude_skills_verify_skill_verify_recipe_dancinggrandma",
+      "target": "claude_skills_verify_skill_wizard_labels_dev_seams",
       "confidence_score": 1.0
     },
     {
@@ -43407,10 +45536,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AGENTS.md",
-      "source_location": "L9",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "agents",
       "target": "agents_this_is_not_the_next_js_you_know",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AGENTS.md",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "agents",
+      "target": "agents_verify_for_real_and_keep_the_tracker_honest",
       "confidence_score": 1.0
     },
     {
@@ -43437,7 +45576,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CLAUDE.md",
-      "source_location": "L35",
+      "source_location": "L39",
       "weight": 1.0,
       "source": "claude",
       "target": "claude_graphify",
@@ -43497,7 +45636,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L61",
+      "source_location": "L83",
       "weight": 1.0,
       "source": "readme",
       "target": "context",
@@ -43537,7 +45676,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L63",
+      "source_location": "L85",
       "weight": 1.0,
       "source": "readme",
       "target": "design",
@@ -43617,7 +45756,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L62",
+      "source_location": "L84",
       "weight": 1.0,
       "source": "readme",
       "target": "product",
@@ -43717,10 +45856,30 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L58",
+      "source_location": "L100",
+      "weight": 1.0,
+      "source": "readme_dancinggrandma",
+      "target": "readme_development",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L81",
       "weight": 1.0,
       "source": "readme_dancinggrandma",
       "target": "readme_docs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L72",
+      "weight": 1.0,
+      "source": "readme_dancinggrandma",
+      "target": "readme_key_features",
       "confidence_score": 1.0
     },
     {
@@ -43737,10 +45896,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L66",
+      "source_location": "L90",
       "weight": 1.0,
       "source": "readme_dancinggrandma",
       "target": "readme_stack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "readme_run_it",
+      "target": "readme_database_architecture",
       "confidence_score": 1.0
     },
     {
@@ -43751,6 +45920,86 @@
       "weight": 1.0,
       "source": "readme_run_it",
       "target": "readme_what_the_apphost_wires_up",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker",
+      "target": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_adr_0001_retrospectives_freeze_as_rationale_actions_live_in_the_issue_tracker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_adr_0001_retrospectives_freeze_as_rationale_actions_live_in_the_issue_tracker",
+      "target": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_consequences",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_adr_0001_retrospectives_freeze_as_rationale_actions_live_in_the_issue_tracker",
+      "target": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0001-retrospectives-freeze-actions-live-in-tracker.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_adr_0001_retrospectives_freeze_as_rationale_actions_live_in_the_issue_tracker",
+      "target": "docs_adr_0001_retrospectives_freeze_actions_live_in_tracker_decision",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_adr_0002_pr_review_checklist",
+      "target": "docs_adr_0002_pr_review_checklist_adr_0002_every_prepared_pr_ends_with_a_reviewer_test_checklist_scaled_to_what_exists",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "docs_adr_0002_pr_review_checklist_adr_0002_every_prepared_pr_ends_with_a_reviewer_test_checklist_scaled_to_what_exists",
+      "target": "docs_adr_0002_pr_review_checklist_consequences",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "docs_adr_0002_pr_review_checklist_adr_0002_every_prepared_pr_ends_with_a_reviewer_test_checklist_scaled_to_what_exists",
+      "target": "docs_adr_0002_pr_review_checklist_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/adr/0002-pr-review-checklist.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "docs_adr_0002_pr_review_checklist_adr_0002_every_prepared_pr_ends_with_a_reviewer_test_checklist_scaled_to_what_exists",
+      "target": "docs_adr_0002_pr_review_checklist_decision",
       "confidence_score": 1.0
     },
     {
@@ -44329,5 +46578,5 @@
       "source_file": "docs/hero-screenshot.png"
     }
   ],
-  "built_at_commit": "320d74ef9ad484a07f32222771e900d93bfd4ac7"
+  "built_at_commit": "19392e8b883851be9e42bd7c86e4e0d5e6355998"
 }

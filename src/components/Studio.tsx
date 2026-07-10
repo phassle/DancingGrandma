@@ -290,7 +290,7 @@ function SpiceMeter({ level }: { level: 1 | 2 | 3 }) {
   );
 }
 
-export default function Studio() {
+export default function Studio({ engines = ENGINES }: { engines?: Engine[] } = {}) {
   const [step, setStep] = useState<Step>("photo");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -1317,7 +1317,7 @@ export default function Studio() {
                   Same grandma, different AI under the hood. We default to the best one.
                 </p>
                 <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap" role="radiogroup" aria-label="Video generation engine">
-                  {ENGINES.map((e) => {
+                  {engines.map((e) => {
                     const selected = engine.id === e.id;
                     const soon = e.status === "coming-soon";
                     return (

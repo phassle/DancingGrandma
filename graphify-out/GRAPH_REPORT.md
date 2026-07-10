@@ -1,16 +1,16 @@
-# Graph Report - DancingGrandma  (2026-07-08)
+# Graph Report - DancingGrandma  (2026-07-10)
 
 ## Corpus Check
-- 258 files · ~162,156 words
+- 269 files · ~176,322 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2025 nodes · 2214 edges · 443 communities (122 shown, 321 thin omitted)
+- 2132 nodes · 2330 edges · 448 communities (128 shown, 320 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `320d74ef`
+- Built from commit: `19392e8b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -427,6 +427,7 @@
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_engines.ts|engines.ts]]
+- [[_COMMUNITY_dynamic-tdd — improvements learned from the PRD 54 run|dynamic-tdd — improvements learned from the PRD #54 run]]
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_provider.ts|provider.ts]]
 - [[_COMMUNITY_route.integration.test.ts|route.integration.test.ts]]
@@ -435,8 +436,12 @@
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_library.integration.test.ts|library.integration.test.ts]]
+- [[_COMMUNITY_Run a real end-to-end generation locally|Run a real end-to-end generation locally]]
 - [[_COMMUNITY_Library.tsx|Library.tsx]]
 - [[_COMMUNITY_dynamic-tdd-54.js|dynamic-tdd-54.js]]
+- [[_COMMUNITY_Verify recipe — DancingGrandma|Verify recipe — DancingGrandma]]
+- [[_COMMUNITY_ADR 0001 Retrospectives freeze as rationale; actions live in the issue tracker|ADR 0001: Retrospectives freeze as rationale; actions live in the issue tracker]]
+- [[_COMMUNITY_ADR 0002 Every prepared PR ends with a reviewer test checklist, scaled to what exists|ADR 0002: Every prepared PR ends with a reviewer test checklist, scaled to what exists]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `getPool()` - 42 edges
@@ -457,9 +462,9 @@
   src/app/api/generations/generations.integration.test.ts → src/lib/server/db.ts
 - `sourcePhotoAsset()` --calls--> `getPool()`  [EXTRACTED]
   src/app/api/generations/generations.integration.test.ts → src/lib/server/db.ts
+- `startRequest()` --calls--> `cookieFor()`  [EXTRACTED]
+  src/app/api/maintenance/maintenance.integration.test.ts → src/test/session.ts
 - `createPendingCheckout()` --calls--> `getPool()`  [EXTRACTED]
-  src/app/api/stripe/webhook/route.integration.test.ts → src/lib/server/db.ts
-- `snapshot()` --calls--> `getPool()`  [EXTRACTED]
   src/app/api/stripe/webhook/route.integration.test.ts → src/lib/server/db.ts
 
 ## Import Cycles
@@ -468,23 +473,23 @@
 ## Hyperedges (group relationships)
 - **Landing page conversion flow: headline -> value prop -> CTA -> ticker reinforcement** — docs_hero_screenshot_headline_stacked_tricolor, docs_hero_screenshot_value_prop_copy, docs_hero_screenshot_cta_make_grandma_dance, docs_hero_screenshot_marquee_ticker [INFERRED 0.85]
 
-## Communities (443 total, 321 thin omitted)
+## Communities (448 total, 320 thin omitted)
 
 ### Community 1 - "Studio Wizard UI"
 Cohesion: 0.11
-Nodes (28): GenerationGate(), GenerationGateProps, clipFiles, CustomClipSource, Dance, DANCES, errorForLog(), fetchResultBlob() (+20 more)
+Nodes (27): GenerationGate(), GenerationGateProps, clipFiles, CustomClipSource, Dance, DANCES, errorForLog(), fetchResultBlob() (+19 more)
 
 ### Community 3 - "Package Dependencies"
 Cohesion: 0.05
-Nodes (40): dependencies, @azure/identity, @azure/storage-blob, @fal-ai/client, @fal-ai/server-proxy, jose, next, pg (+32 more)
+Nodes (41): dependencies, @azure/identity, @azure/storage-blob, @fal-ai/client, @fal-ai/server-proxy, jose, next, pg (+33 more)
 
 ### Community 4 - "Issues & PRD Workflow"
 Cohesion: 0.29
 Nodes (6): Conventions, Issue tracker: GitHub, Pull requests as a triage surface, Wayfinding operations, When a skill says "fetch the relevant ticket", When a skill says "publish to the issue tracker"
 
 ### Community 10 - "Design System & Sora Infra"
-Cohesion: 0.08
-Nodes (23): DancingGrandma Context, Language, Color (OKLCH only), Components & patterns, Design, Motion, Theme, Typography (+15 more)
+Cohesion: 0.07
+Nodes (26): DancingGrandma Context, Language, Color (OKLCH only), Components & patterns, Design, Motion, Theme, Typography (+18 more)
 
 ### Community 11 - "Aspire AppHost Config"
 Cohesion: 0.12
@@ -499,8 +504,8 @@ Cohesion: 0.24
 Nodes (11): Primary CTA: Make Grandma Dance, Dark Green / Pink / Yellow Brand Palette, From Fridge Magnet to For-You Page Section Heading, Stacked Tricolor Headline (Your Grandma / Their Dance / One Video), Hero Screenshot (Landing Page), Hero Section, Secondary Link: How Does It Work, Marquee Ticker Strip (Music Included / Make Grandma Dance ...) (+3 more)
 
 ### Community 16 - "Import Clip API"
-Cohesion: 0.43
-Nodes (5): logImportError(), POST(), importClip(), ImportedClip, IMPORTS_DIR
+Cohesion: 0.39
+Nodes (6): logImportError(), POST(), importClip(), ImportedClip, IMPORTS_DIR, run()
 
 ### Community 17 - "Azure RG Guard Script"
 Cohesion: 0.53
@@ -639,8 +644,8 @@ Cohesion: 0.22
 Nodes (15): blobDataUrl(), classifyReplicateStatus(), delay(), entryName(), ErrorKind, errorResponse(), fetchAsDataUrl(), formString() (+7 more)
 
 ### Community 60 - "Studio.test.tsx"
-Cohesion: 0.12
-Nodes (24): ENTRY_TYPES, POST(), maintenanceGuard(), POST(), ACTIVE_GENERATION_STATUSES, adjustCredits(), AdjustmentEntryType, expireStaleCredits() (+16 more)
+Cohesion: 0.11
+Nodes (26): ENTRY_TYPES, POST(), maintenanceGuard(), POST(), persistentShareUrl(), ACTIVE_GENERATION_STATUSES, adjustCredits(), AdjustmentEntryType (+18 more)
 
 ### Community 61 - "Diagnosing Bugs"
 Cohesion: 0.14
@@ -667,8 +672,8 @@ Cohesion: 0.15
 Nodes (10): Designing for Mockability, When to Mock, Anti-patterns, Rules of the loop, Seams — where tests go, Test-Driven Development, What a good test is, Bad Tests (+2 more)
 
 ### Community 67 - "db.ts"
-Cohesion: 0.38
-Nodes (7): POST(), libraryVideoDto, GET(), requireUser(), listLibraryGenerations(), setGenerationSharing(), shareUrlOf()
+Cohesion: 0.13
+Nodes (12): POST(), libraryVideoDto, GET(), metadata, fetchMock, video, ViewState, getGenerationForUser() (+4 more)
 
 ### Community 68 - "Process"
 Cohesion: 0.17
@@ -683,8 +688,8 @@ Cohesion: 0.17
 Nodes (11): 1. Gather context, 2. Explore the codebase (optional), 3. Draft vertical slices, 4. Quiz the user, 5. Publish the issues to the issue tracker, Acceptance criteria, Blocked by, Parent (+3 more)
 
 ### Community 71 - "generate.test.ts"
-Cohesion: 0.15
-Nodes (9): account, checkout, clear, create, load, redirect, save, track (+1 more)
+Cohesion: 0.17
+Nodes (8): account, checkout, clear, create, load, redirect, save, track
 
 ### Community 72 - "Ask Matt"
 Cohesion: 0.20
@@ -735,8 +740,8 @@ Cohesion: 0.25
 Nodes (7): 1. Pin the fixed point, 2. Identify the spec source, 3. Identify the standards sources, 4. Spawn both sub-agents in parallel, 5. Aggregate, Process, Why two axes
 
 ### Community 84 - "page.tsx"
-Cohesion: 0.25
-Nodes (3): FAQS, MARQUEE_WORDS, STEPS
+Cohesion: 0.18
+Nodes (8): FAQS, Home(), MARQUEE_WORDS, STEPS, Engine, EngineProvider, EngineStatus, resolveEngines()
 
 ### Community 85 - "Agent skills"
 Cohesion: 0.25
@@ -774,32 +779,36 @@ Nodes (3): GLOSSARY.md Format, Rules, Structure
 Cohesion: 0.50
 Nodes (3): How they got here, Licensing note, Trending-dance reference clips
 
+### Community 95 - "AGENTS.md"
+Cohesion: 0.50
+Nodes (3): Issue before implementation — ALWAYS, This is NOT the Next.js you know, Verify for real, and keep the tracker honest
+
 ### Community 205 - "PR-prep tail"
-Cohesion: 0.10
-Nodes (16): Inputs, Naming when there's no PRD/label, Notes, PR-prep tail, Run, Unresolved questions, COMMIT, GATE (+8 more)
+Cohesion: 0.08
+Nodes (22): Inputs, Naming when there's no PRD/label, Notes, PR-prep tail, Run, Unresolved questions, COMMIT, GATE (+14 more)
 
 ### Community 417 - "PR-prep tail"
-Cohesion: 0.10
-Nodes (16): Inputs, Naming when there's no PRD/label, Notes, PR-prep tail, Run, Unresolved questions, COMMIT, GATE (+8 more)
+Cohesion: 0.08
+Nodes (22): Inputs, Naming when there's no PRD/label, Notes, PR-prep tail, Run, Unresolved questions, COMMIT, GATE (+14 more)
 
 ### Community 418 - "implement-prompt.md"
-Cohesion: 0.20
-Nodes (9): COMMIT, CONTEXT, EXECUTION, EXPLORATION, FEEDBACK LOOPS, FINAL RULES, OUTPUT, TASK (+1 more)
+Cohesion: 0.15
+Nodes (12): COMMIT, CONTEXT, EXECUTION, EXPLORATION, FEEDBACK LOOPS, FINAL RULES, Money-path invariant checklist, OUTPUT (+4 more)
 
 ### Community 419 - "SKILL.md"
 Cohesion: 0.20
 Nodes (9): Chart the map, Fog of war, Invocation, Refer by name, The Map, The map body, Ticket Types, Tickets (+1 more)
 
 ### Community 420 - "implement-prompt.md"
-Cohesion: 0.20
-Nodes (9): COMMIT, CONTEXT, EXECUTION, EXPLORATION, FEEDBACK LOOPS, FINAL RULES, OUTPUT, TASK (+1 more)
+Cohesion: 0.15
+Nodes (12): COMMIT, CONTEXT, EXECUTION, EXPLORATION, FEEDBACK LOOPS, FINAL RULES, Money-path invariant checklist, OUTPUT (+4 more)
 
 ### Community 421 - "dynamic-tdd.workflow.mjs"
-Cohesion: 0.33
+Cohesion: 0.25
 Nodes (5): done, IMPL_SCHEMA, mergedIssues, meta, PLAN_SCHEMA
 
 ### Community 422 - "dynamic-tdd.workflow.mjs"
-Cohesion: 0.33
+Cohesion: 0.25
 Nodes (5): done, IMPL_SCHEMA, mergedIssues, meta, PLAN_SCHEMA
 
 ### Community 423 - "AccountBadge.tsx"
@@ -807,36 +816,40 @@ Cohesion: 0.47
 Nodes (4): AccountBadge(), BadgeState, fetchMock, fetchAccount()
 
 ### Community 424 - "merge-prompt.md"
-Cohesion: 0.40
-Nodes (4): CLEANUP — remove each merged worktree, CONSTRAINTS, DO NOT CLOSE ISSUES, TASK
+Cohesion: 0.33
+Nodes (5): CLEANUP — remove each merged worktree, CONSTRAINTS, DO NOT CLOSE ISSUES, RECONCILE SEMANTICS, NOT JUST CONFLICTS, TASK
 
 ### Community 425 - "merge-prompt.md"
-Cohesion: 0.40
-Nodes (4): CLEANUP — remove each merged worktree, CONSTRAINTS, DO NOT CLOSE ISSUES, TASK
+Cohesion: 0.33
+Nodes (5): CLEANUP — remove each merged worktree, CONSTRAINTS, DO NOT CLOSE ISSUES, RECONCILE SEMANTICS, NOT JUST CONFLICTS, TASK
 
 ### Community 426 - "plan-prompt.md"
-Cohesion: 0.50
-Nodes (3): ISSUES, OUTPUT, TASK
+Cohesion: 0.40
+Nodes (4): ISSUES, OUTPUT, SHARED SEAMS — assign them to the first slice, tell the rest to reuse, TASK
 
 ### Community 427 - "plan-prompt.md"
-Cohesion: 0.50
-Nodes (3): ISSUES, OUTPUT, TASK
+Cohesion: 0.40
+Nodes (4): ISSUES, OUTPUT, SHARED SEAMS — assign them to the first slice, tell the rest to reuse, TASK
 
 ### Community 430 - "route.ts"
-Cohesion: 0.25
-Nodes (16): failureKindOf(), generationDto, refreshedDto(), advance(), DELETE(), GET(), POLLABLE, releaseStuckReservation() (+8 more)
+Cohesion: 0.17
+Nodes (25): failureKindOf(), generationDto, refreshedDto(), advance(), DELETE(), GET(), POLLABLE, releaseStuckReservation() (+17 more)
 
 ### Community 431 - "route.ts"
-Cohesion: 0.33
-Nodes (10): badRequest(), GET(), isFileLike(), POST(), REFERENCE_SOURCE_KINDS, ENGINES, createSourcePhotoAsset(), latestActiveGeneration() (+2 more)
+Cohesion: 0.25
+Nodes (11): azureJson(), AzureWanResult, blobDataUrl(), classifyAzureStatus(), entryName(), ErrorKind, errorResponse(), fetchAsDataUrl() (+3 more)
 
 ### Community 432 - "engines.ts"
-Cohesion: 0.50
-Nodes (3): Engine, EngineProvider, EngineStatus
+Cohesion: 0.17
+Nodes (11): 1. Parallel slices duplicate infrastructure — plan for shared seams, 2. Verify must prove it is driving *this branch's* app, 3. The verify prompt was another project's prompt, 4. Auth flows need one real round trip — route tests can't see them, 5. Money paths deserve an invariant checklist at implement time, 6. Codify the interrupted-run cleanup, 7. Token exhaustion is a first-class event — handle it, don't just survive it, 8. The PR must ship a reviewer test schema (implemented) (+3 more)
+
+### Community 433 - "dynamic-tdd — improvements learned from the PRD #54 run"
+Cohesion: 0.17
+Nodes (11): 1. Parallel slices duplicate infrastructure — plan for shared seams, 2. Verify must prove it is driving *this branch's* app, 3. The verify prompt was another project's prompt, 4. Auth flows need one real round trip — route tests can't see them, 5. Money paths deserve an invariant checklist at implement time, 6. Codify the interrupted-run cleanup, 7. Token exhaustion is a first-class event — handle it, don't just survive it, 8. The PR must ship a reviewer test schema (implemented) (+3 more)
 
 ### Community 434 - "route.ts"
-Cohesion: 0.10
-Nodes (30): stripe, POST(), GET(), createPendingCheckout(), deliver(), snapshot(), stripeMocks, POST() (+22 more)
+Cohesion: 0.11
+Nodes (27): POST(), createPendingCheckout(), deliver(), snapshot(), stripeMocks, POST(), applyCheckoutCompleted(), applyInvoicePaid() (+19 more)
 
 ### Community 435 - "provider.ts"
 Cohesion: 0.36
@@ -844,55 +857,71 @@ Nodes (11): classifyFalError(), FalApiErrorLike, falInputFor(), getFalClient(), 
 
 ### Community 436 - "route.integration.test.ts"
 Cohesion: 0.10
-Nodes (19): GenerationError, GenerationErrorMeta, GenerationFailureKind, GenerationUpdate, moderatePhoto(), GenerationStatus, ReferenceSourceKind, Account (+11 more)
+Nodes (19): GenerationError, GenerationErrorMeta, GenerationFailureKind, GenerationUpdate, moderatePhoto(), ReferenceSourceKind, Account, AuthRequiredError (+11 more)
 
 ### Community 437 - "billing.ts"
 Cohesion: 0.10
-Nodes (22): oidcMocks, oidcMocks, stripeMocks, oidcMocks, stripeMocks, oidcMocks, userIdOf(), blobMocks (+14 more)
+Nodes (25): oidcMocks, oidcMocks, stripeMocks, oidcMocks, stripeMocks, GET(), oidcMocks, userIdOf() (+17 more)
 
 ### Community 438 - "CheckoutSuccess.tsx"
 Cohesion: 0.20
 Nodes (5): metadata, CheckoutSuccess(), SubscriptionState, fetchMock, ViewState
 
 ### Community 439 - "route.ts"
-Cohesion: 0.20
-Nodes (13): clearDraft(), DraftReference, fromStoredFile(), loadDraft(), openDb(), PreAccountDraft, saveDraft(), StoredDraft (+5 more)
+Cohesion: 0.22
+Nodes (12): clearDraft(), DraftReference, fromStoredFile(), loadDraft(), openDb(), PreAccountDraft, saveDraft(), StoredDraft (+4 more)
 
 ### Community 440 - "route.ts"
 Cohesion: 0.20
 Nodes (15): GET(), isMissingBlob(), streamBlob(), authMocks, blobMocks, dbMocks, videoResponse(), deleteBlob() (+7 more)
 
 ### Community 441 - "library.integration.test.ts"
-Cohesion: 0.13
-Nodes (22): POST(), blobMocks, ledgerEntries(), oidcMocks, providerMocks, sourcePhotoAsset(), startRequest(), statusRequest() (+14 more)
+Cohesion: 0.14
+Nodes (21): POST(), blobMocks, ledgerEntries(), oidcMocks, providerMocks, sourcePhotoAsset(), startRequest(), statusRequest() (+13 more)
+
+### Community 442 - "Run a real end-to-end generation locally"
+Cohesion: 0.25
+Nodes (7): 1. Bring up the real stack, 2. Secrets & prerequisites, 3. Sign in (real Keycloak), 4. Seed credits (dev only), 5. Generate, poll, fetch, 6. Verify — don't trust HTTP 200, Run a real end-to-end generation locally
 
 ### Community 443 - "Library.tsx"
-Cohesion: 0.20
-Nodes (4): metadata, fetchMock, video, ViewState
+Cohesion: 0.25
+Nodes (7): Auth round trip (required when the diff touches auth), {{BOOT_SIGNAL}}, {{KNOWN_ENV_NOISE}} (tolerated, not regressions), Launch (Aspire, not bare `npm run dev`), Port discovery — never assume 3000, Verify recipe — DancingGrandma, Wizard labels / dev seams
 
 ### Community 444 - "dynamic-tdd-54.js"
-Cohesion: 0.33
-Nodes (5): done, IMPL_SCHEMA, mergedIssues, meta, PLAN_SCHEMA
+Cohesion: 0.25
+Nodes (7): 1. Bring up the real stack, 2. Secrets & prerequisites, 3. Sign in (real Keycloak), 4. Seed credits (dev only), 5. Generate, poll, fetch, 6. Verify — don't trust HTTP 200, Run a real end-to-end generation locally
+
+### Community 445 - "Verify recipe — DancingGrandma"
+Cohesion: 0.25
+Nodes (7): Auth round trip (required when the diff touches auth), {{BOOT_SIGNAL}}, {{KNOWN_ENV_NOISE}} (tolerated, not regressions), Launch (Aspire, not bare `npm run dev`), Port discovery — never assume 3000, Verify recipe — DancingGrandma, Wizard labels / dev seams
+
+### Community 446 - "ADR 0001: Retrospectives freeze as rationale; actions live in the issue tracker"
+Cohesion: 0.40
+Nodes (4): ADR 0001: Retrospectives freeze as rationale; actions live in the issue tracker, Consequences, Context, Decision
+
+### Community 447 - "ADR 0002: Every prepared PR ends with a reviewer test checklist, scaled to what exists"
+Cohesion: 0.40
+Nodes (4): ADR 0002: Every prepared PR ends with a reviewer test checklist, scaled to what exists, Consequences, Context, Decision
 
 ## Knowledge Gaps
-- **1241 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1236 more)
+- **1310 isolated node(s):** `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA`, `done`, `mergedIssues` (+1305 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **321 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **320 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `Package Dependencies` to `route.ts`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
-- **Why does `stripe` connect `route.ts` to `Package Dependencies`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `stripe` connect `Package Dependencies` to `route.ts`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `getPool()` connect `billing.ts` to `db.ts`, `auth.ts`, `route.ts`, `route.ts`, `route.ts`, `library.integration.test.ts`, `Studio.test.tsx`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Studio()` (e.g. with `clearDraft()` and `run()`) actually correct?**
   _`Studio()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `meta`, `PLAN_SCHEMA`, `IMPL_SCHEMA` to the rest of the system?**
-  _1281 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1350 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Studio Wizard UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.10752688172043011 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1103448275862069 - nodes in this community are weakly interconnected._
 - **Should `Package Dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.04878048780487805 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `Design System & Sora Infra` be split into smaller, more focused modules?**
-  _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
