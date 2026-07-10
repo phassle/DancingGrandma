@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import GrandmaDancer from "@/components/GrandmaDancer";
 import Studio from "@/components/Studio";
 import { resolveEngines } from "@/lib/engines";
@@ -56,7 +57,12 @@ const FAQS = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  // Resolve engine availability at request time, not build time: AZURE_WAN_ENDPOINT
+  // is injected at runtime (Container Apps secret, #97), so a single built image must
+  // reflect it live. connection() opts this render into dynamic (issue #17).
+  await connection();
+  const engines = resolveEngines(process.env);
   return (
     <main className="flex-1">
       {/* Header */}
@@ -123,7 +129,7 @@ export default function Home() {
 
       <Marquee />
 
-      <Studio engines={resolveEngines(process.env)} />
+      <Studio engines={engines} />
 
       {/* How it works — a real 3-step sequence */}
       <section id="how" aria-labelledby="how-title" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-28">
