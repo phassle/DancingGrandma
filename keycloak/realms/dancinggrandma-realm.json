@@ -4,6 +4,17 @@
   "displayName": "DancingGrandma",
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@dancinggrandma.local",
+    "fromDisplayName": "Dancing Grandma",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
   "sslRequired": "external",
   "accessTokenLifespan": 3600,
   "clients": [

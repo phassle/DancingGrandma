@@ -70,3 +70,6 @@ graphify-out/20*/
 public/dances/*
 !public/dances/README.md
 !public/dances/*.mp4
+
+# Editor/IDE config is machine-local (personal absolute paths, per-tool)
+.vscode/
